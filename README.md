@@ -18,6 +18,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 ## Skills
 
 - **[ask-me](skills/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
+- **[splitting](skills/splitting/SKILL.md)**: When work is too big for one session or worth sharing out to subagents, the agent turns it into self-contained tasks that each leave the repo green, and shows which can run in parallel.
 
 ## How we know it works
 
