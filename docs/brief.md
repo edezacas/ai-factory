@@ -13,6 +13,7 @@
 
 - Skills are `SKILL.md` files (agentskills.io), harness-agnostic.
 - Start minimal: skills, then two subagents. The orchestrator script, the ledger and optimizations come only if data justifies them.
+- Before writing a skill, run the task without it and confirm the agent fails at what the skill would fix. If it does not fail, do not write it.
 - Short skills: goal and constraints, no steps the model already knows. Description says when to use and when not. Under 500 lines, templates in `assets/`.
 - Persisted documents and artifacts in English; dialogue with the user in Spanish.
 
@@ -21,14 +22,12 @@
 There is no orchestrator. The agent discovers each skill by its description and uses it when needed:
 
 1. `ask-me`, when something is unclear or undecided.
-2. `splitting`, when the work is too big for one session or can be shared out to run in parallel, with subagents or otherwise.
-3. `code-design` and `hexagonal` when designing, `tdd` when programming, `tidy` once the tests are green.
-4. `write-why`, when the work involved important decisions that are hard to reverse or surprising.
+2. `code-design` and `hexagonal` when designing, `tdd` when programming, `tidy` once the tests are green.
+3. `write-why`, when the work involved important decisions that are hard to reverse or surprising.
 
 ## Skills
 
 - **ask-me** (v0.6): leaves nothing forgotten and takes no phantom decision, through rounds of proposals until the user confirms the full account of decisions. Writes no file.
-- **splitting**: self-contained tasks (criteria, decisions, seam, files and dependencies inside each, because a subagent does not see the conversation), so they can run in parallel without touching the same files. Detects big tasks by linguistic signals ("and", "or", "manage") and cuts them into vertical slices. Each task leaves the repo green and can be committed alone. Expand-contract only for tasks touching schema or API.
 - **tdd** (base: `tdd` from edezacas/agent-skills): public seam, independent expected values, mocks only of what is not ours. Add: predict what will fail before running; per-task test list reviewed with ZOMBIES; final gap pass. Optional mutation testing with a real tool over changed files, until it shows whether it adds value.
 - **code-design** (base: own skill): use the repo's structure, abstract only where something varies today, smallest form that works, comments only if the code cannot say it. Add the question "what can be postponed?".
 - **hexagonal** (working name, new): graded levels.
@@ -47,11 +46,15 @@ There is no orchestrator. The agent discovers each skill by its description and 
 - **implementer** (clean context per task): receives the red test, writes the minimum to pass, then simplifies.
 - **validator** (optional, another model, read-only): checks the result against the spec, not the implementer's notes.
 
+Task contract: a subagent does not see the conversation, so each task must carry its criteria, decisions, seam, files, open decisions and dependencies. Tasks can run in parallel only if neither depends on the other, even through a criterion, and they change no file in common. A schema or public API change others use is split into expand, migrate and contract.
+
+This is not a skill. A `splitting` skill was tried and removed: the agent already splits work and launches subagents by itself, the skill doubled or tripled tokens and it did not activate on its own. The contract belongs to an orchestrator that can enforce it. The skill is in git history.
+
 Coordination: the main session launches subagents with file paths, not summaries. Parallel tasks need non-overlapping file ownership. Subagents only when they just report; agent teams only if they must talk to each other.
 
 ## Phases and stop criteria
 
-1. Style skills, `ask-me`, `splitting`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks.
+1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks.
 2. Only if something concrete fails: native subagents tester and implementer, and validator.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
@@ -78,7 +81,7 @@ llm-council, strategy and OKRs, double red and emoji narration in tdd, starter m
 - https://github.com/edezacas/agent-skills: `tdd`, `code-design`, `decision-records`, and the eval runner.
 - https://github.com/eferro/skill-factory, under `output_skills/<category>/<skill>`:
   - ask-me: productivity/grilling, design/align, design/domain-modeling
-  - splitting: practices/story-splitting, practices/hamburger-method, practices/small-safe-steps
+  - task contract: practices/story-splitting, practices/hamburger-method, practices/small-safe-steps
   - tdd: testing/tdd, testing/mutation-testing
   - style: design/hexagonal-architecture, practices/thin-wrappers, practices/code-simplifier, practices/refactoring, practices/complexity-review
   - write-why: design/domain-modeling, practices/capturing-project-knowledge
