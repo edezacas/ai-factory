@@ -1,0 +1,114 @@
+{
+  "skill_name": "ask-me",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We need to let customers cancel orders. Add it.",
+      "expected_output": "The agent writes no code and no document. It looks at the repo itself and opens with one numbered round of concrete proposals, each with a recommendation and rejected alternatives, challenging what 'cancel' means and probing its limits with scenarios.",
+      "assertions": [
+        "The response creates or modifies no file.",
+        "The response presents several numbered questions in a single round.",
+        "Every question carries a recommended answer with its reason.",
+        "Every question either names a rejected alternative and why it lost, or says there is none.",
+        "Every question is worded so that answering yes accepts the recommendation.",
+        "The response questions what 'cancel' means or where it ends, using a concrete scenario such as an order that has already shipped.",
+        "The response raises something the request did not mention, such as a failed refund, existing orders or who is allowed to cancel.",
+        {
+          "text": "The response does not ask the user for anything the repo answers, such as the language, the test runner or the package manager.",
+          "guardrail": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the ask-me skill. Show me what we have agreed in notes/cancel-orders-session.md, so I can confirm it before we go on.",
+      "files": [
+        "evals/files/notes/cancel-orders-session.md"
+      ],
+      "expected_output": "The agent gives the full account in the conversation: each decision with its stated reason, the rejected alternative that was discussed, and what is out of scope. Whatever it finds still open it asks about first, leaving the confirmation for the end. It invents no reason and writes no file.",
+      "assertions": [
+        "The response creates or modifies no file.",
+        "The response lists who can cancel, shipped orders, the 24-hour window and the refund as decided.",
+        "The 24-hour window is shown with its reason as not stated, and no reason is invented for it.",
+        "The refund is shown with the reason the user gave: support does not have to do anything by hand.",
+        "Intercepting shipments appears as a rejected alternative, because the carrier does not support it.",
+        "The confirmation email appears as out of scope.",
+        "If nothing is open, the response asks the user to confirm; if something is, it asks about what is open and leaves the confirmation for the end."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the ask-me skill. OK, that's enough questions, let's move on. Here are the notes: notes/refund-session.md.",
+      "files": [
+        "evals/files/notes/refund-session.md"
+      ],
+      "expected_output": "The agent does not move on. It names the partial-shipment decision and the customer notification as still open, each with a recommendation, and treats the unanswered email recommendation as not decided.",
+      "assertions": [
+        "The response names the decision about partially shipped orders as open.",
+        "The response gives its recommended answer for that decision.",
+        "The response treats notifying the customer as still open, not as decided, although the agent recommended an email.",
+        "The response creates or modifies no file."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Rename the exported function start to boot in src/index.ts.",
+      "expected_output": "The agent makes the rename with no interview.",
+      "assertions": [
+        {
+          "text": "src/index.ts exports a function named boot.",
+          "guardrail": true
+        },
+        {
+          "text": "The response asks no interview questions.",
+          "guardrail": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use the ask-me skill. We need to let customers cancel orders. Add it.",
+      "expected_output": "The agent writes no code and no document. It looks at the repo itself and opens with one numbered round of concrete proposals, each with a recommendation and rejected alternatives, challenging what 'cancel' means and probing its limits with scenarios.",
+      "assertions": [
+        "The response creates or modifies no file.",
+        "The response presents several numbered questions in a single round.",
+        "Every question carries a recommended answer with its reason.",
+        "Every question either names a rejected alternative and why it lost, or says there is none.",
+        "Every question is worded so that answering yes accepts the recommendation.",
+        "The response questions what 'cancel' means or where it ends, using a concrete scenario such as an order that has already shipped.",
+        "The response raises something the request did not mention, such as a failed refund, existing orders or who is allowed to cancel.",
+        {
+          "text": "The response does not ask the user for anything the repo answers, such as the language, the test runner or the package manager.",
+          "guardrail": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Add a CSV export for orders.",
+      "expected_output": "The agent may explore the repo, and opens the interview before writing any code.",
+      "assertions": [
+        "The response creates or modifies no file."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Customers complain that checkout is slow. Fix it.",
+      "expected_output": "The agent may explore the repo, and opens the interview before writing any code.",
+      "assertions": [
+        "The response creates or modifies no file."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "What does src/index.ts do?",
+      "expected_output": "The agent answers the question with no interview.",
+      "assertions": [
+        {
+          "text": "The response says the file logs acme-app and asks no interview questions.",
+          "guardrail": true
+        }
+      ]
+    }
+  ]
+}
