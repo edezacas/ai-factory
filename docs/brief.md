@@ -23,7 +23,6 @@
 ## Skills
 
 - **ask-me** (v0.6): leaves nothing forgotten and takes no phantom decision, through rounds of proposals until the user confirms the full account of decisions. Writes no file.
-- **build** (v0.4, single-session version): the whole flow; writes the spec from the confirmed decisions (goal, out of scope, decisions with reason and rejected alternatives, Given/When/Then criteria); structure of tasks and handoffs; dead ends carried into repairs.
 - **plan**: self-contained tasks (criteria, seam and context inside each). Detects big tasks by linguistic signals ("and", "or", "manage") and cuts them into vertical slices. Each task leaves the repo green and can be committed alone. Expand-contract only for tasks touching schema or API.
 - **tdd** (base: `tdd` from edezacas/agent-skills): public seam, independent expected values, mocks only of what is not ours. Add: predict what will fail before running; per-task test list reviewed with ZOMBIES; final gap pass. Optional mutation testing with a real tool over changed files, until it shows whether it adds value.
 - **code-design** (base: own skill): use the repo's structure, abstract only where something varies today, smallest form that works, comments only if the code cannot say it. Add the question "what can be postponed?".
@@ -43,11 +42,11 @@
 - **implementer** (clean context per task): receives the red test, writes the minimum to pass, then simplifies.
 - **validator** (optional, another model, read-only): checks the result against the spec, not the implementer's notes.
 
-Coordination: the main session follows `build` and launches subagents with file paths, not summaries. Parallel tasks need non-overlapping file ownership. Subagents only when they just report; agent teams only if they must talk to each other.
+Coordination: the main session launches subagents with file paths, not summaries. Parallel tasks need non-overlapping file ownership. Subagents only when they just report; agent teams only if they must talk to each other.
 
 ## Phases and stop criteria
 
-1. Style skills, `ask-me`, `plan`, `tdd`, `write-why` and `build` in a single session. Try on 5 real tasks.
+1. Style skills, `ask-me`, `plan`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks.
 2. Only if something concrete fails: native subagents tester and implementer, and validator.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
@@ -67,6 +66,7 @@ llm-council, strategy and OKRs, double red and emoji narration in tdd, starter m
 
 - Whether unattended execution is still a requirement (decides whether the script comes earlier).
 - Concrete harness and models.
+- Whether a separate `spec` skill writes the spec from the confirmed decisions.
 
 ## References (use as ideas, do not copy)
 
@@ -77,5 +77,5 @@ llm-council, strategy and OKRs, double red and emoji narration in tdd, starter m
   - tdd: testing/tdd, testing/mutation-testing
   - style: design/hexagonal-architecture, practices/thin-wrappers, practices/code-simplifier, practices/refactoring, practices/complexity-review
   - write-why: design/domain-modeling, practices/capturing-project-knowledge
-  - build and coordination: productivity/handoff, ai/claude-code/launching-agent-teams, ai/creating-process-files
+  - coordination: productivity/handoff, ai/claude-code/launching-agent-teams, ai/creating-process-files
   - Not yet read in full, reread before relying on them: story-splitting, hamburger-method, small-safe-steps, mutation-testing, complexity-review.
