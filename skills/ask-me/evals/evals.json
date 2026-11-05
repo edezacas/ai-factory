@@ -63,6 +63,15 @@
           "text": "The response asks no interview questions.",
           "guardrail": true
         }
+      ],
+      "checks": [
+        {
+          "name": "hidden test finds boot, suite and types pass",
+          "files": [
+            "evals/hidden/test/index-boot.test.ts"
+          ],
+          "run": "npx vitest run && npx tsc --noEmit"
+        }
       ]
     },
     {

@@ -31,9 +31,11 @@ import path from 'node:path';
 
 const REPO = path.resolve(import.meta.dirname, '..');
 const SKILLS = path.join(REPO, 'skills');
+const FIXTURE = path.join(REPO, 'evals', 'fixtures', 'acme-app');
 const WORKSPACE = path.join(REPO, 'evals', 'workspace');
 const RUN_TIMEOUT_MS = 300_000;
 const GRADE_TIMEOUT_MS = 180_000;
+const CHECK_TIMEOUT_MS = 120_000;
 
 // ---------------------------------------------------------------- args
 
@@ -163,6 +165,25 @@ function usageTotals(result, messages) {
   );
 }
 
+const isTestFile = (file) => /\.(test|spec)\.|(^|\/)tests?\//.test(file);
+const isSourceFile = (file) => /\.[jt]sx?$/.test(file);
+
+function writtenFiles(calls) {
+  return calls.flatMap((c) => {
+    if (c.name === 'Write' || c.name === 'Edit') return [String(c.input?.file_path)];
+    if (c.name !== 'Bash') return [];
+    return [...String(c.input?.command).matchAll(/(?:>>?|\btee\s+(?:-a\s+)?)\s*([^\s|;&<>'"]+\.[jt]sx?)/g)].map((m) => m[1]);
+  });
+}
+
+// True or false only when the run wrote both tests and code.
+function testBeforeCode(calls) {
+  const files = writtenFiles(calls).filter(isSourceFile);
+  const firstTest = files.findIndex(isTestFile);
+  const firstCode = files.findIndex((f) => !isTestFile(f));
+  return firstTest < 0 || firstCode < 0 ? null : firstTest < firstCode;
+}
+
 const contextSize = ({ usage: u = {} }) =>
   (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
 
@@ -189,6 +210,7 @@ function summarize(events, skillName = null) {
       cache_hit_rate: prompted ? +(tokens.cacheRead / prompted).toFixed(3) : 0,
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
+      test_before_code: testBeforeCode(calls),
       skill_read: calls.some(
         (c) =>
           (c.name === 'Skill' && c.input?.skill === skillName) ||
@@ -213,33 +235,17 @@ async function walk(dir, base = dir) {
   return out;
 }
 
-const FIXTURE = {
-  'package.json': JSON.stringify(
-    {
-      name: 'acme-app',
-      version: '1.0.0',
-      private: true,
-      scripts: { build: 'tsc', dev: 'tsc --watch', test: 'vitest', lint: 'eslint .' },
-      devDependencies: { typescript: '^5.4.0', vitest: '^1.6.0', eslint: '^9.0.0', prettier: '^3.2.0' },
-    },
-    null,
-    2,
-  ) + '\n',
-  '.prettierrc.json': '{ "semi": false, "singleQuote": true, "printWidth": 100 }\n',
-  'tsconfig.json': '{ "compilerOptions": { "strict": true, "target": "ES2022", "module": "ESNext" } }\n',
-  'README.md': '# acme-app\n\nInternal order management service.\n',
-  'src/index.ts': "export const start = () => console.log('acme-app')\n",
-};
-
+// A copy-on-write copy where the filesystem allows it, so every run gets its own
+// node_modules cheaply and a run that installs something cannot affect the others.
 async function prepareWorkdir(dir) {
-  await mkdir(dir, { recursive: true });
   const expected = new Map();
-  for (const [name, content] of Object.entries(FIXTURE)) {
-    const target = path.join(dir, name);
+  for (const { full, rel } of await walk(FIXTURE)) {
+    const target = path.join(dir, rel);
     await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, content);
-    expected.set(name, content);
+    await cp(full, target);
+    expected.set(rel, await readFile(full, 'utf8'));
   }
+  execFileSync('cp', ['-a', '--reflink=auto', path.join(FIXTURE, 'node_modules'), dir]);
   return expected;
 }
 
@@ -277,6 +283,34 @@ async function installSkill(skill, workdir) {
 }
 
 // Extra input files for a case, copied into the workdir by basename.
+// Commands that decide a result with no judge. A check's `files` come from
+// evals/hidden/, are copied only now, and so were never visible to the agent.
+async function runChecks(testCase, workdir, skillDir) {
+  const results = [];
+  for (const check of testCase.checks ?? []) {
+    for (const file of check.files ?? []) {
+      const target = path.join(workdir, file.slice(file.indexOf('/hidden/') + 8));
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(path.join(skillDir, file), target, { force: true });
+    }
+    let passed = true;
+    let output = '';
+    try {
+      output = execFileSync('bash', ['-c', check.run], {
+        cwd: workdir,
+        env: cleanEnv(),
+        timeout: CHECK_TIMEOUT_MS,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).toString();
+    } catch (err) {
+      passed = false;
+      output = `${err.stdout ?? ''}${err.stderr ?? ''}${err.message}`;
+    }
+    results.push({ name: check.name, passed, output: output.slice(-2000) });
+  }
+  return results;
+}
+
 async function copyCaseFiles(testCase, workdir, skillDir, expected) {
   for (const file of testCase.files ?? []) {
     const source = path.join(skillDir, file);
@@ -427,17 +461,15 @@ const EFFICIENCY = {
 const mapValues = (obj, fn) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v, k)]));
 
 // How often each assertion passed: one that neither always passes nor always fails is noise.
-function assertionTally(runs) {
-  const tally = new Map();
-  for (const run of runs) {
-    for (const r of run.grading.assertion_results) {
-      const entry = tally.get(r.text) ?? { text: r.text, passed: 0, total: 0 };
-      entry.passed += r.passed ? 1 : 0;
-      entry.total += 1;
-      tally.set(r.text, entry);
-    }
+function tally(results, label) {
+  const entries = new Map();
+  for (const r of results) {
+    const entry = entries.get(r[label]) ?? { [label]: r[label], passed: 0, total: 0 };
+    entry.passed += r.passed ? 1 : 0;
+    entry.total += 1;
+    entries.set(r[label], entry);
   }
-  return [...tally.values()];
+  return [...entries.values()];
 }
 
 function configStats(runs) {
@@ -450,13 +482,25 @@ function configStats(runs) {
     ungraded_runs: runs.length - graded.length,
     incomplete_runs: runs.length - complete.length,
     skill_read_runs: runs.filter((r) => r.timing.skill_read).length,
-    quality: mapValues(QUALITY, (metric) =>
-      statsOf(graded.map((r) => metric(r.grading.summary)).filter((v) => v !== null)),
-    ),
+    quality: {
+      ...mapValues(QUALITY, (metric) =>
+        statsOf(graded.map((r) => metric(r.grading.summary)).filter((v) => v !== null)),
+      ),
+      checks_pass_rate: statsOf(
+        runs.filter((r) => r.checks?.length).map((r) => r.checks.filter((c) => c.passed).length / r.checks.length),
+      ),
+    },
     efficiency_of_complete_runs: mapValues(EFFICIENCY, (metric) =>
       statsOf(complete.map((r) => metric(r.timing))),
     ),
-    assertions: assertionTally(graded),
+    assertions: tally(graded.flatMap((r) => r.grading.assertion_results), 'text'),
+    checks: tally(runs.flatMap((r) => r.checks ?? []), 'name'),
+    test_before_code: tally(
+      runs
+        .filter((r) => r.timing.test_before_code !== null && r.timing.test_before_code !== undefined)
+        .map((r) => ({ name: 'test_before_code', passed: r.timing.test_before_code })),
+      'name',
+    )[0] ?? null,
   };
 }
 
@@ -505,19 +549,23 @@ function benchmark(runs) {
   const cases = ids.map((id) => caseStats(runs.filter((r) => r.id === id)));
   return {
     total_runs: runs.length,
+    agent_cost_usd: +runs.reduce((sum, r) => sum + r.timing.cost_usd, 0).toFixed(4),
+    judge_cost_usd: +runs.reduce((sum, r) => sum + (r.grading?.judge_cost_usd ?? 0), 0).toFixed(4),
     delta_summary: deltaSummary(cases),
     cases,
   };
 }
 
-function printSummary(name, { cases }) {
+function printSummary(name, { cases, agent_cost_usd, judge_cost_usd }) {
+  console.log(`${name}: agent $${agent_cost_usd}, judge $${judge_cost_usd}`);
   const show = (s) => (s ? `${s.median} [${s.min}-${s.max}]` : '-');
   for (const c of cases) {
     const d = c.delta?.pass_rate;
     console.log(
       `${name} #${c.id}  pass with ${show(c.with_skill?.quality.pass_rate)}` +
         `  without ${show(c.without_skill?.quality.pass_rate)}` +
-        (d ? `  delta ${d.delta}${d.separated ? ' separated' : ''}` : ''),
+        (d ? `  delta ${d.delta}${d.separated ? ' separated' : ''}` : '') +
+        ` checks ${show(c.with_skill?.quality.checks_pass_rate)}`,
     );
   }
 }
@@ -533,6 +581,7 @@ async function nextIteration() {
 async function gradeCase(testCase, config, response, files, dir, baseline) {
   let raw = '';
   let parsed = null;
+  let judgeCost = 0;
   // Outside this repo, so the judge does not load its CLAUDE.md.
   const judgeDir = await mkdtemp(path.join(os.tmpdir(), 'ai-factory-judge-'));
   for (const attempt of [1, 2]) {
@@ -550,7 +599,9 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
           (attempt === 2 ? '\n\nPrevious answer was not valid JSON. Answer with the JSON object only.' : ''),
       },
     );
-    raw = summarize(parseEvents(stdout)).text;
+    const { text, metrics } = summarize(parseEvents(stdout));
+    raw = text;
+    judgeCost += metrics.cost_usd;
     if (stderr.trim()) await writeFile(path.join(dir, `grading_stderr_${attempt}.log`), stderr);
     if (timedOut) continue;
     parsed = parseGrading(raw);
@@ -566,6 +617,7 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
         summary: { passed: 0, failed: 0, total: 0, pass_rate: 0, skill_signal: { passed: 0, total: 0 }, guardrail: { passed: 0, total: 0 } },
         error: 'unparseable',
       };
+  grading.judge_cost_usd = judgeCost;
   await writeFile(path.join(dir, 'grading.json'), JSON.stringify(grading, null, 2) + '\n');
   return grading;
 }
@@ -609,6 +661,8 @@ async function runCase(skill, testCase, itDir, repetition) {
     await writeFile(path.join(dir, 'transcript.md'), text + '\n');
     await writeFile(path.join(dir, 'timing.json'), JSON.stringify(timing, null, 2) + '\n');
     const files = await collectOutputs(workdir, outputsDir, expected);
+    const checks = await runChecks(testCase, workdir, skill.dir);
+    await writeFile(path.join(dir, 'checks.json'), JSON.stringify(checks, null, 2) + '\n');
     const changed = new Set(files.map((f) => f.rel));
     const baseline = [...expected].map(([rel, content]) => ({
       rel,
@@ -622,14 +676,19 @@ async function runCase(skill, testCase, itDir, repetition) {
     // The agent may npm-install into workdir; keep only outputs/ after grading.
     await rm(workdir, { recursive: true, force: true });
 
-    const grading = noGrade
-      ? summarizeGrading(null, testCase)
-      : await gradeCase(testCase, config, text, files, dir, baseline);
-    runs.push({ skill: skill.name, id: testCase.id, config: name, repetition, timing, grading });
+    let grading;
+    if (noGrade) {
+      grading = { ...summarizeGrading(null, testCase), skipped: true };
+      await writeFile(path.join(dir, 'grading.json'), JSON.stringify(grading, null, 2) + '\n');
+    } else {
+      grading = await gradeCase(testCase, config, text, files, dir, baseline);
+    }
+    runs.push({ skill: skill.name, id: testCase.id, config: name, repetition, timing, grading, checks });
 
     const s = grading.summary;
     console.log(
       `  ${skill.name} #${testCase.id} ${name.padEnd(13)} run ${repetition}  ${s.passed}/${s.total} pass  ` +
+        `checks ${checks.filter((c) => c.passed).length}/${checks.length}  ` +
         `${(timing.duration_ms / 1000).toFixed(1)}s  ${timing.turns} turns  ${timing.total_tokens} tok  ` +
         `cache ${timing.cache_hit_rate}  $${timing.cost_usd.toFixed(3)}  skill_read=${timing.skill_read}` +
         (timing.run_error ? `  ERROR: ${timing.run_error}` : ''),
@@ -660,6 +719,9 @@ async function loadRuns(itDir) {
             grading: existsSync(path.join(runDir, 'grading.json'))
               ? JSON.parse(await readFile(path.join(runDir, 'grading.json'), 'utf8'))
               : null,
+            checks: existsSync(path.join(runDir, 'checks.json'))
+              ? JSON.parse(await readFile(path.join(runDir, 'checks.json'), 'utf8'))
+              : [],
             runDir,
           });
         }
@@ -683,7 +745,8 @@ async function writeBenchmark(runs, itDir, meta) {
 
 async function regradeIteration(itDir) {
   const runs = await loadRuns(itDir);
-  const broken = runs.filter((r) => !r.grading?.summary?.total);
+  // Only what the judge failed on: a run made with --no-grade stays without a judge.
+  const broken = runs.filter((r) => !r.grading || r.grading.error);
   console.log(`iteration ${path.basename(itDir)}: ${broken.length} run(s) to re-grade`);
   for (const run of broken) {
     const skill = { name: run.skill, dir: path.join(SKILLS, run.skill) };
@@ -726,6 +789,9 @@ async function main() {
     .map((d) => ({ name: d.name, dir: path.join(SKILLS, d.name) }));
 
   if (!skills.length) throw new Error(`no skill matches --only ${only}`);
+  if (!existsSync(path.join(FIXTURE, 'node_modules'))) {
+    execFileSync('npm', ['ci', '--no-audit', '--no-fund'], { cwd: FIXTURE, stdio: 'inherit' });
+  }
 
   const it = await nextIteration();
   const itDir = path.join(WORKSPACE, `iteration-${it}`);

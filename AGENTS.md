@@ -20,6 +20,8 @@ Results land in `evals/workspace/iteration-N/`. `benchmark.json` gives median an
 skills/<skill>/SKILL.md          # the skill; the runner looks for them here
 skills/<skill>/assets/           # templates
 skills/<skill>/evals/evals.json  # cases; files in evals/files/ land in the workdir by their path below it
+skills/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
+evals/fixtures/acme-app/         # the project every run starts from, with code and passing tests
 evals/run.mjs                    # runner, started from edezacas/agent-skills and now specific to Claude Code
 docs/brief.md                    # what is being built, the phases and their stop criteria
 ```
@@ -34,6 +36,7 @@ docs/brief.md                    # what is being built, the phases and their sto
 
 ## Gotchas
 - A `claude -p` eval is a single turn, so `ask-me` cases can only check one round, not a whole interview
-- Assertions only see the final text and files; the order inside a run, such as test before code, is in `events.jsonl` but no check reads it yet
+- `test_before_code` reads the tool calls, so it can miss a file written in an unusual way; it is null when a run did not write both tests and code
+- A case's `checks` are shell commands, passed on exit 0, that need no judge; prefer them to an assertion whenever a command can decide
 - Three runs per case by default. A difference that is not `separated` is not evidence, and three runs that do not overlap are still weak evidence
 - An installed skill only lists its description, the agent decides whether to read it. A with-skill run with `skill_read=false` is a baseline: cases about behaviour name the skill in the prompt; only cases about activation do not
