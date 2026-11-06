@@ -62,6 +62,28 @@ const AGENT_TOOLS = 'Bash,Edit,Read,Write,Skill,Task';
 
 // ------------------------------------------------------------- helpers
 
+// Skills live one level down, in a folder per category. Installed, they are flat, so
+// names must be unique across categories.
+async function listSkills() {
+  const skills = [];
+  for (const category of await readdir(SKILLS, { withFileTypes: true })) {
+    if (!category.isDirectory()) continue;
+    for (const entry of await readdir(path.join(SKILLS, category.name), { withFileTypes: true })) {
+      if (entry.isDirectory()) skills.push({ name: entry.name, dir: path.join(SKILLS, category.name, entry.name) });
+    }
+  }
+  const names = skills.map((skill) => skill.name);
+  const repeated = names.find((name, i) => names.indexOf(name) !== i);
+  if (repeated) throw new Error(`two skills are named ${repeated}`);
+  return skills;
+}
+
+async function findSkill(name) {
+  const skill = (await listSkills()).find((candidate) => candidate.name === name);
+  if (!skill) throw new Error(`no skill named ${name}`);
+  return skill;
+}
+
 const slug = (s) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
 
@@ -681,7 +703,7 @@ async function runCase(skill, testCase, itDir, repetition) {
     initGit(workdir);
     if (config === 'with') {
       await installSkill(skill, workdir);
-      for (const name of alsoInstall) await installSkill({ name, dir: path.join(SKILLS, name) }, workdir);
+      for (const name of alsoInstall) await installSkill(await findSkill(name), workdir);
     }
     const outputsDir = path.join(dir, 'outputs');
     await mkdir(outputsDir, { recursive: true });
@@ -795,7 +817,7 @@ async function regradeIteration(itDir) {
   const broken = runs.filter((r) => !r.grading || r.grading.error);
   console.log(`iteration ${path.basename(itDir)}: ${broken.length} run(s) to re-grade`);
   for (const run of broken) {
-    const skill = { name: run.skill, dir: path.join(SKILLS, run.skill) };
+    const skill = await findSkill(run.skill);
     const { evals } = JSON.parse(await readFile(path.join(skill.dir, 'evals', 'evals.json'), 'utf8'));
     const testCase = evals.find((e) => e.id === run.id);
     const transcript = await readFile(path.join(run.runDir, 'transcript.md'), 'utf8');
@@ -827,8 +849,8 @@ async function regradeIteration(itDir) {
 // A colon followed by a space in an unquoted value is invalid YAML. Claude Code loads
 // such a skill anyway, so it would pass every eval and fail in stricter tools.
 async function checkHeaders() {
-  for (const skill of await readdir(SKILLS)) {
-    const file = path.join(SKILLS, skill, 'SKILL.md');
+  for (const skill of await listSkills()) {
+    const file = path.join(skill.dir, 'SKILL.md');
     if (!existsSync(file)) continue;
     const description = (await readFile(file, 'utf8')).match(/^description: (.*)$/m)?.[1];
     if (!description) throw new Error(`${file}: no description`);
@@ -844,11 +866,10 @@ async function main() {
     const it = iteration ?? (await nextIteration()) - 1;
     return regradeIteration(path.join(WORKSPACE, `iteration-${it}`));
   }
-  const skills = (await readdir(SKILLS, { withFileTypes: true }))
-    // Evals can exist before the skill, to check first that the agent fails without it.
-    .filter((d) => d.isDirectory() && existsSync(path.join(SKILLS, d.name, 'evals', 'evals.json')))
-    .filter((d) => !only || d.name === only)
-    .map((d) => ({ name: d.name, dir: path.join(SKILLS, d.name) }));
+  // Evals can exist before the skill, to check first that the agent fails without it.
+  const skills = (await listSkills())
+    .filter((skill) => existsSync(path.join(skill.dir, 'evals', 'evals.json')))
+    .filter((skill) => !only || skill.name === only);
 
   if (!skills.length) throw new Error(`no skill matches --only ${only}`);
   if (!existsSync(path.join(FIXTURE, 'node_modules'))) {

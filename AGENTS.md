@@ -17,10 +17,10 @@ Results land in `evals/workspace/iteration-N/`. `benchmark.json` gives median an
 
 ## Structure
 ```
-skills/<skill>/SKILL.md          # the skill; the runner looks for them here
-skills/<skill>/assets/           # templates
-skills/<skill>/evals/evals.json  # cases; files in evals/files/ land in the workdir by their path below it
-skills/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
+skills/<category>/<skill>/SKILL.md          # the skill, under engineering or productivity; the runner looks for them here
+skills/<category>/<skill>/assets/           # templates
+skills/<category>/<skill>/evals/evals.json  # cases; files in evals/files/ land in the workdir by their path below it
+skills/<category>/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
 evals/fixtures/acme-app/         # the project every run starts from, with code and passing tests
 evals/run.mjs                    # runner, started from edezacas/agent-skills and now specific to Claude Code
 docs/brief.md                    # what is being built, the phases and their stop criteria
