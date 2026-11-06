@@ -1,0 +1,75 @@
+{
+  "skill_name": "orchestrate",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/orchestrate Implement notes/order-management.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/order-management.md"
+      ],
+      "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, installs the implementer, delegates the first stage to it with the path of its task file, reviews the result, runs the tests, writes PROGRESS.md and stops at the first checkpoint without starting the next stage.",
+      "assertions": [
+        "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
+        "Placing, listing and cancelling orders are in separate stages, and no stage only adds a layer with no observable behaviour.",
+        "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam, its files and its dependencies.",
+        "The 24-hour cancellation decision has its reason written as not stated, with no invented reason.",
+        "The transcript shows a subagent named implementer launched with the path of a task file, not with a summary of the task.",
+        "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
+        "PROGRESS.md records what changed, the tests run with their result and the next step, and says the work is waiting for review.",
+        "The response ends at the first checkpoint and does not launch the next stage."
+      ],
+      "checks": [
+        {
+          "name": "plan exists with a checkpoint",
+          "run": "test -f PLAN.md && grep -qi checkpoint PLAN.md"
+        },
+        {
+          "name": "one task file per stage",
+          "run": "test \"$(ls docs/plans/*/*.md 2>/dev/null | wc -l)\" -ge 2"
+        },
+        {
+          "name": "progress exists",
+          "run": "test -f PROGRESS.md"
+        },
+        {
+          "name": "implementer installed",
+          "run": "test -f .claude/agents/implementer.md"
+        },
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/orchestrate Let customers cancel their orders.",
+      "expected_output": "Nothing is settled, so the agent interviews the user with ask-me before any plan and writes no file.",
+      "assertions": [
+        "The response asks the user concrete questions with a recommendation each, such as what cancel means for a shipped order or what happens with the refund.",
+        "The response writes no PLAN.md and no task file."
+      ],
+      "checks": [
+        {
+          "name": "no plan was written",
+          "run": "test ! -f PLAN.md && test ! -d docs/plans"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/orchestrate Export a constant VERSION with the value 1.0.0 from src/index.ts.",
+      "expected_output": "The work fits in one change, so the agent says so and does it, or asks, with no plan and no subagent.",
+      "assertions": [
+        "The response says the work does not need orchestration, or simply does it.",
+        "The response writes no PLAN.md and launches no implementer."
+      ],
+      "checks": [
+        {
+          "name": "no plan was written",
+          "run": "test ! -f PLAN.md && test ! -d docs/plans"
+        }
+      ]
+    }
+  ]
+}

@@ -69,7 +69,7 @@ About `splitting`: the skill was tried and removed because, inside one session, 
 
 Installation: skill installers do not install agents. The skill's first step copies `assets/implementer.md` to `.claude/agents/` if it is missing. A Claude Code plugin with skills and agents can replace that later.
 
-To verify in a run, because they were not confirmed in the docs: the `skills` field in an agent definition preloads the full skill; subagents read `CLAUDE.md`; the hook event after a `Task` call; whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent.
+Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `orchestrate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments. Still to verify in a run: whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent, and whether an agent file copied during the run is picked up in `claude -p`.
 
 ## Phases and stop criteria
 
@@ -105,7 +105,7 @@ Two skills are also left out, neither measured without the skill, so this is jud
 
 ## Pending decisions
 
-- Whether subagents use the skills: preloaded through the agent definition, to verify in step 1 of phase 2.
+- Whether the implementer applies the preloaded skills in practice, to verify in step 1 of phase 2.
 
 ## References (use as ideas, do not copy)
 
