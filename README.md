@@ -27,9 +27,9 @@ Instructions that read well don't always change what an agent does, so we test t
 - **Activation:** did the agent pick up the skill when it should, and leave it alone when it shouldn't?
 - **Efficiency:** turns, tool calls, tokens, cache use, peak context and cost.
 
-This has already paid off. With its first short description, `ask-me` triggered in 1 of 10 runs on two vague requests. Rewording the description took that to 10 of 10, and the skill still stayed out of the way on a simple rename and on a question about a file.
+This has already paid off. With its first short description, `ask-me` triggered in 1 of 10 runs on two vague requests. Rewording the description took that to 10 of 10, and the skill still stayed out of the way on a simple rename and on a question about a file. Without `tdd`, the agent wrote no tests on two small coding tasks in any of 10 runs; with it, it wrote them in all 10.
 
-These results are early: one model (Sonnet), a nearly empty test project and no other skills of ours competing with it. A real project may behave differently.
+These results are early: one model (Sonnet), a small test project and each skill measured on its own. A real project may behave differently.
 
 To run an evaluation you need Node 20.11 or later and the Claude Code CLI. It uses your Claude Code account, so each run has a real cost:
 

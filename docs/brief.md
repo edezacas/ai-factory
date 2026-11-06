@@ -27,7 +27,7 @@ There is no orchestrator. The agent discovers each skill by its description and 
 
 ## Skills
 
-- **ask-me** (v0.8): leaves nothing forgotten and takes no phantom decision, through rounds of proposals until the user confirms the full account of decisions. Writes no file.
+- **ask-me** (v0.9): leaves nothing forgotten and takes no phantom decision, through rounds of proposals until the user confirms the full account of decisions. Writes no file.
 - **tdd** (v0.8): test before code, in Red-Green-Refactor, with rules for what makes a test valid. It does not set the flow: who writes the tests, in what batches, and running the whole suite belong to whoever uses it. ZOMBIES, predicting the failure, a final gap pass and "try to break it" were removed for generating work; bring them back only if measurements ask for it.
 - **code-design** (base: own skill): use the repo's structure, abstract only where something varies today, smallest form that works, comments only if the code cannot say it. Add the question "what can be postponed?".
 - **hexagonal** (working name, new): graded levels.
