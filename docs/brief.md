@@ -14,7 +14,7 @@
 - Skills are `SKILL.md` files (agentskills.io), harness-agnostic.
 - Start minimal: skills, then one subagent. The orchestrator script, the ledger and optimizations come only if data justifies them.
 - Before writing a skill, run the task without it and confirm the agent fails at what the skill would fix. If it does not fail, do not write it.
-- Skills live in `skills/engineering/` (tdd, code-design), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project, orchestrate). Names stay unique, because installing makes them flat.
+- Skills live in `skills/engineering/` (tdd, code-design), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project, delegate). Names stay unique, because installing makes them flat.
 - Short skills: goal and constraints, no steps the model already knows. Description says when to use and when not. Under 500 lines, templates in `assets/`.
 - Persisted documents and artifacts in English; dialogue with the user in Spanish.
 - Harness is Claude Code. Models: Opus for the main session, Sonnet for the implementer, Haiku for exploration and for what `tdd` excludes.
@@ -41,9 +41,9 @@ Phase 2 is a mode the user chooses, not a remedy for phase 1 failing. It is stil
 
 ## Orchestrated mode (phase 2)
 
-Everything runs from one Claude Code session on Opus, invoked with `/orchestrate <task>`. Opus analyses with `ask-me` and discusses the proposal before any code; writes the plan; delegates each stage; reviews the result; stops at the agreed checkpoints; and runs `write-why` at the end, because it is the one with the reasons. Each subagent's model is fixed in its definition, not chosen by the main session.
+Everything runs from one Claude Code session on Opus, invoked with `/delegate <task>`. Opus analyses with `ask-me` and discusses the proposal before any code; writes the plan; delegates each stage; reviews the result; stops at the agreed checkpoints; and runs `write-why` at the end, because it is the one with the reasons. Each subagent's model is fixed in its definition, not chosen by the main session.
 
-- **orchestrate** (skill, invoked by name, never self-activated: `disable-model-invocation`): the rules above, with the templates in `assets/`. A command would do the same, but a skill carries its assets and installs like the others.
+- **delegate** (skill, invoked by name, never self-activated: `disable-model-invocation`): the rules above, with the templates in `assets/`. A command would do the same, but a skill carries its assets and installs like the others.
 - **implementer** (Sonnet, clean context per task, `tdd` and `code-design` preloaded): receives the path of a task file, works only in the files it lists, in TDD. If the seam does not fit or a decision is open, it stops and reports. Its report has a fixed short form: files changed, tests run and their result, decisions taken, doubts. The decisions are what `write-why` needs at the end.
 - **Haiku**: exploration goes through the built-in `Explore` subagent, which already runs on it; `ask-me` already delegates fact-finding to a subagent. Beyond that, Haiku gets only what `tdd` excludes: renames, formatting, moving files, documentation, fixtures. Code that changes behaviour goes to Sonnet, because a wrong result costs more in review and retries than it saves.
 
@@ -69,20 +69,20 @@ About `splitting`: the skill was tried and removed because, inside one session, 
 
 Installation: skill installers do not install agents. The skill's first step copies `assets/implementer.md` to `.claude/agents/` if it is missing. A Claude Code plugin with skills and agents can replace that later.
 
-Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `orchestrate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments. Still to verify in a run: whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent, and whether an agent file copied during the run is picked up in `claude -p`.
+Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `delegate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments. Still to verify in a run: whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent, and whether an agent file copied during the run is picked up in `claude -p`.
 
 ## Phases and stop criteria
 
 1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks, noting each time a cleanup had to be requested after green.
 2. Orchestrated mode, built in this order, each step tried on a real task before the next:
    1. The `implementer` alone, delegated by hand from an Opus session with one task file. Decides whether `skills` preloads, what it costs and whether the report fits.
-   2. The templates and `orchestrate`, on one large real task. Record checkpoints kept and whether a new session resumes from `PROGRESS.md` after a cut.
+   2. The templates and `delegate`, on one large real task. Record checkpoints kept and whether a new session resumes from `PROGRESS.md` after a cut.
    3. The hook with the tests and the files-outside-task check.
    4. The runner case and the A/B against phase 1.
    5. Tester, validator, Haiku for code and parallelism, each only on a recorded failure that asks for it.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
-Measuring phase 2: the same large task, in `evals/fixtures/acme-app`, needing an expand, migrate and contract, three runs with phase 1 and three with phase 2. Hidden tests and mutants, `red_before_code`, files outside the task, tokens and cost per model (`modelUsage`), time, and by hand whether a new session resumes after a cut. The runner can check in one turn that `/orchestrate` writes a `PLAN.md` with stages and checkpoints, delegates through `Task` to `implementer`, writes no code from the main session and launches no stage past a checkpoint; it cannot check several turns or a human review.
+Measuring phase 2: the same large task, in `evals/fixtures/acme-app`, needing an expand, migrate and contract, three runs with phase 1 and three with phase 2. Hidden tests and mutants, `red_before_code`, files outside the task, tokens and cost per model (`modelUsage`), time, and by hand whether a new session resumes after a cut. The runner can check in one turn that `/delegate` writes a `PLAN.md` with stages and checkpoints, delegates through `Task` to `implementer`, writes no code from the main session and launches no stage past a checkpoint; it cannot check several turns or a human review.
 
 The value of the mode is finishing tasks that do not fit one session. If phase 1 finishes the same task without losing context, the task is too small to justify phase 2. Abandon the mode if there is no task size at which phase 2 finishes and phase 1 does not, within twice the cost; or if checkpoints are skipped in more than one run of three even with the hook, because then the problem asks for phase 3.
 
