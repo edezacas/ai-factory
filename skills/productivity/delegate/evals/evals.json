@@ -1,9 +1,9 @@
 {
-  "skill_name": "orchestrate",
+  "skill_name": "delegate",
   "evals": [
     {
       "id": 1,
-      "prompt": "/orchestrate Implement notes/order-management.md. Everything in it is settled.",
+      "prompt": "/delegate Implement notes/order-management.md. Everything in it is settled.",
       "files": [
         "evals/files/notes/order-management.md"
       ],
@@ -43,7 +43,7 @@
     },
     {
       "id": 2,
-      "prompt": "/orchestrate Let customers cancel their orders.",
+      "prompt": "/delegate Let customers cancel their orders.",
       "expected_output": "Nothing is settled, so the agent interviews the user with ask-me before any plan and writes no file.",
       "assertions": [
         "The response asks the user concrete questions with a recommendation each, such as what cancel means for a shipped order or what happens with the refund.",
@@ -58,10 +58,10 @@
     },
     {
       "id": 3,
-      "prompt": "/orchestrate Export a constant VERSION with the value 1.0.0 from src/index.ts.",
+      "prompt": "/delegate Export a constant VERSION with the value 1.0.0 from src/index.ts.",
       "expected_output": "The work fits in one change, so the agent says so and does it, or asks, with no plan and no subagent.",
       "assertions": [
-        "The response says the work does not need orchestration, or simply does it.",
+        "The response says the work does not need delegation, or simply does it.",
         "The response writes no PLAN.md and launches no implementer."
       ],
       "checks": [

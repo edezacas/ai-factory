@@ -34,7 +34,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
 - **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
 - **[write-why](skills/productivity/write-why/SKILL.md)**: When the work is done, the agent records the decisions the code can't explain and that are hard to reverse or surprising, and writes nothing if none qualifies.
-- **[orchestrate](skills/productivity/orchestrate/SKILL.md)**: For work too big for one session, and a quota that can pay for it. Invoked with `/orchestrate <task>`: the session plans in small stages, delegates each one to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, reviews the result and stops at checkpoints for you. It never starts on its own.
+- **[delegate](skills/productivity/delegate/SKILL.md)**: For work too big for one session, and a quota that can pay for it. Invoked with `/delegate <task>`: the session plans in small stages, delegates each one to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, reviews the result and stops at checkpoints for you. It never starts on its own.
 
 ## How we know it works
 

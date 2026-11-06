@@ -1,11 +1,11 @@
 ---
-name: orchestrate
+name: delegate
 description: Runs work too big for one session from a session that plans, delegates each stage to the implementer subagent, reviews it and stops at checkpoints. Invoked by name only, with the task as argument. Do not use it for work one session finishes in one go, or for a question.
 disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.1"
+  version: "0.2"
 ---
 
 Finish work that does not fit one session without losing context, tests or decisions on the way. You plan, delegate, review and stop. You write no production code yourself.

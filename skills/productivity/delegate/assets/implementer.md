@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implements one stage of a plan from its task file, in TDD, only within the files the task lists. Launched by the orchestrate skill with the path of the task file.
+description: Implements one stage of a plan from its task file, in TDD, only within the files the task lists. Launched by the delegate skill with the path of the task file.
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 skills:
@@ -21,5 +21,5 @@ Report in this form and nothing else:
 Files changed: <paths>
 Tests: <command>; <passed or failed, with counts>
 Decisions taken: <each with its reason, or none>
-Open: <what stopped you or needs the orchestrator, or none>
+Open: <what stopped you or needs the main session, or none>
 ```
