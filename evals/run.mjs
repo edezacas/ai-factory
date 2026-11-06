@@ -21,6 +21,7 @@
 //   node evals/run.mjs --budget 1               # USD cap per agent run
 //   node evals/run.mjs --runs 5                 # repetitions per case; default 3
 //   node evals/run.mjs --only ask-me --id 1,5   # some cases
+//   node evals/run.mjs --only ask-me --also tdd  # another skill installed, to see them compete
 //   node evals/run.mjs --no-grade               # no judge: enough to measure activation
 
 import { execFileSync, spawn } from 'node:child_process';
@@ -56,6 +57,7 @@ const model = opt('model', 'claude-sonnet-5-5');
 const judgeModel = opt('judge-model', 'claude-opus-5-5');
 const budget = opt('budget', '3');
 const repetitions = Number(opt('runs', 3));
+const alsoInstall = opt('also', '').split(',').filter(Boolean);
 const AGENT_TOOLS = 'Bash,Edit,Read,Write,Skill,Task';
 
 // ------------------------------------------------------------- helpers
@@ -239,6 +241,8 @@ function summarize(events, skillName = null) {
       cache_hit_rate: prompted ? +(tokens.cacheRead / prompted).toFixed(3) : 0,
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
+      skills_used: calls.filter((c) => c.name === 'Skill').map((c) => c.input?.skill),
+      wrote_code: calls.some((c) => writtenFiles(c).some(isCodeFile)),
       red_before_code: redBeforeCode(calls, events).seen,
       red_in_same_command: redBeforeCode(calls, events).sameCommand,
       skill_read: calls.some(
@@ -675,7 +679,10 @@ async function runCase(skill, testCase, itDir, repetition) {
     const expected = await prepareWorkdir(workdir);
     await copyCaseFiles(testCase, workdir, skill.dir, expected);
     initGit(workdir);
-    if (config === 'with') await installSkill(skill, workdir);
+    if (config === 'with') {
+      await installSkill(skill, workdir);
+      for (const name of alsoInstall) await installSkill({ name, dir: path.join(SKILLS, name) }, workdir);
+    }
     const outputsDir = path.join(dir, 'outputs');
     await mkdir(outputsDir, { recursive: true });
 
