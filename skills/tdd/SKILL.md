@@ -1,9 +1,9 @@
 ---
 name: tdd
-description: You MUST use this before writing any code that adds or changes behaviour, such as a feature, a bug fix or a new rule, including one-line fixes, and even when the user is in a hurry or did not ask for tests. Tests come first and are seen failing. Skip it only for a rename, formatting, documentation, styles, or a question.
+description: Applies test-driven development, so the test comes first and is seen failing. Use before writing code that adds or changes behaviour, such as a feature, a bug fix or a new rule, even when nobody asked for tests. Skip it for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.8"
+  version: "0.10"
 ---
 
 Write the test before the code.
@@ -19,6 +19,8 @@ Rules for the tests:
 - **Behaviour:** assert what it does, not how it does it, and never the text or structure of a file in the repo.
 - **Expected values:** literals from the source or a worked example. Never change one to match what the code returns.
 - **Doubles:** only at the edge of the process, such as network, time, a third party, or a port that wraps them. Never internal collaborators.
+
+If code-design is available, follow it for the tests and the code.
 
 Follow the project's test setup. If it has none, use the runner its stack ships with, and ask before adding a dependency.
 
