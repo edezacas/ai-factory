@@ -14,7 +14,7 @@
 - Skills are `SKILL.md` files (agentskills.io), harness-agnostic.
 - Start minimal: skills, then two subagents. The orchestrator script, the ledger and optimizations come only if data justifies them.
 - Before writing a skill, run the task without it and confirm the agent fails at what the skill would fix. If it does not fail, do not write it.
-- Skills live in `skills/engineering/` (tdd, code-design, hexagonal, tidy) and `skills/productivity/` (ask-me, write-why). Names stay unique, because installing makes them flat.
+- Skills live in `skills/engineering/` (tdd, code-design, hexagonal, tidy), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project). Names stay unique, because installing makes them flat.
 - Short skills: goal and constraints, no steps the model already knows. Description says when to use and when not. Under 500 lines, templates in `assets/`.
 - Persisted documents and artifacts in English; dialogue with the user in Spanish.
 

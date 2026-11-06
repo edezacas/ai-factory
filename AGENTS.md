@@ -17,7 +17,7 @@ Results land in `evals/workspace/iteration-N/`. `benchmark.json` gives median an
 
 ## Structure
 ```
-skills/<category>/<skill>/SKILL.md          # the skill, under engineering or productivity; the runner looks for them here
+skills/<category>/<skill>/SKILL.md          # the skill; the runner looks for them here
 skills/<category>/<skill>/assets/           # templates
 skills/<category>/<skill>/evals/evals.json  # cases; files in evals/files/ land in the workdir by their path below it
 skills/<category>/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
@@ -27,6 +27,7 @@ docs/brief.md                    # what is being built, the phases and their sto
 ```
 
 ## Conventions
+- Categories: `engineering` for general architecture and patterns, `stack` for what only applies to one technology, `performance`, and `productivity`
 - `CLAUDE.md` is a symlink to `AGENTS.md`; edit `AGENTS.md` only
 - Persisted documents are in English; the dialogue is in the user's language
 - Skills state the goal and constraints, not steps the model already knows; under 500 lines, templates in `assets/`

@@ -1,0 +1,66 @@
+{
+  "skill_name": "init-project",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/init for this repo.",
+      "expected_output": "The agent inspects the project, writes both CLAUDE.md and AGENTS.md with the shared sections filled in from real manifests, under 80 lines, and adds no empty section.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "both files exist",
+          "run": "test -f AGENTS.md && test -f CLAUDE.md"
+        },
+        {
+          "name": "each under 80 lines",
+          "run": "test $(wc -l < AGENTS.md) -le 80 && test $(wc -l < CLAUDE.md) -le 80"
+        },
+        {
+          "name": "the real commands",
+          "run": "grep -qE 'npm (run )?test|vitest' AGENTS.md && grep -q typecheck AGENTS.md"
+        },
+        {
+          "name": "no empty section",
+          "run": "! awk '/^## /{if(h)e=1;h=1;next} /[^[:space:]]/{h=0} END{exit !(e||h)}' AGENTS.md"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add to AGENTS.md our coding style: 2-space indent, single quotes, no semicolons. Also add that our Claude setup uses a PostToolUse hook that runs prettier.",
+      "files": [
+        "evals/files/AGENTS.md"
+      ],
+      "expected_output": "The style stays out of AGENTS.md, and the Claude-specific hook goes in CLAUDE.md only.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no style rules in AGENTS.md",
+          "run": "! grep -qiE 'single quote|semicolon|2-space' AGENTS.md"
+        },
+        {
+          "name": "no hook in AGENTS.md",
+          "run": "! grep -qiE 'PostToolUse|hook' AGENTS.md"
+        },
+        {
+          "name": "the hook is in CLAUDE.md",
+          "run": "grep -qi PostToolUse CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The API package has about 200 lines of testing rules and deployment steps that the agent should follow. Where do they go?",
+      "expected_output": "The agent puts the topic-specific instructions in agent_docs/ files such as testing.md and deployment.md and leaves AGENTS.md with a short pointer.",
+      "assertions": [
+        "The response puts the long testing and deployment rules in agent_docs/ files and references them from AGENTS.md."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Rename the exported function start to boot in src/index.ts.",
+      "expected_output": "The agent renames it, with no agent configuration work.",
+      "assertions": []
+    }
+  ]
+}

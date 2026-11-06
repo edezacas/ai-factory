@@ -1,0 +1,119 @@
+{
+  "skill_name": "angular-conventions",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create src/app/user-card.component.ts: a user-card component that shows a user's name and email and emits a selected event when clicked.",
+      "expected_output": "The agent writes a standalone component with function-based input and output, OnPush change detection, no decorators and no NgModule.",
+      "assertions": [],
+      "files": [
+        "evals/files/package.json"
+      ],
+      "checks": [
+        {
+          "name": "no decorators or NgModule, and no standalone flag",
+          "run": "! grep -rqE '@Input|@Output|EventEmitter|NgModule|standalone: *true' src/app"
+        },
+        {
+          "name": "uses input()",
+          "run": "grep -rqE '\\binput(\\.required)?[<(]' src/app"
+        },
+        {
+          "name": "uses output()",
+          "run": "grep -rqE '\\boutput[<(]' src/app"
+        },
+        {
+          "name": "uses OnPush",
+          "run": "grep -rqE 'ChangeDetectionStrategy\\.OnPush' src/app"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "In src/app/user-detail.component.ts, load the user from UserService every time userId changes. Also stream live updates from UserService.watch() and stop listening when the component is destroyed.",
+      "expected_output": "The agent watches the input signal with an effect instead of using ngOnInit or ngOnChanges, and ends the watch() subscription with takeUntilDestroyed and a DestroyRef.",
+      "assertions": [],
+      "files": [
+        "evals/files/package.json",
+        "evals/files/src/app/user.service.ts",
+        "evals/files/src/app/user-detail.component.ts"
+      ],
+      "checks": [
+        {
+          "name": "no lifecycle hooks",
+          "run": "! grep -rqE 'ngOnInit|ngOnChanges|ngOnDestroy' src/app"
+        },
+        {
+          "name": "reacts with effect()",
+          "run": "grep -rqE '\\beffect\\(' src/app"
+        },
+        {
+          "name": "stops with takeUntilDestroyed",
+          "run": "grep -rqE 'takeUntilDestroyed' src/app"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create src/app/orders-list.component.ts, which renders a list of orders. Show a total only when there are orders, and show an empty state when there are none.",
+      "expected_output": "The agent uses @for with a track on a unique property, @empty for the zero-items case, and @if for the conditional total.",
+      "assertions": [],
+      "files": [
+        "evals/files/package.json"
+      ],
+      "checks": [
+        {
+          "name": "no structural directives",
+          "run": "! grep -rqE '\\*ngFor|\\*ngIf' src/app"
+        },
+        {
+          "name": "uses @for with track",
+          "run": "grep -rqE '@for *\\(.*track ' src/app"
+        },
+        {
+          "name": "uses @empty",
+          "run": "grep -rqE '@empty' src/app"
+        },
+        {
+          "name": "uses @if",
+          "run": "grep -rqE '@if *\\(' src/app"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Review src/app/legacy-list.component.ts before I merge it, and fix whatever breaks our conventions.",
+      "expected_output": "The agent fixes each convention violation in the file.",
+      "assertions": [],
+      "files": [
+        "evals/files/package.json",
+        "evals/files/src/app/user.service.ts",
+        "evals/files/src/app/legacy-list.component.ts"
+      ],
+      "checks": [
+        {
+          "name": "no decorators or constructor injection",
+          "run": "! grep -rqE '@Input|@Output|EventEmitter|constructor *\\(|standalone: *true' src/app/legacy-list.component.ts"
+        },
+        {
+          "name": "no *ngFor",
+          "run": "! grep -rqE '\\*ngFor' src/app/legacy-list.component.ts"
+        },
+        {
+          "name": "uses inject()",
+          "run": "grep -rqE '\\binject\\(' src/app/legacy-list.component.ts"
+        },
+        {
+          "name": "uses @for with track",
+          "run": "grep -rqE '@for *\\(.*track ' src/app/legacy-list.component.ts"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Add OrderService.countForCustomer(customerId), which returns how many orders a customer has.",
+      "expected_output": "Not an Angular project, so the skill is not read.",
+      "assertions": []
+    }
+  ]
+}

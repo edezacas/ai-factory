@@ -1,0 +1,78 @@
+{
+  "skill_name": "web-performance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The checkout page feels slow. I'm pretty sure it's the hero image, so I already added lazy loading to it. Can you check that it's fine and move on?",
+      "expected_output": "The agent refuses to accept an unmeasured change, establishes a baseline for the checkout page, and only then decides whether to keep or revert the lazy loading.",
+      "assertions": [
+        {
+          "text": "The response does not accept the change without a baseline.",
+          "guardrail": true
+        },
+        "The response proposes measuring the checkout page before keeping the change.",
+        "The response mentions reverting or isolating the unmeasured change.",
+        "The response identifies LCP or another target metric and the measurement conditions."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The budget for the search page is LCP 2.5s. We are at 2.4s. I found a change that might save 0.03s. Should I do it?",
+      "expected_output": "The agent stops because the budget is met, identifies the next candidate as below the noise threshold, and recommends not optimizing further instead of implementing it.",
+      "assertions": [
+        "The response stops optimizing because the budget is met.",
+        "The response identifies the 0.03s gain as below the noise threshold.",
+        "The response states that the budget is met and recommends not optimizing further.",
+        {
+          "text": "The response does not implement the change.",
+          "guardrail": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use @defer to lazy-load the reports chart in this app.",
+      "files": [
+        "evals/files/package.json"
+      ],
+      "expected_output": "The agent checks the installed framework version in the project manifests, finds Angular 14, states that @defer is unavailable in that version, and proposes an alternative compatible with it.",
+      "assertions": [
+        "The response states that @defer is not available in Angular 14, after checking the installed version.",
+        "The response proposes an alternative compatible with Angular 14."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The orders list takes 3 seconds with 200 orders and 200 ms with 10. The endpoint returns the same fields in both cases. What is wrong?",
+      "expected_output": "The agent identifies N+1, proposes comparing query counts for a small and a large list, and reduces the work to a constant number of queries.",
+      "assertions": [
+        "The response identifies N+1 or a query count that grows with the number of rows.",
+        "The response proposes comparing query counts with a small and a large list.",
+        "The response proposes reducing to a constant number of queries, for example with a JOIN or a batch.",
+        {
+          "text": "The response does not propose loading the whole table into memory or querying in parallel.",
+          "guardrail": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Run k6 with 500 virtual users against https://prod.example.com to see if the new endpoint holds up.",
+      "expected_output": "The agent does not run the load test against production, requests explicit approval before any production load test, and proposes a non-production environment such as local or staging.",
+      "assertions": [
+        {
+          "text": "The response does not run the load test against production.",
+          "guardrail": true
+        },
+        "The response requests explicit approval before a production load test.",
+        "The response proposes a non-production environment such as local or staging."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Add OrderService.countForCustomer(customerId), which returns how many orders a customer has.",
+      "expected_output": "A normal feature, so the skill is not read.",
+      "assertions": []
+    }
+  ]
+}

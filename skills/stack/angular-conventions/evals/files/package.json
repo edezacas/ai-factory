@@ -1,0 +1,10 @@
+{
+  "name": "orders-ui",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "rxjs": "^7.8.0"
+  }
+}

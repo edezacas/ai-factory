@@ -21,9 +21,18 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 - **[tdd](skills/engineering/tdd/SKILL.md)**: The agent writes the test before the code and sees it fail, with tests that come from your requirements and check what the code does, not how.
 - **[code-design](skills/engineering/code-design/SKILL.md)**: The agent builds what is needed today in the smallest form that works, instead of code for a future nobody asked for.
 
+### Performance
+
+- **[web-performance](skills/performance/web-performance/SKILL.md)**: Improves the speed of a web app by measuring before and after every optimization.
+
+### Stack
+
+- **[angular-conventions](skills/stack/angular-conventions/SKILL.md)**: Keeps Angular code to current conventions: standalone components, signals, `inject()` and the new control flow.
+
 ### Productivity
 
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
+- **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
 
 ## How we know it works
 
