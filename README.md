@@ -6,11 +6,10 @@ An agent is at its most dangerous when it sounds sure of itself. It fills the ga
 
 ## Quick start
 
-The skills are built and measured on [Claude Code](https://claude.com/claude-code). Copy one into your skills folder and start a new session:
+The skills are built and measured on [Claude Code](https://claude.com/claude-code). Install them and start a new session:
 
 ```bash
-git clone https://github.com/edezacas/ai-factory.git
-cp -r ai-factory/skills/ask-me ~/.claude/skills/
+npx skills add edezacas/ai-factory
 ```
 
 Then ask for something a little vague, such as "Add a CSV export for orders". If the skill doesn't start by itself, ask for it by name: "Use the ask-me skill".

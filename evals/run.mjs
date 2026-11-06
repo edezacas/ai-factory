@@ -166,22 +166,40 @@ function usageTotals(result, messages) {
 }
 
 const isTestFile = (file) => /\.(test|spec)\.|(^|\/)tests?\//.test(file);
-const isSourceFile = (file) => /\.[jt]sx?$/.test(file);
+const isCodeFile = (file) => /\.[jt]sx?$/.test(file) && !isTestFile(file);
 
-function writtenFiles(calls) {
-  return calls.flatMap((c) => {
-    if (c.name === 'Write' || c.name === 'Edit') return [String(c.input?.file_path)];
-    if (c.name !== 'Bash') return [];
-    return [...String(c.input?.command).matchAll(/(?:>>?|\btee\s+(?:-a\s+)?)\s*([^\s|;&<>'"]+\.[jt]sx?)/g)].map((m) => m[1]);
-  });
+// Files a tool call writes. A shell command counts when it can write at all, and
+// then every path it mentions counts, because a script may write several files.
+function writtenFiles(call) {
+  if (call.name === 'Write' || call.name === 'Edit') return [String(call.input?.file_path)];
+  if (call.name !== 'Bash') return [];
+  const command = String(call.input?.command);
+  const writes = /(^|[^0-9&])>>?\s*[^&\s]|\btee\b|\bsed -i|\bpython3?\b|\bnode -e\b|\bperl -i\b/.test(command);
+  return writes ? [...command.matchAll(/[\w./-]+\.[jt]sx?\b/g)].map((m) => m[0]) : [];
 }
 
-// True or false only when the run wrote both tests and code.
-function testBeforeCode(calls) {
-  const files = writtenFiles(calls).filter(isSourceFile);
-  const firstTest = files.findIndex(isTestFile);
-  const firstCode = files.findIndex((f) => !isTestFile(f));
-  return firstTest < 0 || firstCode < 0 ? null : firstTest < firstCode;
+function failedTestRun(call, results) {
+  if (call.name !== 'Bash' || !/\b(vitest|jest|mocha)\b|\bnpm (run )?-?s? ?test\b/.test(String(call.input?.command))) return false;
+  const result = results.get(call.id);
+  const output = typeof result?.content === 'string' ? result.content : JSON.stringify(result?.content ?? '');
+  return Boolean(result?.is_error) || /\b\d+ failed\b|\bFAIL\b/.test(output);
+}
+
+// Whether a test was seen failing before any code was written. Null when the run
+// wrote no code. The fixture starts green, so a failure can only come from new work.
+function redBeforeCode(calls, events) {
+  const results = new Map(
+    events
+      .filter((e) => e.type === 'user' && Array.isArray(e.message?.content))
+      .flatMap((e) => e.message.content)
+      .filter((c) => c.type === 'tool_result')
+      .map((c) => [c.tool_use_id, c]),
+  );
+  for (const call of calls) {
+    if (writtenFiles(call).some(isCodeFile)) return false;
+    if (failedTestRun(call, results)) return true;
+  }
+  return null;
 }
 
 const contextSize = ({ usage: u = {} }) =>
@@ -210,7 +228,7 @@ function summarize(events, skillName = null) {
       cache_hit_rate: prompted ? +(tokens.cacheRead / prompted).toFixed(3) : 0,
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
-      test_before_code: testBeforeCode(calls),
+      red_before_code: redBeforeCode(calls, events),
       skill_read: calls.some(
         (c) =>
           (c.name === 'Skill' && c.input?.skill === skillName) ||
@@ -306,7 +324,7 @@ async function runChecks(testCase, workdir, skillDir) {
       passed = false;
       output = `${err.stdout ?? ''}${err.stderr ?? ''}${err.message}`;
     }
-    results.push({ name: check.name, passed, output: output.slice(-2000) });
+    results.push({ name: check.name, passed, mutant: check.mutant, reference: check.reference, output: output.slice(-2000) });
   }
   return results;
 }
@@ -458,6 +476,11 @@ const EFFICIENCY = {
   cost_usd: (t) => t.cost_usd,
 };
 
+// A seeded error only counts as caught if the tests also pass on correct code: tests
+// that fail on everything would otherwise look as if they caught every error.
+const validChecks = (checks = []) =>
+  checks.some((c) => c.reference && !c.passed) ? checks.filter((c) => !c.mutant) : checks;
+
 const mapValues = (obj, fn) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v, k)]));
 
 // How often each assertion passed: one that neither always passes nor always fails is noise.
@@ -487,18 +510,21 @@ function configStats(runs) {
         statsOf(graded.map((r) => metric(r.grading.summary)).filter((v) => v !== null)),
       ),
       checks_pass_rate: statsOf(
-        runs.filter((r) => r.checks?.length).map((r) => r.checks.filter((c) => c.passed).length / r.checks.length),
+        runs
+          .map((r) => validChecks(r.checks))
+          .filter((checks) => checks.length)
+          .map((checks) => checks.filter((c) => c.passed).length / checks.length),
       ),
     },
     efficiency_of_complete_runs: mapValues(EFFICIENCY, (metric) =>
       statsOf(complete.map((r) => metric(r.timing))),
     ),
     assertions: tally(graded.flatMap((r) => r.grading.assertion_results), 'text'),
-    checks: tally(runs.flatMap((r) => r.checks ?? []), 'name'),
-    test_before_code: tally(
+    checks: tally(runs.flatMap((r) => validChecks(r.checks)), 'name'),
+    red_before_code: tally(
       runs
-        .filter((r) => r.timing.test_before_code !== null && r.timing.test_before_code !== undefined)
-        .map((r) => ({ name: 'test_before_code', passed: r.timing.test_before_code })),
+        .filter((r) => r.timing.red_before_code === true || r.timing.red_before_code === false)
+        .map((r) => ({ name: 'red_before_code', passed: r.timing.red_before_code })),
       'name',
     )[0] ?? null,
   };
@@ -677,7 +703,7 @@ async function runCase(skill, testCase, itDir, repetition) {
     await rm(workdir, { recursive: true, force: true });
 
     let grading;
-    if (noGrade) {
+    if (noGrade || !testCase.assertions?.length) {
       grading = { ...summarizeGrading(null, testCase), skipped: true };
       await writeFile(path.join(dir, 'grading.json'), JSON.stringify(grading, null, 2) + '\n');
     } else {
@@ -784,7 +810,8 @@ async function main() {
     return regradeIteration(path.join(WORKSPACE, `iteration-${it}`));
   }
   const skills = (await readdir(SKILLS, { withFileTypes: true }))
-    .filter((d) => d.isDirectory() && existsSync(path.join(SKILLS, d.name, 'SKILL.md')))
+    // Evals can exist before the skill, to check first that the agent fails without it.
+    .filter((d) => d.isDirectory() && existsSync(path.join(SKILLS, d.name, 'evals', 'evals.json')))
     .filter((d) => !only || d.name === only)
     .map((d) => ({ name: d.name, dir: path.join(SKILLS, d.name) }));
 

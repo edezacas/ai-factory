@@ -1,0 +1,240 @@
+{
+  "skill_name": "tdd",
+  "evals": [
+    {
+      "id": 3,
+      "prompt": "Create src/orders/allocate-discount.ts exporting allocateDiscount(lineTotalsCents: number[], discountCents: number): number[]. It shares the discount between the lines in proportion to their totals, in whole cents, and the shares must add up exactly to the discount. Each line first gets the rounded-down share. The cents left over go one each to the lines with the largest remainder, and on a tie to the earlier line. A discount below zero or above the sum of the lines throws a RangeError. No lines and a zero discount gives an empty list.",
+      "expected_output": "Correct code, with tests written first that would catch a wrong tie-break, remainder rule or validation.",
+      "assertions": [
+        "The tests assert literal expected values, not values recomputed with the same formula as the code."
+      ],
+      "checks": [
+        {
+          "name": "the agent wrote or changed tests",
+          "run": "{ git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        },
+        {
+          "name": "the agent's code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/allocate.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/allocate.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent's tests pass on a correct implementation",
+          "files": [
+            "evals/hidden/mutants/allocate/reference.ts"
+          ],
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && npx vitest run --exclude 'test/hidden/**'",
+          "reference": true
+        },
+        {
+          "name": "agent's tests catch: ties go to the later line",
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && sed -i 's/ || a.index - b.index/ || b.index - a.index/' src/orders/allocate-discount.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: leftover ignores the remainder",
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && sed -i 's/b.remainder - a.remainder || //' src/orders/allocate-discount.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: no error above the total",
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && sed -i 's/ || discountCents > total//' src/orders/allocate-discount.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: no error below zero",
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && sed -i 's/discountCents < 0 || //' src/orders/allocate-discount.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: leftover cents are lost",
+          "run": "cp mutants/allocate/reference.ts src/orders/allocate-discount.ts && sed -i \"/shares\\[index\\] += 1/d\" src/orders/allocate-discount.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Let customers add a line to an order they have already placed. Add OrderService.addLine(customerId, orderId, line), which returns the updated order. It charges only the amount of the new line and updates the order's lines and total. Only the customer who placed the order can do it; anyone else gets an error and is charged nothing. Also add refund(chargeId, amountCents) to PaymentGateway, which this feature may use.",
+      "expected_output": "Correct code. The agent notices that charging and saving can fail separately, and neither failure leaves the customer charged for an unsaved line or the order changed without payment.",
+      "assertions": [
+        "The tests go through OrderService and do not mock the order repository or any other module of the application.",
+        "The tests assert observable results, such as the refund made and the order status, not calls to internal collaborators."
+      ],
+      "checks": [
+        {
+          "name": "the agent wrote or changed tests",
+          "run": "{ git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        },
+        {
+          "name": "the agent's code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/add-line.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/add-line.test.ts"
+        },
+        {
+          "name": "the agent's code leaves nothing half-done when a step fails",
+          "files": [
+            "evals/hidden/test/hidden/add-line-failure.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/add-line-failure.test.ts"
+        },
+        {
+          "name": "the agent's tests pass on a correct implementation",
+          "files": [
+            "evals/hidden/mutants/addline/src/orders/order-service.ts",
+            "evals/hidden/mutants/addline/src/orders/order-repository.ts",
+            "evals/hidden/mutants/addline/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/addline-save-first/order-service.ts"
+          ],
+          "run": "cp -r mutants/addline/src/. src/ && npx vitest run --exclude 'test/hidden/**'",
+          "reference": true
+        },
+        {
+          "name": "agent's tests catch: another customer is allowed",
+          "run": "cp -r mutants/addline/src/. src/ && sed -i 's/ || order.customerId !== customerId//' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: customer charged although saving failed",
+          "run": "cp -r mutants/addline/src/. src/ && sed -i '/payments.refund/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent's tests catch: order changed although the charge failed",
+          "run": "cp -r mutants/addline/src/. src/ && cp mutants/addline-save-first/order-service.ts src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Create src/orders/import-discounts.ts exporting importDiscounts(csvPath: string): Promise<Map<string, number>>. It reads a CSV file whose lines are sku,percent and returns the percent for each sku.",
+      "expected_output": "The input comes from a file and the task does not say what to do with a malformed line, so the agent asks or reports it as open, without presenting its own choice as settled.",
+      "assertions": [
+        "The response asks what should happen with a malformed line, or reports it as an open question, without presenting its own handling as settled."
+      ],
+      "checks": []
+    },
+    {
+      "id": 8,
+      "prompt": "Quick, I have no time: totalCents must also reject a negative unitPriceCents by throwing an error. Just fix it.",
+      "expected_output": "Even in a hurry and for a one-line fix, the test comes first and is seen failing.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "the agent wrote or changed tests",
+          "run": "{ git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        },
+        {
+          "name": "the agent's code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/negative-price.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/negative-price.test.ts"
+        },
+        {
+          "name": "agent's tests catch: the original code without the fix",
+          "mutant": true,
+          "run": "git show $(git rev-list --max-parents=0 HEAD):src/orders/order.ts > src/orders/order.ts && ! npx vitest run --exclude 'test/hidden/**'"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Show the order status in the UI. Create src/ui/status-label.ts exporting statusLabel(status: 'placed' | 'cancelled'): string, which returns 'Placed' or 'Cancelled'. In public/styles.css add a rule .status-cancelled with the colour #b00020.",
+      "files": [
+        "evals/files/public/styles.css"
+      ],
+      "expected_output": "The agent tests the code and not the stylesheet.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "the agent wrote or changed tests",
+          "run": "{ git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        },
+        {
+          "name": "the agent's code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/status-label.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/status-label.test.ts"
+        },
+        {
+          "name": "the stylesheet rule was added",
+          "run": "grep -q '#b00020' public/styles.css"
+        },
+        {
+          "name": "no test reads the stylesheet",
+          "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.' | xargs -r grep -lE '\\.css|styles'"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Rename the exported function start to boot in src/index.ts.",
+      "expected_output": "The agent renames with no test cycle.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no test was added or changed",
+          "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Add an Installation section to README.md explaining that you run npm install and then npm test.",
+      "expected_output": "The agent edits the document and writes no test about its structure.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no test was added or changed",
+          "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the section was added",
+          "run": "grep -qi installation README.md"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "In public/styles.css, change the colour of .btn to #0055ff.",
+      "files": [
+        "evals/files/public/styles.css"
+      ],
+      "expected_output": "The agent edits the stylesheet and writes no test.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no test was added or changed",
+          "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the colour was changed",
+          "run": "grep -q '#0055ff' public/styles.css"
+        }
+      ]
+    }
+  ]
+}

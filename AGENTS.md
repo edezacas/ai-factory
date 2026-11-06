@@ -36,7 +36,9 @@ docs/brief.md                    # what is being built, the phases and their sto
 
 ## Gotchas
 - A `claude -p` eval is a single turn, so `ask-me` cases can only check one round, not a whole interview
-- `test_before_code` reads the tool calls, so it can miss a file written in an unusual way; it is null when a run did not write both tests and code
+- `red_before_code` reads the tool calls and results: a test seen failing before any code was written. It is null when a run wrote no code, and a file written in an unusual way can escape it
 - A case's `checks` are shell commands, passed on exit 0, that need no judge; prefer them to an assertion whenever a command can decide
+- A check marked `mutant` seeds an error; it counts only in runs whose `reference` check, the tests on correct code, passed
+- Cases that name the skill in the prompt are not comparable with a run without the skill: run them with `--configs with`
 - Three runs per case by default. A difference that is not `separated` is not evidence, and three runs that do not overlap are still weak evidence
 - An installed skill only lists its description, the agent decides whether to read it. A with-skill run with `skill_read=false` is a baseline: cases about behaviour name the skill in the prompt; only cases about activation do not
