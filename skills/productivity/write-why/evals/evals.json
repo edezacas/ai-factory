@@ -1,0 +1,224 @@
+{
+  "skill_name": "write-why",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Give every placed order a customer-facing `reference` in the format ACME- followed by 8 random uppercase letters or digits. We considered sequential numbers, but they would reveal our order volume to competitors. References are printed on invoices, so the format cannot change once this ships.",
+      "expected_output": "The agent implements the reference and, unasked, records the decision: random references rather than sequential ones, because sequential numbers reveal order volume, and the format cannot change after shipping.",
+      "assertions": [
+        "A persisted document records the decision to use random references.",
+        "That document gives the reason: sequential numbers would reveal order volume.",
+        "That document names sequential numbers as the rejected option.",
+        "That document says the format cannot change once references are printed on invoices.",
+        "The document quotes no identifiers from the code: classes, methods, fields or file paths."
+      ],
+      "checks": [
+        {
+          "name": "a decision was written in a markdown document",
+          "run": "test -n \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\""
+        },
+        {
+          "name": "the record has at most 20 lines",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do test \"$(wc -l < \"$f\")\" -le 20 || exit 1; done"
+        },
+        {
+          "name": "the record is an unnumbered file under docs/decisions/<domain>/",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do [[ $f =~ ^docs/decisions/[^/]+/[^/0-9][^/]*\\.md$ ]] || exit 1; done"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A client may retry OrderService.place after a timeout, and today that can charge the customer twice. Make it impossible to charge twice for the same order attempt. External clients integrate against this method's signature and cannot be asked to change it later. Choose the approach yourself.",
+      "expected_output": "The agent picks an approach, implements it and, unasked, records what it chose, the real alternative it discarded and why.",
+      "assertions": [
+        "A persisted document records the approach the agent chose against double charging.",
+        "That document names a real alternative that was discarded and why.",
+        "The document quotes no identifiers from the code: classes, methods, fields or file paths."
+      ],
+      "checks": [
+        {
+          "name": "a decision was written in a markdown document",
+          "run": "test -n \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\""
+        },
+        {
+          "name": "the record has at most 20 lines",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do test \"$(wc -l < \"$f\")\" -le 20 || exit 1; done"
+        },
+        {
+          "name": "the record is an unnumbered file under docs/decisions/<domain>/",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do [[ $f =~ ^docs/decisions/[^/]+/[^/0-9][^/]*\\.md$ ]] || exit 1; done"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add OrderService.cancel(orderId). A cancelled order stays stored with a `cancelledAt` date and is never deleted: deleting would be simpler, but finance must be able to audit orders for seven years. Pick whatever names and helpers you like for the rest.",
+      "expected_output": "The agent implements cancellation and records one decision: orders are kept rather than deleted, because of the seven-year audit. Names, helpers and how the lookup was added are not recorded.",
+      "assertions": [
+        "A persisted document records that cancelled orders are kept rather than deleted, because of the seven-year audit.",
+        "A persisted document exists, and it does not record names, helpers or how the order lookup was added.",
+        "The document quotes no identifiers from the code: classes, methods, fields or file paths."
+      ],
+      "checks": [
+        {
+          "name": "exactly one markdown document was written",
+          "run": "test \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; } | sort -u | wc -l)\" -eq 1"
+        },
+        {
+          "name": "the record has at most 20 lines",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do test \"$(wc -l < \"$f\")\" -le 20 || exit 1; done"
+        },
+        {
+          "name": "the record is an unnumbered file under docs/decisions/<domain>/",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do [[ $f =~ ^docs/decisions/[^/]+/[^/0-9][^/]*\\.md$ ]] || exit 1; done"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add OrderService.quote(lines), which returns the total in cents for the given lines without charging or saving anything.",
+      "files": [
+        "evals/files/docs/decisions/payments/charge-in-full-at-placement.md"
+      ],
+      "expected_output": "The agent adds the small method and writes no record, because nothing was decided: the repository's decisions folder does not make this worth recording.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no markdown document was written or changed",
+          "run": "test -z \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\""
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Orders of 100000 cents or more now pay a 30% deposit when placed instead of the full amount, because customers with large orders were abandoning checkout. Store the amount charged on the order. Collecting the rest is out of scope.",
+      "files": [
+        "evals/files/docs/decisions/customers/deleted-customers-are-anonymised.md",
+        "evals/files/docs/decisions/customers/one-account-per-email.md",
+        "evals/files/docs/decisions/invoices/invoice-numbers-have-no-gaps.md",
+        "evals/files/docs/decisions/orders/orders-are-immutable-after-placement.md",
+        "evals/files/docs/decisions/orders/prices-frozen-at-placement.md",
+        "evals/files/docs/decisions/payments/card-numbers-never-stored.md",
+        "evals/files/docs/decisions/payments/charge-in-full-at-placement.md",
+        "evals/files/docs/decisions/payments/one-payment-provider.md",
+        "evals/files/docs/decisions/shipping/free-shipping-is-per-order.md"
+      ],
+      "expected_output": "The agent implements the deposit, finds among several records the one that says every order is charged in full, and rewrites it so it is true today, with the reason the user gave, without an amendment block and without adding a second record on the subject.",
+      "assertions": [
+        "After the work, no document in the repository still claims that every order is charged in full when placed.",
+        "The decisions folder states the deposit rule for large orders and its reason, abandoned checkouts.",
+        "The record has no amendment block and no account of the past, such as \"originally\", \"update\" or \"this replaces\". Naming the old option under Rejected is fine."
+      ],
+      "checks": [
+        {
+          "name": "the stale record was changed",
+          "run": "! git diff --quiet $(git rev-list --max-parents=0 HEAD) -- docs/decisions/payments/charge-in-full-at-placement.md"
+        },
+        {
+          "name": "only one record is about the deposit",
+          "run": "test \"$(grep -rliE 'deposit' docs/decisions | wc -l)\" -eq 1"
+        },
+        {
+          "name": "the other records did not change",
+          "run": "test -z \"$(git diff --name-only --diff-filter=MD $(git rev-list --max-parents=0 HEAD) -- docs/decisions ':(exclude)docs/decisions/payments/charge-in-full-at-placement.md')\""
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Record this decision: refunds are never automatic, every refund goes to an operator for approval whatever the amount. We considered auto-approving small refunds and discarded it. It will be enforced by a requestRefund method in src/orders/order-service.ts.",
+      "expected_output": "The agent writes one short record of the rule with auto-approving small refunds as the rejected option. Nobody said why, so the reason is `not stated`, and the record does not name the method or the file.",
+      "assertions": [
+        "The record states that every refund needs operator approval.",
+        "The record names auto-approving small refunds as the rejected option.",
+        "The reason is marked as not stated.",
+        "The record and the response give no business, legal or security reason that the user did not give, neither for the rule nor for discarding the alternative."
+      ],
+      "checks": [
+        {
+          "name": "a decision was written in a markdown document",
+          "run": "test -n \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\""
+        },
+        {
+          "name": "the record has at most 20 lines",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && for f in $F; do test \"$(wc -l < \"$f\")\" -le 20 || exit 1; done"
+        },
+        {
+          "name": "the record names no code",
+          "run": "F=$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }); test -n \"$F\" && ! grep -lE 'requestRefund|order-service|OrderService' $F"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Add a required `country` to orders, stored as an ISO 3166 alpha-2 code. We considered free text, but tax reports need an exact match, and the code ends up in exported tax filings that cannot be amended.",
+      "files": [
+        "evals/files/docs/adr/0001-prices-in-integer-cents.md",
+        "evals/files/docs/adr/0002-charge-before-saving.md"
+      ],
+      "expected_output": "The agent implements the field and records the decision as the next record of the repo's own numbered log, in that log's format, without creating another decisions folder.",
+      "assertions": [
+        "The new record states the decision to store the country as an ISO 3166 alpha-2 code.",
+        "The new record gives the reason: tax reports need an exact match and filings cannot be amended.",
+        "The new record names free text as the rejected option.",
+        "The new record follows the format of the existing records in docs/adr, including their status field."
+      ],
+      "checks": [
+        {
+          "name": "the record is the next one in docs/adr",
+          "run": "test \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\" != '' && test \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; } | sort -u | wc -l)\" -eq 1 && [[ $({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; }) =~ ^docs/adr/0003-[^/]+\\.md$ ]]"
+        },
+        {
+          "name": "no second decisions structure",
+          "run": "test ! -e docs/decisions"
+        },
+        {
+          "name": "the existing records did not change",
+          "run": "test -z \"$(git diff --name-only --diff-filter=MD $(git rev-list --max-parents=0 HEAD) -- docs/adr)\""
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Support says order references are hard to dictate over the phone. Change them to sequential numbers.",
+      "files": [
+        "evals/files/src/orders/order.ts",
+        "evals/files/src/orders/order-service.ts",
+        "evals/files/docs/decisions/orders/order-references-are-random.md"
+      ],
+      "expected_output": "The agent finds the recorded decision and tells the user what the change breaks, whether or not it goes ahead.",
+      "assertions": [
+        "The response warns that sequential references would reveal the order volume.",
+        "The response warns that references are printed on invoices or that their format cannot change once shipped."
+      ],
+      "checks": []
+    },
+    {
+      "id": 9,
+      "prompt": "Support says order references are hard to dictate over the phone. Change them to sequential numbers.",
+      "files": [
+        "evals/files/src/orders/order.ts",
+        "evals/files/src/orders/order-service.ts"
+      ],
+      "expected_output": "Control for case 8: the same task and code with no record, to see what the agent says without it.",
+      "assertions": [
+        "The response warns that sequential references would reveal the order volume.",
+        "The response warns that references are printed on invoices or that their format cannot change once shipped."
+      ],
+      "checks": []
+    },
+    {
+      "id": 10,
+      "prompt": "We want customer-facing order references. Should they be random or sequential? Recommend one and wait for my answer; do not implement anything yet.",
+      "expected_output": "The agent recommends an option and waits. Nothing has been decided yet, so it writes no record.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no markdown document was written or changed",
+          "run": "test -z \"$({ git ls-files -o --exclude-standard -- '*.md'; git diff --name-only $(git rev-list --max-parents=0 HEAD) -- '*.md'; })\""
+        }
+      ]
+    }
+  ]
+}

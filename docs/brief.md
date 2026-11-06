@@ -24,7 +24,7 @@ There is no orchestrator. The agent discovers each skill by its description and 
 
 1. `ask-me`, when something is unclear or undecided.
 2. `code-design` and `hexagonal` when designing, `tdd` when programming, `tidy` once the tests are green.
-3. `write-why`, when the work involved important decisions that are hard to reverse or surprising.
+3. `write-why`, when development is finished and verified, before reporting it, while the agent that did the work still has the context.
 
 ## Skills
 
@@ -39,7 +39,7 @@ There is no orchestrator. The agent discovers each skill by its description and 
   - Go up only with a second implementation, a dependency that makes tests slow or brittle, or to keep third-party types out of the domain. The agent reads the repo, then declares the level and why.
   - Base content: the "does it do I/O or run out of process?" rule counting dependencies; antipatterns (anemic domain, third-party types in the domain, use cases calling use cases, adapters with logic); tests per layer (domain without doubles, application with fakes of ports, adapters against real infrastructure).
 - **tidy** (working name, new, brief; simplify and refactor): after green, one change at a time, tests untouched, no over-simplifying (real versus coincidental duplication, three similar lines beat a helper), final pass as a critic.
-- **write-why** (base: `decision-records` from edezacas/agent-skills, renamed): 20 lines per decision, no code names or history, `not stated` instead of inventing. Add: only if the decision is hard to reverse, surprising without context and the result of a real trade-off. Do not record what the code shows; correct stale knowledge. Stored as one unnumbered file per decision under `docs/decisions/<domain>/`, unless the repo already has its own structure. The description must say explicitly that if no decision deserves a record, it writes nothing.
+- **write-why** (v0.12; base: `decision-records` from edezacas/agent-skills, renamed): 20 lines per decision, no code names or history, `not stated` instead of inventing. Add: only if the decision is hard to reverse or surprising without context, never for each activity done. The decision and its reason matter most; a rejected option is recorded only if there was one. Its description says when to open it; its body is a capability that knows what deserves a record and writes it. Do not record what the code shows; correct stale knowledge. Stored as one unnumbered file per decision under `docs/decisions/<domain>/`, unless the repo already has its own structure. The description must say explicitly that if no decision deserves a record, it writes nothing.
 
 ## Subagents (phase 2)
 

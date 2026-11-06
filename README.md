@@ -33,6 +33,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
 - **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
+- **[write-why](skills/productivity/write-why/SKILL.md)**: When the work is done, the agent records the decisions the code can't explain and that are hard to reverse or surprising, and writes nothing if none qualifies.
 
 ## How we know it works
 
