@@ -7,14 +7,14 @@
 3. Plans too big for one session: split them into small tasks.
 4. Tests independent of the implementation, not written just to match it.
 5. A document with what matters and the code does not show.
-6. All of it under good practice: clean code, only necessary comments, maintainable and readable code, hexagonal architecture fitted to the context, no over-engineering.
+6. All of it under good practice: clean code, only necessary comments, maintainable and readable code, architecture fitted to the context, no over-engineering.
 
 ## Decisions
 
 - Skills are `SKILL.md` files (agentskills.io), harness-agnostic.
 - Start minimal: skills, then two subagents. The orchestrator script, the ledger and optimizations come only if data justifies them.
 - Before writing a skill, run the task without it and confirm the agent fails at what the skill would fix. If it does not fail, do not write it.
-- Skills live in `skills/engineering/` (tdd, code-design, hexagonal, tidy), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project). Names stay unique, because installing makes them flat.
+- Skills live in `skills/engineering/` (tdd, code-design), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project). Names stay unique, because installing makes them flat.
 - Short skills: goal and constraints, no steps the model already knows. Description says when to use and when not. Under 500 lines, templates in `assets/`.
 - Persisted documents and artifacts in English; dialogue with the user in Spanish.
 
@@ -23,7 +23,7 @@
 There is no orchestrator. The agent discovers each skill by its description and uses it when needed:
 
 1. `ask-me`, when something is unclear or undecided.
-2. `code-design` and `hexagonal` when designing, `tdd` when programming, `tidy` once the tests are green.
+2. `code-design` when designing, `tdd` when programming.
 3. `write-why`, when development is finished and verified, before reporting it, while the agent that did the work still has the context.
 
 ## Skills
@@ -31,14 +31,6 @@ There is no orchestrator. The agent discovers each skill by its description and 
 - **ask-me** (v0.11): leaves nothing forgotten and takes no phantom decision, through rounds of proposals until the user confirms the full account of decisions. Writes no file.
 - **tdd** (v0.11): test before code, in Red-Green-Refactor, with rules for what makes a test valid. It does not set the flow: who writes the tests, in what batches, and running the whole suite belong to whoever uses it. ZOMBIES, predicting the failure, a final gap pass and "try to break it" were removed for generating work; bring them back only if measurements ask for it.
 - **code-design** (v0.5): a simple design that is easy to change, built for stated needs: no code for future needs nobody asked for, abstractions only where something varies today, reuse and the repo's structure first, comments only for what the code cannot say. Measured without the skill, the agent overbuilt only when a request mentioned a possible future.
-- **hexagonal** (working name, new): graded levels.
-  - 0, CRUD or script: repo structure, no ports.
-  - 1, pure domain separated from I/O, no interfaces.
-  - 2, ports only on external dependencies that complicate tests or vary today, as thin wrappers in domain language (the 80% rule).
-  - 3, full hexagonal: use cases, several adapters, complex domain.
-  - Go up only with a second implementation, a dependency that makes tests slow or brittle, or to keep third-party types out of the domain. The agent reads the repo, then declares the level and why.
-  - Base content: the "does it do I/O or run out of process?" rule counting dependencies; antipatterns (anemic domain, third-party types in the domain, use cases calling use cases, adapters with logic); tests per layer (domain without doubles, application with fakes of ports, adapters against real infrastructure).
-- **tidy** (working name, new, brief; simplify and refactor): after green, one change at a time, tests untouched, no over-simplifying (real versus coincidental duplication, three similar lines beat a helper), final pass as a critic.
 - **write-why** (v0.12; base: `decision-records` from edezacas/agent-skills, renamed): 20 lines per decision, no code names or history, `not stated` instead of inventing. Add: only if the decision is hard to reverse or surprising without context, never for each activity done. The decision and its reason matter most; a rejected option is recorded only if there was one. Its description says when to open it; its body is a capability that knows what deserves a record and writes it. Do not record what the code shows; correct stale knowledge. Stored as one unnumbered file per decision under `docs/decisions/<domain>/`, unless the repo already has its own structure. The description must say explicitly that if no decision deserves a record, it writes nothing.
 
 ## Subagents (phase 2)
@@ -62,7 +54,7 @@ Coordination: the main session launches subagents with file paths, not summaries
 
 ## Phases and stop criteria
 
-1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks.
+1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks, noting each time a cleanup had to be requested after green.
 2. Only if something concrete fails: native subagents tester and implementer, and validator, with `PLAN.md`, checkpoints and `PROGRESS.md`. The entry test is a large real task done with the phase 1 setup, in one session: if it fails, that failure opens this phase and the task is the baseline to compare against. Also record whether the main session keeps to checkpoints, delegation and tests, how much subagent results fill its context, and whether subagents use the skills.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
@@ -77,6 +69,11 @@ Each phase measures tokens, time and failures detected per task against the prev
 ## Left out for now
 
 llm-council, strategy and OKRs, double red and emoji narration in tdd, starter markers for their token cost, fact cache with hash, model routing per phase beyond the fixed model per subagent in phase 2, Haiku until a task shows it pays for its delegation and review.
+
+Two skills are also left out, neither measured without the skill, so this is judgement, not data. Their drafts are in this file's git history.
+
+- **hexagonal**: `code-design` already covers most of it, and a skill that can add layers would pull against one that holds them back. If a dependency that makes tests slow or brittle needs a port, add a line to `code-design`. A project that needs the architecture states it in its `AGENTS.md`.
+- **tidy**: the Refactor step in `tdd`, `code-design` and Claude Code's `/simplify` overlap with it, and it would add a third skill to a chain that already rarely opens together. Whether the agent leaves code dirty after green is unknown. If the phase 1 notes show repeated cleanups, try `/simplify`, then a stronger Refactor step in `tdd`, and only then this skill.
 
 ## Pending decisions
 
