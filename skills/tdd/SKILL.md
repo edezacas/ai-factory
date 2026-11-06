@@ -1,9 +1,9 @@
 ---
 name: tdd
-description: Applies test-driven development, so the test comes first and is seen failing. Use before writing code that adds or changes behaviour, such as a feature, a bug fix or a new rule, even when nobody asked for tests. Skip it for a rename, formatting, documentation, styles, or a question.
+description: You MUST use this before writing any code that adds or changes behaviour, such as a feature, a bug fix or a new rule, including one-line fixes, and even when the user is in a hurry or did not ask for tests. Tests come first and are seen failing. Skip it only for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.10"
+  version: "0.11"
 ---
 
 Write the test before the code.

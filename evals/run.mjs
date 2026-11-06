@@ -824,7 +824,22 @@ async function regradeIteration(itDir) {
   console.log('benchmark rebuilt');
 }
 
+// A colon followed by a space in an unquoted value is invalid YAML. Claude Code loads
+// such a skill anyway, so it would pass every eval and fail in stricter tools.
+async function checkHeaders() {
+  for (const skill of await readdir(SKILLS)) {
+    const file = path.join(SKILLS, skill, 'SKILL.md');
+    if (!existsSync(file)) continue;
+    const description = (await readFile(file, 'utf8')).match(/^description: (.*)$/m)?.[1];
+    if (!description) throw new Error(`${file}: no description`);
+    if (!/^["']/.test(description) && /: |:$/.test(description)) {
+      throw new Error(`${file}: the description has an unquoted colon, which is invalid YAML`);
+    }
+  }
+}
+
 async function main() {
+  await checkHeaders();
   if (regrade) {
     const it = iteration ?? (await nextIteration()) - 1;
     return regradeIteration(path.join(WORKSPACE, `iteration-${it}`));

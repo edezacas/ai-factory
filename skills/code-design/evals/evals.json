@@ -98,6 +98,13 @@
             "evals/hidden/test/hidden/fee.test.ts"
           ],
           "run": "npx vitest run test/hidden/fee.test.ts"
+        },
+        {
+          "name": "totalCents still returns only the total of the lines",
+          "files": [
+            "evals/hidden/test/hidden/total-unchanged.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/total-unchanged.test.ts"
         }
       ]
     },
