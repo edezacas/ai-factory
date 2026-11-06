@@ -43,20 +43,27 @@ There is no orchestrator. The agent discovers each skill by its description and 
 
 ## Subagents (phase 2)
 
-- **tester** (isolated): receives criteria and the public interface, never sees the implementation. Writes the test and checks it fails for the right reason.
-- **implementer** (clean context per task): receives the red test, writes the minimum to pass, then simplifies.
-- **validator** (optional, another model, read-only): checks the result against the spec, not the implementer's notes.
+Everything runs from one Claude Code session on Opus, which plans, delegates, waits for each result and reviews it. Each subagent's model is fixed in its definition, not chosen by the main session.
+
+- **tester** (Sonnet, isolated): receives criteria and the public interface, never sees the implementation. Writes the test and checks it fails for the right reason.
+- **implementer** (Sonnet, clean context per task): receives the red test, writes the minimum to pass, then simplifies.
+- **validator** (optional, Opus, read-only): checks the result against the spec, not the implementer's notes.
+
+Two documents support the work:
+
+- `PLAN.md`: small stages, each with its task contract, what must change, what behaviour to keep and how to validate it. It marks the checkpoints where the main session stops for the user to review.
+- `PROGRESS.md`: what changed, which tests ran and their results, what is left to test and the next step, so another agent can take over. It holds state, while `write-why` holds reasons.
 
 Task contract: a subagent does not see the conversation, so each task must carry its criteria, decisions, seam, files, open decisions and dependencies. Tasks can run in parallel only if neither depends on the other, even through a criterion, and they change no file in common. A schema or public API change others use is split into expand, migrate and contract.
 
-This is not a skill. A `splitting` skill was tried and removed: the agent already splits work and launches subagents by itself, the skill doubled or tripled tokens and it did not activate on its own. The contract belongs to an orchestrator that can enforce it. The skill is in git history.
+This is not a skill. A `splitting` skill was tried and removed: the agent already splits work and launches subagents by itself, the skill doubled or tripled tokens and it did not activate on its own. In phase 2 the contract lives in `PLAN.md`, where nothing enforces it; if the main session skips checkpoints, delegation or tests, that failure is what justifies an orchestrator that can enforce it. The skill is in git history.
 
 Coordination: the main session launches subagents with file paths, not summaries. Parallel tasks need non-overlapping file ownership. Subagents only when they just report; agent teams only if they must talk to each other.
 
 ## Phases and stop criteria
 
 1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks.
-2. Only if something concrete fails: native subagents tester and implementer, and validator.
+2. Only if something concrete fails: native subagents tester and implementer, and validator, with `PLAN.md`, checkpoints and `PROGRESS.md`. The entry test is a large real task done with the phase 1 setup, in one session: if it fails, that failure opens this phase and the task is the baseline to compare against. Also record whether the main session keeps to checkpoints, delegation and tests, how much subagent results fill its context, and whether subagents use the skills.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
 Each phase measures tokens, time and failures detected per task against the previous one. If it does not improve, do not move on. Evals use the runner in `evals/` (each case with and without the skill, guardrail assertions).
@@ -69,7 +76,7 @@ Each phase measures tokens, time and failures detected per task against the prev
 
 ## Left out for now
 
-llm-council, strategy and OKRs, double red and emoji narration in tdd, starter markers for their token cost, fact cache with hash, model routing per phase.
+llm-council, strategy and OKRs, double red and emoji narration in tdd, starter markers for their token cost, fact cache with hash, model routing per phase beyond the fixed model per subagent in phase 2, Haiku until a task shows it pays for its delegation and review.
 
 ## Pending decisions
 
