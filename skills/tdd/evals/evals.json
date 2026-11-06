@@ -64,7 +64,7 @@
       "prompt": "Let customers add a line to an order they have already placed. Add OrderService.addLine(customerId, orderId, line), which returns the updated order. It charges only the amount of the new line and updates the order's lines and total. Only the customer who placed the order can do it; anyone else gets an error and is charged nothing. Also add refund(chargeId, amountCents) to PaymentGateway, which this feature may use.",
       "expected_output": "Correct code. The agent notices that charging and saving can fail separately, and neither failure leaves the customer charged for an unsaved line or the order changed without payment.",
       "assertions": [
-        "The tests go through OrderService and do not mock the order repository or any other module of the application.",
+        "The tests go through OrderService and use a double only for the payment gateway or to make a step fail, never replacing application logic.",
         "The tests assert observable results, such as the refund made and the order status, not calls to internal collaborators."
       ],
       "checks": [
@@ -103,7 +103,7 @@
         },
         {
           "name": "agent's tests catch: another customer is allowed",
-          "run": "cp -r mutants/addline/src/. src/ && sed -i 's/ || order.customerId !== customerId//' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "run": "cp -r mutants/addline/src/. src/ && sed -i '/async addLine/,/const amount/{/const orders = /d; s/const order = orders.find((candidate) => candidate.id === orderId)/const order = await (this.orders as any).findById(orderId)/}' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
           "mutant": true
         },
         {

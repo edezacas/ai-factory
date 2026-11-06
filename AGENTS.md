@@ -36,7 +36,7 @@ docs/brief.md                    # what is being built, the phases and their sto
 
 ## Gotchas
 - A `claude -p` eval is a single turn, so `ask-me` cases can only check one round, not a whole interview
-- `red_before_code` reads the tool calls and results: a test seen failing before any code was written. It is null when a run wrote no code, and a file written in an unusual way can escape it
+- `red_before_code` reads the tool calls and results: a test seen failing before any code was written. It is null when a run wrote no code, and a file written in an unusual way can escape it. `red_in_same_command` marks a test that failed first inside the same shell command that wrote the code, so nobody saw the failure before writing it
 - A case's `checks` are shell commands, passed on exit 0, that need no judge; prefer them to an assertion whenever a command can decide
 - A check marked `mutant` seeds an error; it counts only in runs whose `reference` check, the tests on correct code, passed
 - Cases that name the skill in the prompt are not comparable with a run without the skill: run them with `--configs with`

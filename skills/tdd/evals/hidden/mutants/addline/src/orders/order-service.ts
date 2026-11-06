@@ -26,8 +26,9 @@ export class OrderService {
   }
 
   async addLine(customerId: string, orderId: string, line: OrderLine): Promise<Order> {
-    const order = await this.orders.findById(orderId)
-    if (!order || order.customerId !== customerId) throw new Error('Order not found')
+    const orders = await this.orders.findByCustomer(customerId)
+    const order = orders.find((candidate) => candidate.id === orderId)
+    if (!order) throw new Error('Order not found')
     const amount = totalCents([line])
     const updated: Order = { ...order, lines: [...order.lines, line], totalCents: order.totalCents + amount }
     const { chargeId } = await this.payments.charge(customerId, amount)

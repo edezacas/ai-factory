@@ -17,6 +17,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 ## Skills
 
 - **[ask-me](skills/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
+- **[tdd](skills/tdd/SKILL.md)**: The agent writes the test before the code and sees it fail, with tests that come from your requirements and check what the code does, not how.
 
 ## How we know it works
 

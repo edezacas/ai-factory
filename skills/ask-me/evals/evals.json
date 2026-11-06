@@ -12,10 +12,8 @@
         "Every question is worded so that answering yes accepts the recommendation.",
         "The response questions what 'cancel' means or where it ends, using a concrete scenario such as an order that has already shipped.",
         "The response raises something the request did not mention, such as a failed refund, existing orders or who is allowed to cancel.",
-        {
-          "text": "The response does not ask the user for anything the repo answers, such as the language, the test runner or the package manager.",
-          "guardrail": true
-        }
+        "The response does not ask the user about what the repo's conventions settle, such as the framework, file locations, names or the test tool.",
+        "The response asks about at least one business rule, such as which orders can be cancelled or what happens with the refund."
       ],
       "checks": [
         {
@@ -57,6 +55,20 @@
         "The response names the decision about partially shipped orders as open.",
         "The response gives its recommended answer for that decision.",
         "The response treats notifying the customer as still open, not as decided, although the agent recommended an email."
+      ],
+      "checks": [
+        {
+          "name": "no file was created or changed",
+          "run": "test -z \"$(git status --porcelain)\""
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Use the ask-me skill. Add a cache to OrderService.listForCustomer, because I think it might get slow.",
+      "expected_output": "The store is in memory, so the agent says once, with its reason, that a cache may not be needed, and leaves the decision to the user.",
+      "assertions": [
+        "The response says, with a reason, that the cache may not be needed or that something simpler would do."
       ],
       "checks": [
         {

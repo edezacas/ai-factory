@@ -185,6 +185,15 @@ function failedTestRun(call, results) {
   return Boolean(result?.is_error) || /\b\d+ failed\b|\bFAIL\b/.test(output);
 }
 
+// One shell command can write a test, run it and write the code without waiting for
+// the result: the test did fail first, but nobody looked before writing the code.
+function failedBeforeCodeInCommand(call, results) {
+  const command = String(call.input?.command);
+  const run = command.search(/\b(vitest|jest|mocha)\b|\bnpm (run )?-?s? ?test\b/);
+  const write = [...command.matchAll(/(?:>>?|\btee\s+(?:-a\s+)?)\s*([\w./-]+\.[jt]sx?)\b/g)].find((m) => isCodeFile(m[1]));
+  return run >= 0 && write && run < write.index && failedTestRun(call, results);
+}
+
 // Whether a test was seen failing before any code was written. Null when the run
 // wrote no code. The fixture starts green, so a failure can only come from new work.
 function redBeforeCode(calls, events) {
@@ -196,10 +205,12 @@ function redBeforeCode(calls, events) {
       .map((c) => [c.tool_use_id, c]),
   );
   for (const call of calls) {
-    if (writtenFiles(call).some(isCodeFile)) return false;
-    if (failedTestRun(call, results)) return true;
+    if (writtenFiles(call).some(isCodeFile)) {
+      return { seen: false, sameCommand: Boolean(failedBeforeCodeInCommand(call, results)) };
+    }
+    if (failedTestRun(call, results)) return { seen: true, sameCommand: false };
   }
-  return null;
+  return { seen: null, sameCommand: false };
 }
 
 const contextSize = ({ usage: u = {} }) =>
@@ -228,7 +239,8 @@ function summarize(events, skillName = null) {
       cache_hit_rate: prompted ? +(tokens.cacheRead / prompted).toFixed(3) : 0,
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
-      red_before_code: redBeforeCode(calls, events),
+      red_before_code: redBeforeCode(calls, events).seen,
+      red_in_same_command: redBeforeCode(calls, events).sameCommand,
       skill_read: calls.some(
         (c) =>
           (c.name === 'Skill' && c.input?.skill === skillName) ||
@@ -521,6 +533,7 @@ function configStats(runs) {
     ),
     assertions: tally(graded.flatMap((r) => r.grading.assertion_results), 'text'),
     checks: tally(runs.flatMap((r) => validChecks(r.checks)), 'name'),
+    red_in_same_command_runs: runs.filter((r) => r.timing.red_in_same_command).length,
     red_before_code: tally(
       runs
         .filter((r) => r.timing.red_before_code === true || r.timing.red_before_code === false)
