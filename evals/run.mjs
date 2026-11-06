@@ -841,6 +841,7 @@ async function regradeIteration(itDir) {
     judge_model: meta.judge_model,
     configs: meta.configs,
     runs_per_case: meta.runs_per_case,
+    also_install: meta.also_install,
     regraded_at: new Date().toISOString(),
   });
   console.log('benchmark rebuilt');
@@ -917,6 +918,7 @@ async function main() {
     judge_model: judgeModel,
     configs,
     runs_per_case: repetitions,
+    also_install: alsoInstall,
   });
   console.log(`\nwrote ${path.relative(REPO, itDir)}/benchmark.json`);
 }
