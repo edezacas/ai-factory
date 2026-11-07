@@ -3,13 +3,13 @@ name: tdd
 description: You MUST use this before writing any code that adds or changes behaviour, such as a feature, a bug fix or a new rule, including one-line fixes, and even when the user is in a hurry or did not ask for tests. Tests come first and are seen failing. Skip it only for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.12"
+  version: "0.13"
 ---
 
 Write the test before the code.
 
 1. **Red:** write the test and see it fail because the behaviour is missing or wrong. For a bug, the test reproduces it. If it passes at once, find out why; never force a failure.
-2. **Green:** implement the behaviour until it passes.
+2. **Green:** implement the behaviour until it passes. Comment only what the code cannot say, such as a workaround, a hidden invariant or a trade-off; never where it came from, such as a plan section, a decision id or a ticket.
 3. **Refactor:** clean up, with the tests green and no new behaviour.
 
 Rules for the tests:

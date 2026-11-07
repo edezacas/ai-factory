@@ -235,6 +235,36 @@
           "run": "grep -q '#0055ff' public/styles.css"
         }
       ]
+    },
+    {
+      "id": 11,
+      "prompt": "Use the tdd skill. Implement section B.3 of docs/plan.md.",
+      "files": [
+        "evals/files/docs/plan.md"
+      ],
+      "expected_output": "Correct code whose comments say only what the code cannot, and never cite the plan, a section or a decision id.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "the agent wrote or changed tests",
+          "run": "{ git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '\\.(test|spec)\\.'"
+        },
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        },
+        {
+          "name": "the agent's code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/discount.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/discount.test.ts"
+        },
+        {
+          "name": "no comment in the code cites the plan, a section or a decision",
+          "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '^src/.*\\.ts$' | xargs -r grep -hE '^\\s*(//|\\*|/\\*)' | grep -iE '\\bB\\.[0-9]|\\bD[0-9]+\\b|plan|spec|section|decision'"
+        }
+      ]
     }
   ]
 }
