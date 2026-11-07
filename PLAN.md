@@ -1,0 +1,49 @@
+# ai-factory as a portable harness
+
+## Goal
+
+Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit that installs in any project and any coding-agent tool: portable core (skills, templates, scripts, roles), thin adapters per tool, and a feedback loop that records evidence per project and proposes changes a human approves.
+
+## Where we are
+
+- Phase 1 done: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project`, measured with the runner.
+- Phase 2, step 1 (implementer delegated by hand from an Opus session) still pending. Nothing further in phase 2 starts before it.
+- `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
+- Templates live in `skills/productivity/delegate/assets/`. No scripts, no session bootstrap, no per-project log.
+
+## Decisions this plan adds to `docs/brief.md`
+
+- The harness is tool-agnostic. Everything that must always run lives in repo scripts; hooks and permissions are adapters that call them.
+- Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/<tool>/`, and the installer (`init-project`).
+- What a project learns stays in the project. It moves into the kit only when it repeats in two projects, by hand, with an eval.
+- The harness does not edit itself. Deterministic sensors write a log; a skill invoked by name reads it and proposes additions or removals; the user approves.
+- Leiva's rule for growth: a line only after the same failure twice; cheapest level first (`AGENTS.md` line, then skill, then hook or deny rule); every proposal answers the five questions.
+
+## Stages
+
+Each stage leaves the repo green and can be committed alone. "Green" is `node evals/run.mjs --only <skill> --cases 1 --runs 1` for a touched skill, plus the scripts' own smoke test once they exist.
+
+| # | Stage | Task file | What changes | Behaviour to keep | Validation | Checkpoint |
+|---|-------|-----------|--------------|-------------------|------------|------------|
+| 1 | Brief update | `docs/plans/harness/01-brief.md` | `docs/brief.md`: decisions above, revised phase 2 order, `init-project` as installer, tune skill in "only if data" list | Phases and stop criteria logic | Read-through against this plan | no |
+| 2 | Implementer by hand | `docs/plans/harness/02-implementer.md` | Nothing in the repo unless the run shows it; notes in `PROGRESS.md` | Everything | One real task in a real repo: did `skills` preload apply, did the report fit, cost | **yes** |
+| 3 | Gate and scope scripts | `docs/plans/harness/03-gate.md` | `core/scripts/gate.sh`, `core/scripts/check-scope.sh`; commands read from `harness.json` in the project; both append one JSON line to `docs/harness/log.jsonl` on every run | Skills untouched | Run both on `evals/fixtures/acme-app` and on one real project; exit codes and log lines correct | no |
+| 4 | Session bootstrap | `docs/plans/harness/04-bootstrap.md` | `core/scripts/init.sh`; `PROGRESS.md` template gains a "Resume" header (read `PROGRESS.md`, `git log`, run `init.sh`, run gate, then work); `delegate` step 0 | `delegate` steps 1 to 6 | New session with no history resumes one in-progress task from `PROGRESS.md` alone | **yes** |
+| 5 | Core and adapters layout | `docs/plans/harness/05-layout.md` | Move templates to `core/templates/`, `implementer.md` to `core/roles/`; `adapters/claude-code/` with agent definition, `settings.json` hook calling the scripts, permission policy; `delegate` SKILL.md names files and scripts, no tool primitives | Runner still finds `skills/<category>/<skill>/`; `delegate` evals pass with `--configs with` | `node evals/run.mjs --only delegate --configs with --runs 1`; smoke in real project | **yes** |
+| 6 | Installer | `docs/plans/harness/06-installer.md` | `init-project` installs the kit: copies core, picks adapter by detected tool dir, creates `harness.json` and `AGENTS.md` through `ask-me` if missing, leaves `init.sh` working | `init-project` evals | Install into a fresh clone of a real project, run `init.sh` and gate | no |
+| 7 | Tune skill | `docs/plans/harness/07-tune.md` | `skills/productivity/tune`: reads `log.jsonl` and `PROGRESS.md`, proposes a change only on a repeated failure, cheapest level first, five questions answered, also proposes removals; invoked by name; writes nothing without approval | Other skills | Starts only with at least 10 logged stages in one project; eval: a seeded log with two identical failures yields exactly one proposal, a clean log yields none | **yes** |
+| 8 | Phase 2 vs phase 1 A/B | `docs/plans/harness/08-ab.md` | Runner case for the expand/migrate/contract task in acme-app, as the brief describes | Everything | Three runs each; stop criteria from the brief | no |
+| 9 | Second adapter | `docs/plans/harness/09-adapter.md` | `adapters/opencode/` or `adapters/pi/`, whichever a real project uses first | Core unchanged | Stages 3 and 4 behaviour in that tool | no |
+
+Parallel: none. Stage 2 gates everything after it; stages 3 and 4 need the real-project result to know what to log.
+
+## Recovery
+
+No data is touched. Each stage is one PR; revert the PR.
+
+## Left out, and what brings it back
+
+- A JSON feature list as source of state: only if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
+- Independent validator, tester, Haiku for code, parallelism: unchanged from the brief, each on a recorded failure.
+- Auto-applying `tune` proposals: never. If approval becomes a bottleneck, that is a phase 3 orchestrator question, not a skill change.
+- A TypeScript installer instead of the `init-project` skill: only if the skill fails to install cleanly in two projects.
