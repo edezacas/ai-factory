@@ -2,7 +2,7 @@
 
 ## Goal
 
-Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit that installs in any project and any coding-agent tool: portable core (skills, templates, scripts, roles), thin adapters per tool, and a feedback loop that records evidence per project and proposes changes a human approves.
+Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit that installs in any project. It targets Claude Code, built on a base that another tool (pi, OpenCode) can be added to by writing an adapter and nothing else: portable core (skills, templates, scripts, roles), one Claude Code adapter, and a feedback loop that records evidence per project and proposes changes a human approves.
 
 ## Where we are
 
@@ -13,8 +13,9 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
 
 ## Decisions this plan adds to `docs/brief.md`
 
-- The harness is tool-agnostic. Everything that must always run lives in repo scripts; hooks and permissions are adapters that call them.
-- Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/<tool>/`, and the installer (`init-project`).
+- Claude Code is the only target for now. Portability is a design discipline, not a deliverable: the test is whether a person without Claude Code could run the whole flow with the repo's files and scripts alone.
+- Rules that keep the base portable at no cost: state and contracts in neutral files (`PLAN.md`, task files, `PROGRESS.md`, `harness.json`, the log); checks in scripts with no Claude in them, hooks only call them; skills speak of files and scripts, never of tool primitives (`Task`, `.claude/agents`), with anything Claude Code specific in a short section at the end or in the adapter; role text separate from its agent frontmatter; everything tool-specific in `adapters/claude-code/`, so a leak into the core is visible.
+- Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/claude-code/` (the only adapter), and the installer (`init-project`).
 - What a project learns stays in the project. It moves into the kit only when it repeats in two projects, by hand, with an eval.
 - The harness does not edit itself. Deterministic sensors write a log; a skill invoked by name reads it and proposes additions or removals; the user approves.
 - Leiva's rule for growth: a line only after the same failure twice; cheapest level first (`AGENTS.md` line, then skill, then hook or deny rule); every proposal answers the five questions.
@@ -29,11 +30,10 @@ Each stage leaves the repo green and can be committed alone. "Green" is `node ev
 | 2 | Implementer by hand | `docs/plans/harness/02-implementer.md` | Nothing in the repo unless the run shows it; notes in `PROGRESS.md` | Everything | One real task in a real repo: did `skills` preload apply, did the report fit, cost | **yes** |
 | 3 | Gate and scope scripts | `docs/plans/harness/03-gate.md` | `core/scripts/gate.sh`, `core/scripts/check-scope.sh`; commands read from `harness.json` in the project; both append one JSON line to `docs/harness/log.jsonl` on every run | Skills untouched | Run both on `evals/fixtures/acme-app` and on one real project; exit codes and log lines correct | no |
 | 4 | Session bootstrap | `docs/plans/harness/04-bootstrap.md` | `core/scripts/init.sh`; `PROGRESS.md` template gains a "Resume" header (read `PROGRESS.md`, `git log`, run `init.sh`, run gate, then work); `delegate` step 0 | `delegate` steps 1 to 6 | New session with no history resumes one in-progress task from `PROGRESS.md` alone | **yes** |
-| 5 | Core and adapters layout | `docs/plans/harness/05-layout.md` | Move templates to `core/templates/`, `implementer.md` to `core/roles/`; `adapters/claude-code/` with agent definition, `settings.json` hook calling the scripts, permission policy; `delegate` SKILL.md names files and scripts, no tool primitives | Runner still finds `skills/<category>/<skill>/`; `delegate` evals pass with `--configs with` | `node evals/run.mjs --only delegate --configs with --runs 1`; smoke in real project | **yes** |
-| 6 | Installer | `docs/plans/harness/06-installer.md` | `init-project` installs the kit: copies core, picks adapter by detected tool dir, creates `harness.json` and `AGENTS.md` through `ask-me` if missing, leaves `init.sh` working | `init-project` evals | Install into a fresh clone of a real project, run `init.sh` and gate | no |
+| 5 | Core and adapter layout | `docs/plans/harness/05-layout.md` | Move templates to `core/templates/`, `implementer.md` role text to `core/roles/`; `adapters/claude-code/` with the agent frontmatter, `settings.json` hook calling the scripts, permission policy; `delegate` SKILL.md names files and scripts, with a short Claude Code section at the end; no abstraction over adapters, there is one | Runner still finds `skills/<category>/<skill>/`; `delegate` evals pass with `--configs with` | `node evals/run.mjs --only delegate --configs with --runs 1`; smoke in real project | **yes** |
+| 6 | Installer | `docs/plans/harness/06-installer.md` | `init-project` installs the kit: copies core and the Claude Code adapter, creates `harness.json` and `AGENTS.md` through `ask-me` if missing, leaves `init.sh` working | `init-project` evals | Install into a fresh clone of a real project, run `init.sh` and gate | no |
 | 7 | Tune skill | `docs/plans/harness/07-tune.md` | `skills/productivity/tune`: reads `log.jsonl` and `PROGRESS.md`, proposes a change only on a repeated failure, cheapest level first, five questions answered, also proposes removals; invoked by name; writes nothing without approval | Other skills | Starts only with at least 10 logged stages in one project; eval: a seeded log with two identical failures yields exactly one proposal, a clean log yields none | **yes** |
 | 8 | Phase 2 vs phase 1 A/B | `docs/plans/harness/08-ab.md` | Runner case for the expand/migrate/contract task in acme-app, as the brief describes | Everything | Three runs each; stop criteria from the brief | no |
-| 9 | Second adapter | `docs/plans/harness/09-adapter.md` | `adapters/opencode/` or `adapters/pi/`, whichever a real project uses first | Core unchanged | Stages 3 and 4 behaviour in that tool | no |
 
 Parallel: none. Stage 2 gates everything after it; stages 3 and 4 need the real-project result to know what to log.
 
@@ -43,6 +43,7 @@ No data is touched. Each stage is one PR; revert the PR.
 
 ## Left out, and what brings it back
 
+- A second adapter (`adapters/pi/`, `adapters/opencode/`): only when a real project works in that tool. The hands-on mode should port with the adapter alone; `delegate` will need its delegation rethought per tool, because `skills` preload, `SubagentStop` and resuming a subagent are Claude Code's. The fallback that works anywhere is another session given the task file path.
 - A JSON feature list as source of state: only if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
 - Independent validator, tester, Haiku for code, parallelism: unchanged from the brief, each on a recorded failure.
 - Auto-applying `tune` proposals: never. If approval becomes a bottleneck, that is a phase 3 orchestrator question, not a skill change.

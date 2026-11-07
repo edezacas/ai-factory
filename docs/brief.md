@@ -17,10 +17,11 @@
 - Skills live in `skills/engineering/` (tdd, code-design), `skills/stack/` (angular-conventions), `skills/performance/` (web-performance) and `skills/productivity/` (ask-me, write-why, init-project, delegate). Names stay unique, because installing makes them flat.
 - Short skills: goal and constraints, no steps the model already knows. Description says when to use and when not. Under 500 lines, templates in `assets/`.
 - Persisted documents and artifacts in English; dialogue with the user in Spanish.
-- The harness is tool-agnostic. ai-factory is the kit that installs into a project, not a project that uses it. Everything that must always run lives in repo scripts; hooks and permissions are adapters that call them. Measured on Claude Code first; other tools get an adapter when a real project uses them.
-- Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/<tool>/` (agent definitions, hooks, permission policy), and the installer, which is `init-project`.
+- ai-factory is the kit that installs into a project, not a project that uses it. It targets Claude Code only, on a base built so that pi or OpenCode can be added later by writing an adapter and nothing else. Portability is a design discipline, not a deliverable: a person without Claude Code must be able to run the whole flow with the repo's files and scripts.
+- Rules that keep the base portable: state and contracts in neutral files; everything that must always run lives in scripts with no Claude in them, and hooks only call them; skills speak of files and scripts, never of tool primitives, with anything Claude Code specific in a short section at the end or in the adapter; role text separate from its agent frontmatter; everything tool-specific under `adapters/claude-code/`, so a leak into the core is visible.
+- Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/claude-code/` (agent frontmatter, hooks, permission policy; the only adapter), and the installer, which is `init-project`.
 - The scripts read the project's commands (`test`, `lint`, `build`, `dev`) from a `harness.json` at the project root, written by the installer. Parsing `AGENTS.md` was rejected: it is written for people and breaks when reworded.
-- Models, in the Claude Code adapter: Opus for the main session, Sonnet for the implementer, Haiku for exploration and for what `tdd` excludes.
+- Models: Opus for the main session, Sonnet for the implementer, Haiku for exploration and for what `tdd` excludes.
 - What a project learns stays in the project (`AGENTS.md`, local skills, policy). It moves into the kit only when it repeats in two projects, by hand, with an eval.
 - The harness does not edit itself. Deterministic sensors (the scripts) write a log; a skill invoked by name reads it and proposes additions or removals; the user approves. A line is proposed only after the same failure twice, at the cheapest level first: an `AGENTS.md` line, then a skill, then a hook or deny rule. Every proposal answers: what failure it fixes, whether something simpler would do, what improvement is expected, what it costs, and whether it still helps with the next model.
 - Unattended execution is not a requirement. The orchestrated mode advances on its own between checkpoints, and that is enough until data says otherwise.
@@ -60,7 +61,7 @@ Documents:
 - One task file per stage in `docs/plans/<work>/`, from the template kept from `splitting`: goal, criteria, decisions, open decisions, seam, files, dependencies. A subagent does not see the conversation, so the file carries everything it needs. Opus launches subagents with the file path, not a summary.
 - `PROGRESS.md`: what changed, which tests ran and their results, what is left to test and the next step, so another session can take over after a cut or a `/clear`. It holds state, while `write-why` holds reasons. At a checkpoint it says the work is waiting for review.
 
-Review after each stage is two deterministic checks, not a judgement: the tests pass (`core/scripts/gate.sh`: install, lint, types, tests, build, from `harness.json`), and `git diff --name-only` stays inside the task's files (`core/scripts/check-scope.sh`). Both append one JSON line to `docs/harness/log.jsonl` in the project on every run, pass or fail, so there is evidence to tune on. The Claude Code adapter runs them from a hook after each delegation; any other tool, or a human, runs the same scripts. Only then Opus reads the diff against the criteria.
+Review after each stage is two deterministic checks, not a judgement: the tests pass (`core/scripts/gate.sh`: install, lint, types, tests, build, from `harness.json`), and `git diff --name-only` stays inside the task's files (`core/scripts/check-scope.sh`). Both append one JSON line to `docs/harness/log.jsonl` in the project on every run, pass or fail, so there is evidence to tune on. The Claude Code adapter runs them from a hook after each delegation; a human, or a future adapter, runs the same scripts. Only then Opus reads the diff against the criteria.
 
 Every session, with or without `delegate`, starts the same way: read `PROGRESS.md` and the git log, run `core/scripts/init.sh` (start the project, basic smoke check), run the gate, and only then touch code. Starting a feature on a broken repo makes the next session's job worse. Ending a session is a commit and a `PROGRESS.md` update.
 
@@ -76,7 +77,7 @@ Left out of the first version, each with what would bring it back:
 
 About `splitting`: the skill was tried and removed because, inside one session, splitting was extra work that doubled or tripled tokens and did not activate on its own. In this mode splitting is the plan, so the cost is the price of the mode, and activation is by name. Only the comparison changes: against phase 1 on the same large task, never against a run without the skill.
 
-Installation: skill installers install skills only, and a harness is more than skills. `init-project` becomes the installer: it copies `core/`, picks the adapter from the tool directory it finds (`.claude/`, `.opencode/`), writes `harness.json` and, through `ask-me`, an `AGENTS.md` if there is none, and leaves `init.sh` working. Until that lands, `delegate` keeps copying `assets/implementer.md` to `.claude/agents/` itself.
+Installation: skill installers install skills only, and a harness is more than skills. `init-project` becomes the installer: it copies `core/` and `adapters/claude-code/`, writes `harness.json` and, through `ask-me`, an `AGENTS.md` if there is none, and leaves `init.sh` working. Until that lands, `delegate` keeps copying `assets/implementer.md` to `.claude/agents/` itself.
 
 Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `delegate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments. Still to verify in a run: whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent, and whether an agent file copied during the run is picked up in `claude -p`.
 
@@ -87,11 +88,11 @@ Confirmed in the Claude Code docs: the `skills` field in an agent definition inj
    1. The `implementer` alone, delegated by hand from an Opus session with one task file. Decides whether `skills` preloads, what it costs and whether the report fits.
    2. `gate.sh` and `check-scope.sh` with the log, tried on `acme-app` and on one real project.
    3. Session bootstrap: `init.sh`, the resume header in `PROGRESS.md`, step 0 of `delegate`. Record whether a new session resumes from `PROGRESS.md` after a cut.
-   4. The `core/` and `adapters/claude-code/` layout, templates moved out of `delegate/assets/`, `delegate` rewritten in terms of files and scripts, the hook calling the scripts.
+   4. The `core/` and `adapters/claude-code/` layout, templates moved out of `delegate/assets/`, role text split from agent frontmatter, `delegate` rewritten in terms of files and scripts, the hook calling the scripts.
    5. `init-project` as installer, tried on a fresh clone of a real project.
    6. `tune`, only once a project has at least 10 logged stages.
    7. The runner case and the A/B against phase 1.
-   8. Tester, validator, Haiku for code, parallelism and a second adapter, each only on a recorded failure or a real project that asks for it.
+   8. Tester, validator, Haiku for code and parallelism, each only on a recorded failure that asks for it.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
 Measuring phase 2: the same large task, in `evals/fixtures/acme-app`, needing an expand, migrate and contract, three runs with phase 1 and three with phase 2. Hidden tests and mutants, `red_before_code`, files outside the task, tokens and cost per model (`modelUsage`), time, and by hand whether a new session resumes after a cut. The runner can check in one turn that `/delegate` writes a `PLAN.md` with stages and checkpoints, delegates through `Task` to `implementer`, writes no code from the main session and launches no stage past a checkpoint; it cannot check several turns or a human review.
@@ -112,6 +113,7 @@ llm-council, strategy and OKRs, double red and emoji narration in tdd, starter m
 
 From the harness articles (Leiva, Anthropic), each with what brings it back:
 
+- A second adapter (pi, OpenCode): only when a real project works in that tool. The hands-on mode should port with the adapter alone; `delegate` needs its delegation rethought per tool, because `skills` preload, `SubagentStop` and resuming a subagent are Claude Code's. The fallback that works anywhere is another session given the task file path.
 - A JSON feature list as the source of state, which the model is less likely to overwrite than Markdown: only if a run shows `PLAN.md` or `PROGRESS.md` corrupted.
 - `passing` versus `accepted` as separate states: only if the validator comes back.
 - Auto-applying `tune` proposals: never. If approval becomes the bottleneck, that is a phase 3 question.
