@@ -1,9 +1,9 @@
 ---
 name: code-design
-description: Keeps the design simple and easy to change, without code for needs nobody has stated. Use before adding an interface, class, wrapper, layer or new file, when a request mentions a possible future need, or when another skill needs it. Skip it when the change fits in the code that already exists.
+description: You MUST use this before writing code that adds or changes behaviour. It keeps the design simple and the code small, without classes, layers, files or abstractions for needs nobody has stated. Skip it only for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.5"
+  version: "0.6"
 ---
 
 The best code is the code never written. Solve the whole problem with the least new code. This applies to the tests as well: no test helpers, fixtures or layers until they are needed.
