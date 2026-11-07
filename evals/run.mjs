@@ -94,6 +94,13 @@ function cleanEnv() {
   return Object.fromEntries(Object.entries(process.env).filter(([k]) => !inherited.test(k)));
 }
 
+// Claude Code creates a project folder per cwd even with --no-session-persistence;
+// each run's cwd is a fresh temp dir, so its folder would be left behind for good.
+function projectFolder(cwd) {
+  const config = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+  return path.join(config, 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'));
+}
+
 // Project settings only: the user's own skills, plugins, MCP servers and CLAUDE.md
 // would otherwise reach both configs and contaminate the baseline.
 function claude(argv, { cwd, timeout, input }) {
@@ -118,8 +125,9 @@ function claude(argv, { cwd, timeout, input }) {
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
     child.stdin.end(input);
-    const done = (err) => {
+    const done = async (err) => {
       if (timer) clearTimeout(timer);
+      await rm(projectFolder(cwd), { recursive: true, force: true });
       resolve({ err, stdout, stderr, durationMs: Date.now() - started, timedOut: child.killed });
     };
     timer = setTimeout(() => child.kill('SIGKILL'), timeout);
