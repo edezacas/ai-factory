@@ -6,8 +6,9 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
 
 ## Where we are
 
-- Phase 1 done: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project`, measured with the runner.
-- Phase 2, step 1 (implementer delegated by hand from an Opus session) still pending. Nothing further in phase 2 starts before it.
+- Skills, `delegate` and the scripts are independent tracks; none waits for another.
+- Skills: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project` measured with the runner; 2 of 5 real tasks done, one of them the large task, which phase 1 finished in one session without losing context.
+- `delegate`: the implementer delegated by hand from an Opus session (stage 2) still pending.
 - `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
 - Templates live in `skills/productivity/delegate/assets/`. No scripts, no session bootstrap, no per-project log.
 
@@ -35,7 +36,7 @@ Each stage leaves the repo green and can be committed alone. "Green" is `node ev
 | 7 | Tune skill | `docs/plans/harness/07-tune.md` | `skills/productivity/tune`: reads `log.jsonl` and `PROGRESS.md`, proposes a change only on a repeated failure, cheapest level first, five questions answered, also proposes removals; invoked by name; writes nothing without approval | Other skills | Starts only with at least 10 logged stages in one project; eval: a seeded log with two identical failures yields exactly one proposal, a clean log yields none | **yes** |
 | 8 | Phase 2 vs phase 1 A/B | `docs/plans/harness/08-ab.md` | Runner case for the expand/migrate/contract task in acme-app, as the brief describes | Everything | Three runs each; stop criteria from the brief | no |
 
-Parallel: none. Stage 2 gates everything after it; stages 3 and 4 need the real-project result to know what to log.
+Parallel: stages 2 and 3 are independent and can go in any order. `delegate` uses the scripts once they exist.
 
 ## Recovery
 
