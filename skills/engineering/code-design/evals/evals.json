@@ -242,6 +242,41 @@
           "run": "npx vitest run test/hidden/webhook.test.ts"
         }
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "When the payment provider sends a charge.succeeded webhook, email the customer a receipt. Add it as OrderService.handleChargeSucceeded(event), with the Mailer in src/notifications/mailer.ts as the last constructor parameter. The event format is in docs/payment-events.md.",
+      "files": [
+        "evals/files/src/notifications/mailer.ts",
+        "evals/files/docs/payment-events.md"
+      ],
+      "expected_output": "An event delivered twice sends one receipt, and so does an event redelivered after the first send failed; different events send one receipt each. Nothing says the event can repeat: the docs do not mention delivery guarantees.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "no dependency was added",
+          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
+        },
+        {
+          "name": "no new source file",
+          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
+        },
+        {
+          "name": "no new interface, class or abstraction",
+          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
+        },
+        {
+          "name": "no new comment",
+          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/webhook-unstated.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/webhook-unstated.test.ts"
+        }
+      ]
     }
   ]
 }

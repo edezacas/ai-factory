@@ -12,7 +12,7 @@ The best code is the code never written. Solve the whole problem with the least 
 - **Simple, not careless.** Keep each responsibility in its place, so the next change is easy. Fewer lines never justify hiding a rule inside something else.
 - **Boxes.** Put business rules, data access and presentation where this repo already does. Add a box only when every existing one is wrong.
 - **Pure rules.** A business decision, such as who gets a discount or how much, can be tested with plain values, without a repository, a gateway or a mock. The code around it reads the data, passes it in and acts on the result. This holds even when the decision fits in one line.
-- **Idempotency.** When an operation can be retried, running it twice must leave the same result as running it once.
+- **Idempotency.** Running the same operation twice, or again after a crash halfway through, ends in the same state as running it once.
 - **Abstractions.** Only where something varies today; a single implementation is indirection.
 - **What exists first.** The repo, the standard library, an installed dependency. Leave code that is only superficially similar alone. Never add a dependency for a few lines.
 - **Smallest form.** A line before a helper, a helper before an abstraction. When you abstract or break a convention, say so.
