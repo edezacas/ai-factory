@@ -7,7 +7,7 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
 ## Where we are
 
 - Skills, `delegate` and the scripts are independent tracks; none waits for another.
-- Skills: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project` measured with the runner; 2 of 5 real tasks done, one of them the large task, which phase 1 finished in one session without losing context.
+- Skills: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project` measured with the runner; 3 of 5 real tasks done, one of them the large task, which phase 1 finished in one session without losing context. The third counts with caveats: its prompt also asked to delegate two stages, and `ask-me`, `tdd` and `code-design` did not open in the main session; it left more removable code (about 9% of production lines against about 4%) and comments citing the plan. The next real tasks do not mention `delegate`.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in reband. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
 - `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
 - Templates live in `skills/productivity/delegate/assets/`. No scripts, no session bootstrap, no per-project log.
