@@ -12,9 +12,8 @@ This applies to the tests as well: no helpers, fixtures or layers until they are
 
 ## Separate concerns
 
-* Business rules, data access, presentation and external calls each live in their own place.
+* Business logic, data access, presentation and external calls each live in their own place.
 * Add a layer or module only when a concern has nowhere to go.
-* Fewer lines never justify mixing them.
 
 ## Abstract only what varies today
 
