@@ -11,6 +11,7 @@
 
 ## Decisions
 
+- The code and its tests are the source of truth. A document exists only to add what cannot be deduced from them.
 - Skills are `SKILL.md` files (agentskills.io), harness-agnostic.
 - Start minimal: skills, then one subagent. The orchestrator script, the ledger and optimizations come only if data justifies them.
 - Before writing a skill, run the task without it and confirm the agent fails at what the skill would fix. If it does not fail, do not write it.
@@ -119,6 +120,11 @@ From the harness articles (Leiva, Anthropic), each with what brings it back:
 - Auto-applying `tune` proposals: never. If approval becomes the bottleneck, that is a phase 3 question.
 - A TypeScript installer instead of the `init-project` skill: only if the skill fails to install cleanly in two projects.
 - A fixed chain of specialist subagents: no. Leiva and the Terminal-Bench data agree it is cost without gain on frontier models.
+
+From Anthropic's *Components of agent memory* (2026-11-06), which found that telling an agent to read its memory before answering roughly doubled a model's score, though it measured an agent's own notes, not a repo's records:
+
+- `write-why` adding one line to `AGENTS.md` or `CLAUDE.md` that points to the records folder: only if agents miss a recorded decision, twice, in a real project or in an eval like write-why case 8. Cheapest level first; a script or hook only if the line fails too.
+- Rewriting records that a change contradicts on another subject, or a periodic pass that finds stale records: only if stale records show up in use. It can live in `tune` or in its own skill.
 
 Two skills are also left out, neither measured without the skill, so this is judgement, not data. Their drafts are in this file's git history.
 
