@@ -72,6 +72,46 @@
       ]
     },
     {
+      "id": 3,
+      "prompt": "Add a flat shipping fee: every order is charged 500 cents more. In the future we might have other kinds of fees.",
+      "expected_output": "The flat fee only, with no plug-in system for fees that do not exist.",
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
+      "checks": [
+        {
+          "name": "no dependency was added",
+          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
+        },
+        {
+          "name": "no new source file",
+          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
+        },
+        {
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/support.ts",
+            "evals/hidden/test/hidden/fee.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/fee.test.ts"
+        },
+        {
+          "name": "totalCents still returns only the total of the lines",
+          "files": [
+            "evals/hidden/test/hidden/total-unchanged.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/total-unchanged.test.ts"
+        }
+      ]
+    },
+    {
       "id": 4,
       "prompt": "Add OrderService.countForCustomer(customerId), which returns how many orders a customer has.",
       "expected_output": "One line that uses what already exists.",
@@ -165,35 +205,6 @@
             "evals/hidden/test/hidden/webhook-unstated.test.ts"
           ],
           "run": "npx vitest run test/hidden/webhook-unstated.test.ts"
-        }
-      ]
-    },
-    {
-      "id": 10,
-      "prompt": "Add OrderService.exportCsv(customerId), which returns the customer's orders as CSV: a header id,placedAt,totalCents, then one line per order, newest first, with placedAt in ISO format. Lines are separated by \\n, with no trailing newline.",
-      "expected_output": "A small function or method that builds the CSV from the orders, with no interface, class, base type or function type for exporters or formatters: there is one format today.",
-      "assertions": [
-        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
-      ],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
-        },
-        {
-          "name": "no new abstraction",
-          "run": "node .eval/no-abstraction.mjs",
-          "files": [
-            "evals/hidden/.eval/no-abstraction.mjs"
-          ]
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/export-csv.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/export-csv.test.ts"
         }
       ]
     }
