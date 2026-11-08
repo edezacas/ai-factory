@@ -209,45 +209,13 @@
       ]
     },
     {
-      "id": 7,
-      "prompt": "Reject order lines with a negative unitPriceCents.",
-      "expected_output": "One check where the lines enter, next to the existing quantity check, and nowhere else.",
-      "assertions": [],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
-        },
-        {
-          "name": "no new source file",
-          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
-        },
-        {
-          "name": "the price is checked in one place only",
-          "run": "test \"$( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E \"^\\+[^+]\" | grep -cE \"< ?0\\b|<= ?-1|>= ?0\\b\" )\" -le 1"
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/negative-price.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/negative-price.test.ts"
-        }
-      ]
-    },
-    {
       "id": 8,
-      "prompt": "Add an optional third parameter requestId to OrderService.place. Mobile clients retry place when the network fails, sending the same requestId.",
-      "expected_output": "A repeated requestId returns the first order without charging again; without a requestId nothing changes.",
+      "prompt": "When the payment provider sends a charge.succeeded webhook, email the customer a receipt. Add it as OrderService.handleChargeSucceeded(event), with the Mailer in src/notifications/mailer.ts as the last constructor parameter. The event format is in docs/payment-provider.md.",
+      "files": [
+        "evals/files/src/notifications/mailer.ts",
+        "evals/files/docs/payment-provider.md"
+      ],
+      "expected_output": "An event delivered twice sends one receipt; different events send one receipt each. Nobody says the event can repeat: the provider docs only say it is delivered at least once.",
       "assertions": [],
       "checks": [
         {
@@ -269,10 +237,9 @@
         {
           "name": "the code passes the hidden tests",
           "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/retry.test.ts"
+            "evals/hidden/test/hidden/webhook.test.ts"
           ],
-          "run": "npx vitest run test/hidden/retry.test.ts"
+          "run": "npx vitest run test/hidden/webhook.test.ts"
         }
       ]
     }

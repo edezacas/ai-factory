@@ -11,8 +11,7 @@ The best code is the code never written. Solve the whole problem with the least 
 - **Stated needs only.** A need nobody has stated gets no code. If you leave one out, say so in one line. A stated need counts even if it is for later, such as an expected load.
 - **Simple, not careless.** Keep each responsibility in its place, so the next change is easy. Fewer lines never justify hiding a rule inside something else.
 - **Boxes.** Put business rules, data access and presentation where this repo already does. Add a box only when every existing one is wrong.
-- **Pure rules.** Business rules do no I/O; the code at the edges reads, calls them and writes. Where the repo already mixes them, follow the repo.
-- **Validate once.** Check input where it enters the system; trust it inside.
+- **Pure rules.** A business decision, such as who gets a discount or how much, can be tested with plain values, without a repository, a gateway or a mock. The code around it reads the data, passes it in and acts on the result. This holds even when the decision fits in one line.
 - **Idempotency.** When an operation can be retried, running it twice must leave the same result as running it once.
 - **Abstractions.** Only where something varies today; a single implementation is indirection.
 - **What exists first.** The repo, the standard library, an installed dependency. Leave code that is only superficially similar alone. Never add a dependency for a few lines.
