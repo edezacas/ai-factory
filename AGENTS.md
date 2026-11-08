@@ -12,6 +12,7 @@ Skills and subagents that take an agent from a prompt to validated code: clarify
 node evals/run.mjs                          # every skill, with and without it
 node evals/run.mjs --only ask-me --cases 1 --runs 1 # smoke test
 node evals/run.mjs --regrade --iteration 5  # re-grade without re-running
+node --test core/scripts/                   # tests of gate.mjs and check-scope.mjs
 ```
 Results land in `evals/workspace/iteration-N/`. `benchmark.json` gives median and range per case, how often each assertion passed, and deltas marked `separated` when the two ranges do not overlap.
 
@@ -22,6 +23,7 @@ skills/<category>/<skill>/assets/           # templates
 skills/<category>/<skill>/evals/evals.json  # cases; files in evals/files/ land in the workdir by their path below it
 skills/<category>/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
 evals/fixtures/acme-app/         # the project every run starts from, with code and passing tests
+core/scripts/                    # gate.mjs and check-scope.mjs, run from a project's root; harness.json gives the gate steps
 evals/run.mjs                    # runner, started from edezacas/agent-skills and now specific to Claude Code
 docs/brief.md                    # what is being built, the phases and their stop criteria
 PLAN.md                          # the stages of the current work on the kit, one PR each

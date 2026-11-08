@@ -61,7 +61,7 @@ Documents:
 - One task file per stage in `docs/plans/<work>/`, from the template kept from `splitting`: goal, criteria, decisions, open decisions, seam, files, dependencies. A subagent does not see the conversation, so the file carries everything it needs. Opus launches subagents with the file path, not a summary.
 - `PROGRESS.md`: what changed, which tests ran and their results, what is left to test and the next step, so another session can take over after a cut or a `/clear`. It holds state, while `write-why` holds reasons. At a checkpoint it says the work is waiting for review.
 
-Review after each stage is two deterministic checks, not a judgement: the tests pass (`core/scripts/gate.sh`: install, lint, types, tests, build, from `harness.json`), and `git diff --name-only` stays inside the task's files (`core/scripts/check-scope.sh`). Both append one JSON line to `docs/harness/log.jsonl` in the project on every run, pass or fail, so there is evidence to tune on. The Claude Code adapter runs them from a hook after each delegation; a human, or a future adapter, runs the same scripts. Only then Opus reads the diff against the criteria.
+Review after each stage is two deterministic checks, not a judgement: the tests pass (`core/scripts/gate.mjs`: the ordered, named steps in `harness.json`, such as install, types, tests and build, stopping at the first that fails), and the files changed since the base, untracked ones included, stay inside the backticked paths of the task file's `## Files` (`core/scripts/check-scope.mjs`). The scripts are Node with no dependencies, so they run the same on Windows, macOS and Linux; bash and jq would leave out native Windows. Both append one JSON line to `docs/harness/log.jsonl` in the project on every run, pass or fail, so there is evidence to tune on; the log is committed, so it survives a clone. The Claude Code adapter runs them from a hook after each delegation; a human, or a future adapter, runs the same scripts. Only then Opus reads the diff against the criteria.
 
 Every session, with or without `delegate`, starts the same way: read `PROGRESS.md` and the git log, run `core/scripts/init.sh` (start the project, basic smoke check), run the gate, and only then touch code. Starting a feature on a broken repo makes the next session's job worse. Ending a session is a commit and a `PROGRESS.md` update.
 
@@ -86,7 +86,7 @@ Confirmed in the Claude Code docs: the `skills` field in an agent definition inj
 1. Style skills, `ask-me`, `tdd` and `write-why`, each discovered on its own, in a single session. Try on 5 real tasks, noting each time a cleanup had to be requested after green.
 2. Orchestrated mode, built in this order, each step tried on a real task before the next:
    1. The `implementer` alone, delegated by hand from an Opus session with one task file. Decides whether `skills` preloads, what it costs and whether the report fits.
-   2. `gate.sh` and `check-scope.sh` with the log, tried on `acme-app` and on one real project.
+   2. `gate.mjs` and `check-scope.mjs` with the log, tried on `acme-app` and on one real project.
    3. Session bootstrap: `init.sh`, the resume header in `PROGRESS.md`, step 0 of `delegate`. Record whether a new session resumes from `PROGRESS.md` after a cut.
    4. The `core/` and `adapters/claude-code/` layout, templates moved out of `delegate/assets/`, role text split from agent frontmatter, `delegate` rewritten in terms of files and scripts, the hook calling the scripts.
    5. `init-project` as installer, tried on a fresh clone of a real project.
