@@ -5,7 +5,9 @@
       "id": 1,
       "prompt": "Add OrderService.quote(lines), which returns the total in cents for the given lines without charging or saving anything.",
       "expected_output": "It reuses the existing total calculation in one small method.",
-      "assertions": [],
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
       "checks": [
         {
           "name": "no dependency was added",
@@ -16,12 +18,11 @@
           "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
         },
         {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
         },
         {
           "name": "reuses the existing total, no new calculation",
@@ -41,7 +42,9 @@
       "id": 2,
       "prompt": "Orders of 10000 cents or more get 10% off the amount charged. Apply it in OrderService.place.",
       "expected_output": "A small conditional where the amount is charged, with no rule engine.",
-      "assertions": [],
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
       "checks": [
         {
           "name": "no dependency was added",
@@ -52,12 +55,11 @@
           "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
         },
         {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
         },
         {
           "name": "the code passes the hidden tests",
@@ -73,7 +75,9 @@
       "id": 4,
       "prompt": "Add OrderService.countForCustomer(customerId), which returns how many orders a customer has.",
       "expected_output": "One line that uses what already exists.",
-      "assertions": [],
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
       "checks": [
         {
           "name": "no dependency was added",
@@ -84,12 +88,11 @@
           "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
         },
         {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
         },
         {
           "name": "the code passes the hidden tests",
@@ -109,23 +112,20 @@
         "evals/files/docs/payment-provider.md"
       ],
       "expected_output": "An event delivered twice sends one receipt; different events send one receipt each. Nobody says the event can repeat: the provider docs only say it is delivered at least once.",
-      "assertions": [],
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
       "checks": [
         {
           "name": "no dependency was added",
           "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
         },
         {
-          "name": "no new source file",
-          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
         },
         {
           "name": "the code passes the hidden tests",
@@ -144,23 +144,20 @@
         "evals/files/docs/payment-events.md"
       ],
       "expected_output": "An event delivered twice sends one receipt, and so does an event redelivered after the first send failed; different events send one receipt each. Nothing says the event can repeat: the docs do not mention delivery guarantees.",
-      "assertions": [],
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
       "checks": [
         {
           "name": "no dependency was added",
           "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
         },
         {
-          "name": "no new source file",
-          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
         },
         {
           "name": "the code passes the hidden tests",
