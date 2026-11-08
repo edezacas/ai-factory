@@ -26,7 +26,7 @@
 
 ## Files
 
-- <Files this task creates or changes.>
+- <Files this task creates or changes, with a test file for each new behaviour, including queries against the database. No test is optional.>
 
 ## Depends on
 

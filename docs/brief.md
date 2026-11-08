@@ -127,7 +127,7 @@ Two skills are also left out, neither measured without the skill, so this is jud
 
 ## Pending decisions
 
-- Whether the implementer applies the preloaded skills in practice, to verify in step 1 of phase 2.
+- None. Step 1 of phase 2 answered the last one: the implementer applies the preloaded skills. Two tasks in a real repo (2026-11-08) showed `tdd` and `code-design` injected at start, a test seen failing before code, only the listed files touched and the four-field report.
 
 ## References (use as ideas, do not copy)
 
