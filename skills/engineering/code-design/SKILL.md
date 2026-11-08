@@ -3,7 +3,7 @@ name: code-design
 description: You MUST use this before writing code that adds or changes behaviour. It keeps the design simple and the code small, without classes, layers, files or abstractions for needs nobody has stated. Skip it only for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.6"
+  version: "0.7"
 ---
 
 The best code is the code never written. Solve the whole problem with the least new code. This applies to the tests as well: no test helpers, fixtures or layers until they are needed.
@@ -11,6 +11,9 @@ The best code is the code never written. Solve the whole problem with the least 
 - **Stated needs only.** A need nobody has stated gets no code. If you leave one out, say so in one line. A stated need counts even if it is for later, such as an expected load.
 - **Simple, not careless.** Keep each responsibility in its place, so the next change is easy. Fewer lines never justify hiding a rule inside something else.
 - **Boxes.** Put business rules, data access and presentation where this repo already does. Add a box only when every existing one is wrong.
+- **Pure rules.** Business rules do no I/O; the code at the edges reads, calls them and writes. Where the repo already mixes them, follow the repo.
+- **Validate once.** Check input where it enters the system; trust it inside.
+- **Idempotency.** When an operation can be retried, running it twice must leave the same result as running it once.
 - **Abstractions.** Only where something varies today; a single implementation is indirection.
 - **What exists first.** The repo, the standard library, an installed dependency. Leave code that is only superficially similar alone. Never add a dependency for a few lines.
 - **Smallest form.** A line before a helper, a helper before an abstraction. When you abstract or break a convention, say so.
