@@ -34,7 +34,8 @@ This applies to the tests as well: no helpers, fixtures or layers until they are
 
 ## Reuse before writing
 
-* Look first in the repo, the standard library and the installed dependencies.
+* Before adding a function, method or service, reuse existing code if it does the job.
+* Don't force reuse of code that only looks similar.
 * Never add a dependency for a few lines.
 
 ## Make operations idempotent
