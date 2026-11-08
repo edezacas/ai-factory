@@ -167,6 +167,35 @@
           "run": "npx vitest run test/hidden/webhook-unstated.test.ts"
         }
       ]
+    },
+    {
+      "id": 10,
+      "prompt": "Add OrderService.exportCsv(customerId), which returns the customer's orders as CSV: a header id,placedAt,totalCents, then one line per order, newest first, with placedAt in ISO format. Lines are separated by \\n, with no trailing newline.",
+      "expected_output": "A small function or method that builds the CSV from the orders, with no interface, class, base type or function type for exporters or formatters: there is one format today.",
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
+      "checks": [
+        {
+          "name": "no dependency was added",
+          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
+        },
+        {
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/support.ts",
+            "evals/hidden/test/hidden/export-csv.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/export-csv.test.ts"
+        }
+      ]
     }
   ]
 }
