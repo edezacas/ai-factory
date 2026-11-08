@@ -13,7 +13,6 @@ This applies to the tests as well: no helpers, fixtures or layers until they are
 ## Separate concerns
 
 * Business rules, data access, presentation and external calls each live in their own place.
-* Use the places the repo already has.
 * Add a layer or module only when a concern has nowhere to go.
 * Fewer lines never justify mixing them.
 
