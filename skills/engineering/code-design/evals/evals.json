@@ -207,6 +207,46 @@
           "run": "npx vitest run test/hidden/webhook-unstated.test.ts"
         }
       ]
+    },
+    {
+      "id": 11,
+      "prompt": "Add OrderService.summary(customerId), which returns a line like \"c1: 3 orders, 45.00 EUR spent\".",
+      "files": [
+        "evals/files/src/shared/text.ts"
+      ],
+      "expected_output": "summary reuses plural and amount from src/shared/text.ts and the existing order lookup; it does not format cents or pluralise again.",
+      "assertions": [
+        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
+      ],
+      "checks": [
+        {
+          "name": "no dependency was added",
+          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
+        },
+        {
+          "name": "no new source file",
+          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
+        },
+        {
+          "name": "no new abstraction",
+          "run": "node .eval/no-abstraction.mjs",
+          "files": [
+            "evals/hidden/.eval/no-abstraction.mjs"
+          ]
+        },
+        {
+          "name": "reuses the existing formatting, no new one",
+          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src/orders | grep -E \"^\\+[^+]\" | grep -E \"/ ?100|% ?100|toFixed|padStart|=== ?1 ?\\?\" )"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/support.ts",
+            "evals/hidden/test/hidden/summary.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/summary.test.ts"
+        }
+      ]
     }
   ]
 }
