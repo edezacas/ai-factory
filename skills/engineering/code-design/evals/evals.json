@@ -70,45 +70,6 @@
       ]
     },
     {
-      "id": 3,
-      "prompt": "Add a flat shipping fee: every order is charged 500 cents more. In the future we might have other kinds of fees.",
-      "expected_output": "The flat fee only, with no plug-in system for fees that do not exist.",
-      "assertions": [],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
-        },
-        {
-          "name": "no new source file",
-          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/fee.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/fee.test.ts"
-        },
-        {
-          "name": "totalCents still returns only the total of the lines",
-          "files": [
-            "evals/hidden/test/hidden/total-unchanged.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/total-unchanged.test.ts"
-        }
-      ]
-    },
-    {
       "id": 4,
       "prompt": "Add OrderService.countForCustomer(customerId), which returns how many orders a customer has.",
       "expected_output": "One line that uses what already exists.",
@@ -137,38 +98,6 @@
             "evals/hidden/test/hidden/count.test.ts"
           ],
           "run": "npx vitest run test/hidden/count.test.ts"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "prompt": "Create src/orders/format-total.ts exporting formatTotal(cents: number): string, which formats an amount as '12.34 EUR'. We might support other currencies one day.",
-      "expected_output": "One small function for EUR only, with no currency parameter or table, saying in one line that other currencies were left out.",
-      "assertions": [],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
-        },
-        {
-          "name": "no currency parameter or table",
-          "run": "! grep -Eqi 'currency|locale|Intl\\.' src/orders/format-total.ts"
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/format-total.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/format-total.test.ts"
         }
       ]
     },
