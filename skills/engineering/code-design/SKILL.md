@@ -16,13 +16,6 @@ This applies to the tests as well: no helpers, fixtures or layers until they are
 * Add a layer or module only when a concern has nowhere to go.
 * Fewer lines never justify mixing them.
 
-## Keep business rules free of I/O and frameworks
-
-* A business rule can be tested with plain values.
-* The caller reads the data, passes it in and acts on the result.
-* This holds even when the rule fits in one line.
-* Apply it to the code you touch; leave the rest as it is.
-
 ## Abstract only what varies today
 
 * No interface, base class or factory with one implementation.

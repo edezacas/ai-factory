@@ -19,7 +19,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 ### Engineering
 
 - **[tdd](skills/engineering/tdd/SKILL.md)**: The agent writes the test before the code and sees it fail, with tests that come from your requirements and check what the code does, not how.
-- **[code-design](skills/engineering/code-design/SKILL.md)**: The agent writes clean code with just enough architecture: business rules free of I/O and frameworks, each concern in the place the repo already has, no abstraction with a single implementation, operations safe to repeat.
+- **[code-design](skills/engineering/code-design/SKILL.md)**: The agent writes clean code with just enough architecture: each concern in its own place without new layers, no abstraction with a single implementation, operations safe to repeat.
 
 ### Performance
 

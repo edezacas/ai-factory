@@ -41,9 +41,7 @@
       "id": 2,
       "prompt": "Orders of 10000 cents or more get 10% off the amount charged. Apply it in OrderService.place.",
       "expected_output": "A small conditional where the amount is charged, with no rule engine.",
-      "assertions": [
-        "The discount decision is a function that receives plain values, such as the total, and does no I/O; place calls it and charges the result."
-      ],
+      "assertions": [],
       "checks": [
         {
           "name": "no dependency was added",
@@ -60,10 +58,6 @@
         {
           "name": "no new comment",
           "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
-        },
-        {
-          "name": "the rule is not written inside the service",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src/orders/order-service.ts | grep -E \"^\\+[^+]\" | grep -E \"\\b10_?000\\b|\\b0?\\.9\\b|\\b0?\\.1\\b|/ ?10\\b|\\b90\\b\" )"
         },
         {
           "name": "the code passes the hidden tests",
@@ -104,44 +98,6 @@
             "evals/hidden/test/hidden/count.test.ts"
           ],
           "run": "npx vitest run test/hidden/count.test.ts"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "prompt": "Customers with 3 or more previous orders get 500 cents off. Apply it in OrderService.place.",
-      "expected_output": "The rule is a small function that takes the number of previous orders and does no I/O; place reads the orders, calls it and charges.",
-      "assertions": [
-        "The discount decision is a function that receives plain values, such as the number of previous orders, and does no I/O; place reads the orders, calls it and charges the result."
-      ],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
-        },
-        {
-          "name": "no new source file",
-          "run": "test -z \"$( git ls-files -o --exclude-standard src; git diff --name-only --diff-filter=A $(git rev-list --max-parents=0 HEAD) -- src )\""
-        },
-        {
-          "name": "no new interface, class or abstraction",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '\\b(interface|abstract|class|implements)\\b' )"
-        },
-        {
-          "name": "no new comment",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src | grep -E '^\\+[^+]' | grep -E '(^\\+\\s*//|/\\*)' )"
-        },
-        {
-          "name": "the rule is not written inside the service",
-          "run": "! ( git add -A -N src && git diff $(git rev-list --max-parents=0 HEAD) -- src/orders/order-service.ts | grep -E \"^\\+[^+]\" | grep -E \"\\b500\\b|>= ?3|> ?2\" )"
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/support.ts",
-            "evals/hidden/test/hidden/loyalty.test.ts"
-          ],
-          "run": "npx vitest run test/hidden/loyalty.test.ts"
         }
       ]
     },
