@@ -138,13 +138,9 @@
       ]
     },
     {
-      "id": 8,
-      "prompt": "When the payment provider sends a charge.succeeded webhook, email the customer a receipt. Add it as OrderService.handleChargeSucceeded(event), with the Mailer in src/notifications/mailer.ts as the last constructor parameter. The event format is in docs/payment-provider.md.",
-      "files": [
-        "evals/files/src/notifications/mailer.ts",
-        "evals/files/docs/payment-provider.md"
-      ],
-      "expected_output": "An event delivered twice sends one receipt; different events send one receipt each. Nobody says the event can repeat: the provider docs only say it is delivered at least once.",
+      "id": 10,
+      "prompt": "Prices of existing orders were saved without VAT. Add applyVat(orders: OrderRepository) in src/orders/apply-vat.ts that adds 21% VAT to the totalCents of every saved order.",
+      "expected_output": "Every order ends with VAT applied once, whether the migration runs once, twice, or again after failing halfway. Nothing in the prompt says it may run more than once.",
       "assertions": [
         "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
       ],
@@ -154,50 +150,25 @@
           "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
         },
         {
-          "name": "no new abstraction",
-          "run": "node .eval/no-abstraction.mjs",
+          "name": "applies VAT once",
           "files": [
-            "evals/hidden/.eval/no-abstraction.mjs"
-          ]
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/webhook.test.ts"
+            "evals/hidden/test/hidden/vat.test.ts"
           ],
-          "run": "npx vitest run test/hidden/webhook.test.ts"
-        }
-      ]
-    },
-    {
-      "id": 9,
-      "prompt": "When the payment provider sends a charge.succeeded webhook, email the customer a receipt. Add it as OrderService.handleChargeSucceeded(event), with the Mailer in src/notifications/mailer.ts as the last constructor parameter. The event format is in docs/payment-events.md.",
-      "files": [
-        "evals/files/src/notifications/mailer.ts",
-        "evals/files/docs/payment-events.md"
-      ],
-      "expected_output": "An event delivered twice sends one receipt, and so does an event redelivered after the first send failed; different events send one receipt each. Nothing says the event can repeat: the docs do not mention delivery guarantees.",
-      "assertions": [
-        "Every new comment explains a workaround, a hidden invariant or a trade-off; none restates the code or cites a ticket or a plan. No new comment also passes."
-      ],
-      "checks": [
-        {
-          "name": "no dependency was added",
-          "run": "git diff --quiet $(git rev-list --max-parents=0 HEAD) -- package.json"
+          "run": "npx vitest run test/hidden/vat.test.ts -t '^applies VAT once$'"
         },
         {
-          "name": "no new abstraction",
-          "run": "node .eval/no-abstraction.mjs",
+          "name": "running it twice applies VAT once",
           "files": [
-            "evals/hidden/.eval/no-abstraction.mjs"
-          ]
-        },
-        {
-          "name": "the code passes the hidden tests",
-          "files": [
-            "evals/hidden/test/hidden/webhook-unstated.test.ts"
+            "evals/hidden/test/hidden/vat.test.ts"
           ],
-          "run": "npx vitest run test/hidden/webhook-unstated.test.ts"
+          "run": "npx vitest run test/hidden/vat.test.ts -t '^running it twice'"
+        },
+        {
+          "name": "running it again after a crash halfway applies VAT once",
+          "files": [
+            "evals/hidden/test/hidden/vat.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/vat.test.ts -t '^running it again after a crash'"
         }
       ]
     }

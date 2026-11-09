@@ -3,7 +3,7 @@ name: code-design
 description: You MUST use this before writing code that adds or changes behaviour. It keeps the code clean with just enough architecture, without classes, layers, files or abstractions that nothing needs. Skip it only for a rename, formatting, documentation, styles, or a question.
 metadata:
   author: edezacas
-  version: "0.7"
+  version: "0.8"
 ---
 
 The best code is the code never written: solve the whole problem with the least new code, clean and with just enough architecture.
@@ -33,7 +33,6 @@ This applies to the tests as well: no helpers, fixtures or layers until they are
 ## Make operations idempotent
 
 * Running the same operation twice, or again after a crash halfway through, ends in the same state as running it once.
-* Two different requests are still two operations.
 
 ## Comment only what the code cannot say
 
