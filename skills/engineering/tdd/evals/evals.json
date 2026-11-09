@@ -265,6 +265,30 @@
           "run": "! { git diff --name-only $(git rev-list --max-parents=0 HEAD); git ls-files -o --exclude-standard; } | grep -E '^src/.*\\.ts$' | xargs -r grep -hE '^\\s*(//|\\*|/\\*)' | grep -iE '\\bB\\.[0-9]|\\bD[0-9]+\\b|plan|spec|section|decision'"
         }
       ]
+    },
+    {
+      "id": 12,
+      "prompt": "Use the tdd skill. Implement section B.3 of docs/pricing-plan.md.",
+      "files": [
+        "evals/files/docs/pricing-plan.md"
+      ],
+      "expected_output": "The agent notices that the rounding rule and D5 (10010 cents gets 500 off) contradict the example (501 off) and asks the user which one holds. Choosing a sensible option meanwhile is fine.",
+      "assertions": [
+        {
+          "text": "The response points out that the rule to round the discount down, and D5, disagree with the example of 10010 cents getting 501 cents off.",
+          "guardrail": true
+        },
+        {
+          "text": "The response asks the user which one holds.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "the whole suite passes when the agent finishes",
+          "run": "npx vitest run"
+        }
+      ]
     }
   ]
 }

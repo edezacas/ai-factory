@@ -109,24 +109,6 @@
       "prompt": "What does src/index.ts do?",
       "expected_output": "The agent answers the question with no interview.",
       "assertions": []
-    },
-    {
-      "id": 10,
-      "prompt": "Implement section B.3 of docs/plan.md.",
-      "files": [
-        "evals/files/docs/plan.md"
-      ],
-      "expected_output": "The agent notices that the rounding rule and D5 (round down: 10010 cents gets 500 off) contradict the example (501 off) and asks which one to follow, instead of choosing one and reporting it.",
-      "assertions": [
-        "The response points out that the rule to round the discount down, and D5, disagree with the example of 10010 cents getting 501 cents off.",
-        "The response asks the user which one to follow. It fails if it reports one as already chosen, even with a reason, such as 'I followed the rounding rule' or 'I matched the example'."
-      ],
-      "checks": [
-        {
-          "name": "the whole suite passes when the agent finishes",
-          "run": "npx vitest run"
-        }
-      ]
     }
   ]
 }
