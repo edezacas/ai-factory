@@ -16,7 +16,12 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
     - In 3 tasks, existing code or repo conventions were not reused.
     - Comments still restate the code in task 5 with `code-design` open.
     - Twice, the user and not the agent raised a key risk. One task opened with a "how do we" question, so `ask-me` did not open.
-  - Next: an eval for a decision that changes during implementation, then a larger fixture for reuse and conventions. Baseline first in both.
+  - Follow-up on 2026-11-09:
+    - A spec that contradicts itself: the agent asks in every run, and its own choice is sensible. It stays as a `tdd` guardrail case.
+    - `ask-me` 0.12 skips only when the request says exactly what to change.
+    - Reuse and conventions did not reproduce in a 27-file repo: the model reuses on its own there.
+    - Activation is measured with Opus. Sonnet opened `code-design` in 1 of 15 runs.
+  - **The skills track is closed.** `angular-conventions`, `init-project` and `web-performance` stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in reband. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
 - `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
 - Templates live in `skills/productivity/delegate/assets/`. `core/scripts/gate.mjs` and `check-scope.mjs` exist and write `docs/harness/log.jsonl`. There is no session bootstrap yet.
