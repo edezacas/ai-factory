@@ -1,9 +1,9 @@
 ---
 name: ask-me
-description: You MUST use this before writing code, or when asked to move on with decisions still open, whenever a request leaves open a requirement, term, edge case or decision, even if a sensible default seems obvious. Explore first. It interviews the user so no decision is forgotten and none is taken on their behalf. Skip it only when the outcome is fully specified, or for a question.
+description: You MUST use this before writing code, or when asked to move on with decisions still open, whenever a request leaves open a requirement, term, edge case or decision, even if a sensible default seems obvious. Explore first. It interviews the user so no decision is forgotten and none is taken on their behalf. Skip it only when the request says exactly what to change.
 metadata:
   author: edezacas
-  version: "0.11"
+  version: "0.12"
 ---
 
 Prevent two failures: a **forgotten decision**, which nobody noticed had to be made, and a **phantom decision**, which reaches the work without anyone making it.
