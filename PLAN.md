@@ -7,10 +7,19 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
 ## Where we are
 
 - Skills, `delegate` and the scripts are independent tracks; none waits for another.
-- Skills: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project` measured with the runner; 3 of 5 real tasks done, one of them the large task, which phase 1 finished in one session without losing context. The third counts with caveats: its prompt also asked to delegate two stages, and `ask-me`, `tdd` and `code-design` did not open in the main session; it left more removable code (about 9% of production lines against about 4%) and comments citing the plan. The next real tasks do not mention `delegate`.
+- Skills: `ask-me`, `tdd`, `code-design`, `write-why`, `init-project` measured with the runner. The 5 real tasks of phase 1 are done (2026-11-06 to 2026-11-09). One of them is the large task, which phase 1 finished in one session without losing context. The third counts with caveats, because its prompt also asked to delegate.
+  - No cleanup was requested after green in any task, so `tidy` stays out. No session compacted.
+  - `tdd` showed red before code whenever it opened. Since `code-design` v0.6, `code-design` and `tdd` open on their own before code.
+  - Removable production code found by an independent review: about 4%, 9%, 2% and 12% in tasks 2 to 5.
+  - Repeated misses:
+    - In 4 of 5 tasks, a decision was taken or changed during implementation without asking. Once it contradicted a confirmed one. `ask-me` is no longer active by then.
+    - In 3 tasks, existing code or repo conventions were not reused.
+    - Comments still restate the code in task 5 with `code-design` open.
+    - Twice, the user and not the agent raised a key risk. One task opened with a "how do we" question, so `ask-me` did not open.
+  - Next: an eval for a decision that changes during implementation, then a larger fixture for reuse and conventions. Baseline first in both.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in reband. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
 - `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
-- Templates live in `skills/productivity/delegate/assets/`. No scripts, no session bootstrap, no per-project log.
+- Templates live in `skills/productivity/delegate/assets/`. `core/scripts/gate.mjs` and `check-scope.mjs` exist and write `docs/harness/log.jsonl`. There is no session bootstrap yet.
 
 ## Decisions this plan adds to `docs/brief.md`
 
