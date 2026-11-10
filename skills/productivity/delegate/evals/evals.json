@@ -8,16 +8,16 @@
         "evals/files/notes/order-management.md",
         "evals/files/.claude/agents/implementer.md"
       ],
-      "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, installs the implementer, delegates the first stage to it with the path of its task file, reviews the result, runs the tests, writes PROGRESS.md and stops at the first checkpoint without starting the next stage.",
+      "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, delegates each stage to the implementer with the path of its task file, reviews the result, runs the tests and records PROGRESS.md. It stops at every checkpoint and goes on only after the user replies, until the work is done.",
       "assertions": [
         "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
-        "Placing, listing and cancelling orders are in separate stages, and no stage only adds a layer with no observable behaviour.",
+        "Every stage adds behaviour a test can observe; no stage only adds a layer, an interface or a type.",
         "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam, its files and its dependencies.",
         "The 24-hour cancellation decision has its reason written as not stated, with no invented reason.",
-        "The transcript shows a subagent named implementer launched with the path of a task file, not with a summary of the task.",
+        "Every stage went to a subagent named implementer that ran, launched with the path of its task file, not with a summary of the task.",
         "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
-        "PROGRESS.md records what changed, the tests run with their result and the next step, and says the work is waiting for review.",
-        "The response ends at the first checkpoint and does not launch the next stage."
+        "PROGRESS.md records each stage with what changed and the tests run with their result, and says the work is done.",
+        "The agent stopped at every checkpoint marked in PLAN.md and started the next stage only after a user reply."
       ],
       "checks": [
         {
@@ -33,14 +33,82 @@
           "run": "test -f PROGRESS.md"
         },
         {
-          "name": "implementer installed",
-          "run": "test -f .claude/agents/implementer.md"
-        },
-        {
           "name": "tests pass",
           "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/order-management.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/order-management.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on a correct implementation",
+          "files": [
+            "evals/hidden/mutants/order-management/src/orders/order.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-repository.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-service.ts",
+            "evals/hidden/mutants/order-management/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/order-management/src/notifications/email-sender.ts"
+          ],
+          "run": "cp -r mutants/order-management/src/. src/ && npx vitest run --exclude test/hidden/**",
+          "reference": true
+        },
+        {
+          "name": "agent tests catch: a cancel is still allowed at exactly 24 hours",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/>= CANCEL_WINDOW_MS/> CANCEL_WINDOW_MS/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancel does not refund",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/this.payments.refund(/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a shipped order can be cancelled",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/status === '\\''shipped'\\''/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an order already cancelled is refunded again",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/status === '\\''cancelled'\\'') throw/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed refund still cancels the order",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/^    await this.payments.refund(order.chargeId, order.totalCents)$/    await this.payments.refund(order.chargeId, order.totalCents).catch(() => {})/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: another customer's order gives a different error",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/if (!order || order.customerId !== customerId) throw new Error('\\''Order not found'\\'')/if (!order) throw new Error('\\''Order not found'\\''); if (order.customerId !== customerId) throw new Error('\\''Not your order'\\'')/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed email fails the order",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/} catch {/} catch (err) { throw err/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the email goes to the customer id",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/sendOrderConfirmation(email, order)/sendOrderConfirmation(customerId, order)/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelled orders drop out of the list",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/return orders.sort(/return orders.filter((o) => o.status !== '\\''cancelled'\\'').sort(/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
         }
-      ]
+      ],
+      "replies": [
+        "continue",
+        "continue",
+        "continue",
+        "continue",
+        "continue"
+      ],
+      "until": "grep -qiE '^\\*\\*Status:\\*\\* *done' PROGRESS.md"
     },
     {
       "id": 2,
@@ -69,6 +137,22 @@
         {
           "name": "no plan was written",
           "run": "test ! -f PLAN.md && test ! -d docs/plans"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Runner smoke test, not a task: remember the word kiwi and reply only OK.",
+      "replies": [
+        "Write the word I asked you to remember to word.txt, nothing else.",
+        "Append the word done on a new line of word.txt."
+      ],
+      "expected_output": "The second and third turns resume the first session: word.txt holds kiwi, then done.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "the replies resumed one session",
+          "run": "test \"$(cat word.txt)\" = \"$(printf \"kiwi\\ndone\")\""
         }
       ]
     }
