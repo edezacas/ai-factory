@@ -56,6 +56,9 @@ const regrade = args.includes('--regrade');
 const model = opt('model', 'claude-sonnet-5-5');
 const judgeModel = opt('judge-model', 'claude-opus-5-5');
 const budget = opt('budget', '3');
+// dontAsk refuses writes under .claude/ even for allowed tools; bypassPermissions lets a
+// skill install files there. The workdir is a temporary copy outside this repo.
+const permissionMode = opt('permission-mode', 'dontAsk');
 const repetitions = Number(opt('runs', 3));
 const alsoInstall = opt('also', '').split(',').filter(Boolean);
 const AGENT_TOOLS = 'Bash,Edit,Read,Write,Skill,Task';
@@ -751,7 +754,7 @@ async function runCase(skill, testCase, itDir, repetition) {
       '--model', model,
       '--tools', AGENT_TOOLS,
       '--allowedTools', AGENT_TOOLS,
-      '--permission-mode', 'dontAsk',
+      '--permission-mode', permissionMode,
       '--max-budget-usd', budget,
     ];
     const started = Date.now();
@@ -878,6 +881,7 @@ async function regradeIteration(itDir) {
     created_at: meta.created_at,
     model: meta.model,
     judge_model: meta.judge_model,
+    permission_mode: meta.permission_mode,
     configs: meta.configs,
     runs_per_case: meta.runs_per_case,
     also_install: meta.also_install,
@@ -921,7 +925,7 @@ async function main() {
   await mkdir(itDir, { recursive: true });
   for (const skill of skills) await cp(skill.dir, path.join(itDir, 'skills', skill.name), { recursive: true });
 
-  console.log(`iteration-${it} · ${model} · judge ${judgeModel} · configs: ${configs.join(',')} · runs: ${repetitions} · jobs: ${jobs}`);
+  console.log(`iteration-${it} · ${model} · judge ${judgeModel} · ${permissionMode} · configs: ${configs.join(',')} · runs: ${repetitions} · jobs: ${jobs}`);
 
   const queue = [];
   for (const skill of skills) {
@@ -955,6 +959,7 @@ async function main() {
     created_at: new Date().toISOString(),
     model,
     judge_model: judgeModel,
+    permission_mode: permissionMode,
     configs,
     runs_per_case: repetitions,
     also_install: alsoInstall,
