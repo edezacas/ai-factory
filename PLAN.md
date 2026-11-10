@@ -23,9 +23,9 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
     - Activation is measured with Opus. Sonnet opened `code-design` in 1 of 15 runs.
   - **The skills track is closed.** `angular-conventions`, `init-project` and `web-performance` stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in a real repo. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
-- `delegate` is being redesigned as v0.3 (see "Redesign of `delegate`" in `docs/brief.md` for the design, and the stages below). Before it is built, v0.2 runs one task in `evals/fixtures/acme-app` and its tokens per model (`modelUsage`) are recorded as the baseline, because the real-repo figures above cannot be repeated. The redesign is kept only if it costs less on that same task, with the same result.
-- `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
-- Templates live in `skills/productivity/delegate/assets/`. `core/scripts/gate.mjs` and `check-scope.mjs` exist and write `docs/harness/log.jsonl`. There is no session bootstrap yet.
+- `delegate` is at v0.3 (2026-11-10): R1, R2, R3, R5 and R6 are done, with their results below. A branch per work, a commit per stage, the scope check and an untouched `main` stay after R6: they cost 17 % more than v0.2.1 on case 1, below the 30 % cap, with the same result. Whether the review rule saves anything is decided in R7, on a larger task. R4 (verifier) is pending and independent.
+- Install is global: `delegate` with its `assets/` among the user's skills, the implementer in `~/.claude/agents/`. `gate.mjs` and `check-scope.mjs` live in `delegate`'s `assets/` and log the skill version; only `harness.json` lives in a project, at its root. `PLAN.md` and `PROGRESS.md` of a work go in `docs/plans/<work>/`. `delegate` is invoked by name only, and the user treats it as an agent, so it may name other skills.
+- Claude Code specific: `Agent`, `.claude/agents/`, `model`, `skills` preload. No `SubagentStop` hook and no session bootstrap yet.
 
 ## Decisions this plan adds to `docs/brief.md`
 
@@ -68,6 +68,14 @@ Design and reasons are in `docs/brief.md`. The task for every measurement is `sk
 | R7 | The review rule on a large task | Notes, hidden tests and mutants for a task of six to eight stages with diffs across several files and one expand, migrate and contract; three baseline runs on v0.2.1 and three on v0.3 | Case 1 and its figures | v0.3's review rule stays only if the main session's cost after the first delegation is lower and `separated`, with the same hidden tests and mutants | **yes**, the end |
 
 R4 is independent of R5 and R6 and can go in any order after R2, whose mutants it uses. The first real-repo task on v0.3 records the two figures the brief asks for about `Explore`.
+
+**Next: R7.** Proposed to the user on 2026-11-10 and not yet agreed:
+- **The task.** On the fixture with order management already built (the R2 reference), "customer accounts and partial cancellation". A customer store holds the email. `place` goes through expand, migrate and contract: `place(customerId, lines)` looks up the email, a new `src/clients/storefront.ts` plays the other team and is migrated, then the `email` parameter goes. Cancelling one line within 24 hours refunds that line and recalculates the total, with an email for it. That makes six to eight stages, with diffs across several files.
+- **The notes** settle the interface, error messages, concurrency and edge cases before the first run, as R2 and R3 taught.
+- **Hidden tests, a reference and mutants,** with `mutants/catch.mjs`, validated as in R2.
+- **The runner** computes the split by phase itself, from per-model prices, into `timing.json`: the main session's cost before and after the first delegation. It also installs a skill from a git ref (`--skill-ref`), so the baseline runs v0.2.1 while master holds v0.3.
+- **The runs:** three on v0.2.1 and three on v0.3, estimated at $2-4 each.
+- Preparing this, the first four items, is one session; the runs and the decision another.
 
 ### R1 results (2026-11-10, iterations 118 to 122)
 

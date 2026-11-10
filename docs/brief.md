@@ -79,7 +79,7 @@ Lessons from that orchestrator, both observed in real use:
 - The analysis and the answers from `ask-me` stay in the main session. When a subagent did the clarifying, the orchestrator lacked part of the information.
 - A verifier that starts from empty context, on a different model from the implementer, caught failures that had slipped past. This is the evidence behind the `verifier` below.
 
-Goal: subagents start from empty context with only what their task needs; the orchestrator keeps the whole analysis and delegates only test and code; a separate agent verifies when the user asks. v0.3 is kept only if it costs less than v0.2 on the baseline task in `PLAN.md`, with the same result.
+Goal: subagents start from empty context with only what their task needs; the orchestrator keeps the whole analysis and delegates only test and code; a separate agent verifies when the user asks. The baseline task in `PLAN.md` decided its safety pieces (a branch per work, a commit per stage, the scope check): they stay, at 17 % more cost with the same result, within the 30 % the user accepted. Its diffs are too small to test the review rule, so a larger task decides that, kept only if the main session's cost after the first delegation goes down with the same result.
 
 The design of v0.3, each piece with the failure it answers. Until the baseline shows where the main session's tokens go, the review rule is a hypothesis.
 
