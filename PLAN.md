@@ -23,7 +23,7 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
     - Activation is measured with Opus. Sonnet opened `code-design` in 1 of 15 runs.
   - **The skills track is closed.** `angular-conventions`, `init-project` and `web-performance` stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in a real repo. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
-- `delegate` is being redesigned from scratch (see "Redesign of `delegate`" in `docs/brief.md`). Before the redesign is built, v0.2 runs one task in `evals/fixtures/acme-app` and its tokens per model (`modelUsage`) are recorded as the baseline, because the real-repo figures above cannot be repeated. The redesign is kept only if it costs less on that same task, with the same result.
+- `delegate` is being redesigned as v0.3 (see "Redesign of `delegate`" in `docs/brief.md` for the design, and the stages below). Before it is built, v0.2 runs one task in `evals/fixtures/acme-app` and its tokens per model (`modelUsage`) are recorded as the baseline, because the real-repo figures above cannot be repeated. The redesign is kept only if it costs less on that same task, with the same result.
 - `delegate` v0.2 exists and is Claude Code specific: `Task`, `.claude/agents/`, `model`, `skills` preload, `SubagentStop` hook (not built yet).
 - Templates live in `skills/productivity/delegate/assets/`. `core/scripts/gate.mjs` and `check-scope.mjs` exist and write `docs/harness/log.jsonl`. There is no session bootstrap yet.
 
@@ -53,6 +53,21 @@ Each stage leaves the repo green and can be committed alone. "Green" is `node ev
 
 Parallel: stages 2 and 3 are independent and can go in any order. `delegate` uses the scripts once they exist.
 
+## Redesign of `delegate` (v0.3)
+
+Design and reasons are in `docs/brief.md`. The task for every measurement is `skills/productivity/delegate/evals/files/notes/order-management.md` on `evals/fixtures/acme-app`: the fixture already places and lists orders, so the work is the confirmation email, cancellation and the refund. Runs use `--configs with --model claude-opus-5-5`.
+
+| # | Stage | What changes | Behaviour to keep | Validation | Checkpoint |
+|---|-------|--------------|-------------------|------------|------------|
+| R1 | Exploratory run of v0.2 | `evals/run.mjs` keeps `modelUsage` per model instead of only its sum. One run of `delegate` case 1 as it is: one turn, up to the first checkpoint | Totals in `benchmark.json`; every other skill's evals | `benchmark.json` shows tokens and cost per model for the run. Recorded here: cost of one run, the Opus and Sonnet shares, and whether the main session's tokens can be split by phase from `stream-json` | **yes**: the cost decides how many runs R3 and R6 take and whether they go to the end |
+| R2 | Baseline tooling | Hidden tests and mutants for the email, cancellation and refund in `delegate/evals/hidden/`. A case can carry fixed replies (`confirmed`, `continue`) that the runner sends by resuming the session until the work ends or the replies run out | One-turn cases run as before | The hidden tests pass on a correct implementation written by hand in a copy of the fixture, and each mutant fails them. A two-reply smoke case resumes the same session | no |
+| R3 | Baseline | Nothing in the code. Three runs of v0.2 to the end, or what R1 decided | Everything | Recorded here per run and as median and range: tokens and cost per model, time, number of stages, hidden tests and mutants | **yes**: if the split by phase contradicts the review hypothesis, the design changes before R5 |
+| R4 | Verifier | `core/roles/verifier.md` and its frontmatter in `adapters/claude-code/`, joined into one agent file on install | `delegate` and every skill untouched | On a copy of the fixture with a correct implementation and its task file: `pass`. With one R2 mutant applied: `fail`, naming the criterion. `git status` is the same before and after. In three Opus runs of a coding task that does not mention it, the main session never launches it | **yes** |
+| R5 | `delegate` v0.3 | `SKILL.md` at 0.3, the task, plan and progress templates, the implementer's report; the fixture gets a `harness.json`; case 1 gains the replies and checks for the branch, one commit per stage, task files within 120 lines and gate and scope lines in the log | Cases 2 and 3: nothing settled asks first, a one-change task is not delegated | `node evals/run.mjs --only delegate --configs with --model claude-opus-5-5 --runs 1` | no |
+| R6 | v0.3 against the baseline | Nothing in the code. The same runs as R3 on v0.3, with the same replies | Everything | Same measures as R3. v0.3 stays only if its cost is lower and `separated`, with the hidden tests and mutants as in the baseline; otherwise revert R5 | **yes**, the end |
+
+R4 is independent of R5 and R6 and can go in any order after R2, whose mutants it uses. The first real-repo task on v0.3 records the two figures the brief asks for about `Explore`.
+
 ## Recovery
 
 No data is touched. Each stage is one PR; revert the PR.
@@ -61,6 +76,7 @@ No data is touched. Each stage is one PR; revert the PR.
 
 - A second adapter (`adapters/pi/`, `adapters/opencode/`): only when a real project works in that tool. The hands-on mode should port with the adapter alone; `delegate` will need its delegation rethought per tool, because `skills` preload, `SubagentStop` and resuming a subagent are Claude Code's. The fallback that works anywhere is another session given the task file path.
 - A JSON feature list as source of state: only if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
-- Independent validator, tester, Haiku for code, parallelism: unchanged from the brief, each on a recorded failure.
+- Tester, Haiku for code, parallelism: unchanged from the brief, each on a recorded failure. The verifier is stage R4.
+- From the redesign, each with its condition in the brief: an advisor before stopping, a worktree per work, a hook blocking writes from the verifier.
 - Auto-applying `tune` proposals: never. If approval becomes a bottleneck, that is a phase 3 orchestrator question, not a skill change.
 - A TypeScript installer instead of the `init-project` skill: only if the skill fails to install cleanly in two projects.

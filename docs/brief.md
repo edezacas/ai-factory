@@ -22,7 +22,7 @@
 - Rules that keep the base portable: state and contracts in neutral files; everything that must always run lives in scripts with no Claude in them, and hooks only call them; skills speak of files and scripts, never of tool primitives, with anything Claude Code specific in a short section at the end or in the adapter; role text separate from its agent frontmatter; everything tool-specific under `adapters/claude-code/`, so a leak into the core is visible.
 - Three layers in the kit: `core/` (skills, templates, scripts, roles), `adapters/claude-code/` (agent frontmatter, hooks, permission policy; the only adapter), and the installer, which is `init-project`.
 - The scripts read the project's commands (`test`, `lint`, `build`, `dev`) from a `harness.json` at the project root, written by the installer. Parsing `AGENTS.md` was rejected: it is written for people and breaks when reworded.
-- Models: Opus for the main session, Sonnet for the implementer, Haiku for exploration and for what `tdd` excludes.
+- Models: Opus for the main session, Sonnet for the implementer, Haiku for exploration and for what `tdd` excludes, Fable for the verifier.
 - What a project learns stays in the project (`AGENTS.md`, local skills, policy). It moves into the kit only when it repeats in two projects, by hand, with an eval.
 - The harness does not edit itself. Deterministic sensors (the scripts) write a log; a skill invoked by name reads it and proposes additions or removals; the user approves. A line is proposed only after the same failure twice, at the cheapest level first: an `AGENTS.md` line, then a skill, then a hook or deny rule. Every proposal answers: what failure it fixes, whether something simpler would do, what improvement is expected, what it costs, and whether it still helps with the next model.
 - Unattended execution is not a requirement. The orchestrated mode advances on its own between checkpoints, and that is enough until data says otherwise.
@@ -77,21 +77,53 @@ Why: in an earlier orchestrator built on the same idea, results were good but ru
 Lessons from that orchestrator, both observed in real use:
 
 - The analysis and the answers from `ask-me` stay in the main session. When a subagent did the clarifying, the orchestrator lacked part of the information.
-- A verifier that starts from empty context, on a different model from the implementer, caught failures that had slipped past. This is the evidence the validator entry below asks for; whether it comes back is decided in the redesign.
+- A verifier that starts from empty context, on a different model from the implementer, caught failures that had slipped past. This is the evidence behind the `verifier` below.
 
-Goal: subagents start from empty context with only what their task needs; the orchestrator keeps the whole analysis and delegates only test and code; a separate agent validates at the end. Measured on the baseline task in `PLAN.md`.
+Goal: subagents start from empty context with only what their task needs; the orchestrator keeps the whole analysis and delegates only test and code; a separate agent verifies when the user asks. v0.3 is kept only if it costs less than v0.2 on the baseline task in `PLAN.md`, with the same result.
 
-Left out of the first version, each with what would bring it back:
+The design of v0.3, each piece with the failure it answers. Until the baseline shows where the main session's tokens go, the review rule is a hypothesis.
 
+- **The user takes part in analysis and specification only.** The main session (Opus) analyses, runs `ask-me` itself and keeps what it learns. Reasoning about the code and clarifying with the user never go to a subagent. `Explore` only locates: it returns paths and line ranges, and the main session reads what it is going to quote. This split is a hypothesis; the fixture is too small to test it. The first task in a real repo records the Opus tokens spent before the plan, and how often an implementer explored beyond its task file or stopped for a missing fragment. If the first dominates and the second is zero, try letting `Explore` return the fragments; if the second repeats, the main session reads everything.
+- **The task file is the implementer's whole context.** Fixes: subagents analysing the code again. It carries the goal, criteria in Given/When/Then with literal values, the behaviour to keep, the decisions this task relies on, the seam with the signatures and types it touches copied in, an excerpt of the closest existing test, exact paths, and the commands for its test and for the gate. It leaves out the conversation, rejected alternatives, other stages and the bodies of functions the task does not change. There is no "Open decisions" section: a task with an open decision is not delegated. At most 120 lines, 60 of them fragments; a task that does not fit is a stage to split. The cap is a line in the template, and moves to a script only if it is broken twice.
+- **All task files are written before the first stage**, so the analysis is in files before any `/clear`. A later stage quotes the seam an earlier task file declares, not code that does not exist yet.
+- **The implementer's report** gains a status and the commands it ran, because in v0.2 it listed only tests: `Status`, `Files changed`, `Commands`, `Decisions taken`, `Open`.
+- **Review per stage is the two scripts.** Fixes: the cost of the main session reading every diff, paid again on each later turn. The main session reads the diff only when a script fails, when the report carries a decision or something open, or at a checkpoint, where it reads the diff accumulated since the previous one.
+- **One branch per work, `delegate/<work>`, and one commit per green stage.** `delegate` refuses to start on a dirty tree. The base of `check-scope.mjs` is then always `HEAD`, and a failed stage is undone alone. Nothing reaches the main branch until the user has validated the last checkpoint: the user integrates, with a squash, and `delegate` neither merges nor pushes. A rejected checkpoint returns the branch to the commit of the previous one. `PROGRESS.md` records the branch and the commit the work started from.
+- **Checkpoints** are proposed by the orchestrator during the analysis and confirmed by the user inside `ask-me`, as one more decision, then marked in `PLAN.md`. The minimum: after the first stage, before anything hard to reverse (data, a contract phase, a public API) and at the end. Never one per stage by default. Two failed rounds in a stage are a stop, not a checkpoint.
+- **Verification is outside `delegate`.** A `verifier` subagent with no skill: role text in `core/roles/verifier.md`, frontmatter in `adapters/claude-code/`. It starts from empty context, can read and run tests but has no edit, write or delegation tool, writes nothing in the repo, and runs on Fable, the one model that differs from the implementer in both modes (Sonnet in `delegate`, Opus hands-on). Its description says it is used only when the user asks for it, never on the main session's initiative. It receives what to verify against (a task file, `PLAN.md` or the user's description) and a git base, and takes the diff itself. It never receives the implementer's report or opinion. It checks the criteria, looks for cases no test covers and tries to break the change. `delegate` only suggests it when the work ends. It serves the hands-on mode too. If the main session hands it summaries instead of paths and a base, the first fix is a line in `AGENTS.md`; a skill only if the failure repeats. Its report is fixed and short, about 30 lines at most:
+
+  ```
+  Verdict: pass | fail | cannot verify
+  Checked against: <path or description>; base <sha>; <n> files in diff
+  Criteria: <n> met, <n> not met
+  - not met: <criterion>: <file:line or command and output>
+  Uncovered: <cases with no test, each with a concrete input, or none>
+  Broken: <input, command, observed vs expected, or none>
+  Commands: <each run, with result>
+  Tree: <git status at the end>
+  ```
+
+Unchanged from v0.2: Sonnet for the implementer with `tdd` and `code-design` preloaded, Haiku for what `tdd` excludes, `PROGRESS.md`, one stage at a time by default. Until the installer lands, `delegate` copies the scripts and a `harness.json` into the project the way it copies the implementer.
+
+Rejected in the redesign:
+
+- **Fable as the orchestrator**: Opus is the default model of Claude Code on every plan, and the measured problem is the cost of the main session.
+- **An orchestrator, area leads and workers**: the fixed chain of specialists this brief already rejects. Claude Code allows it, since a subagent can launch subagents up to three levels deep, so the reason is cost and not the tool.
+- **More agents in parallel than can be verified.**
+
+Left out of v0.3, each with what would bring it back:
+
+- **An advisor before stopping**: after two failed rounds the stage stops and asks the user. A bounded question to a more capable model comes back if, in two stages, that stop is resolved by an answer that was not the user's decision to make. Try Claude Code's own advisor first; it is experimental and needs the Anthropic API.
+- **A worktree per work**: the branch already isolates the history. Comes back the first time the user needs to work in the repo while `delegate` runs, or to run two works at once; then `git worktree add` in a sibling folder, which is plain git.
+- **A hook that blocks writes from the verifier's shell**: a shell can write even without edit tools, and a deny rule is not a boundary. Comes back the first time the verifier leaves the tree changed, which its report shows.
 - **tester** (isolated, never sees the implementation): forces the interface to be fixed before the code, which pulls against `code-design`. Comes back if tests appear written after the code.
-- **validator** (Opus, read-only): Opus's review already is one. Comes back if a mutant seeded in a stage gets past the review.
 - **Haiku for code**: comes back if a task shows that delegating and reviewing it costs less than Sonnet.
 
 About `splitting`: the skill was tried and removed because, inside one session, splitting was extra work that doubled or tripled tokens and did not activate on its own. In this mode splitting is the plan, so the cost is the price of the mode, and activation is by name. Only the comparison changes: against phase 1 on the same large task, never against a run without the skill.
 
 Installation: skill installers install skills only, and a harness is more than skills. `init-project` becomes the installer: it copies `core/` and `adapters/claude-code/`, writes `harness.json` and, through `ask-me`, an `AGENTS.md` if there is none, and leaves `init.sh` working. Until that lands, `delegate` keeps copying `assets/implementer.md` to `.claude/agents/` itself.
 
-Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `delegate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments. Still to verify in a run: whether the parent's `stream-json` carries the subagent's tool calls or only its result, which decides how the runner measures TDD inside the subagent, and whether an agent file copied during the run is picked up in `claude -p`.
+Confirmed in the Claude Code docs: the `skills` field in an agent definition injects the full skill at startup; subagents read `CLAUDE.md` but do not inherit the parent's skills; a skill with `disable-model-invocation` cannot be preloaded, so the implementer preloads `tdd` and `code-design`, never `delegate`; the hook after each delegation is `SubagentStop` in `settings.json`, matched by agent name; a subagent can be resumed to ask for adjustments; `model` in an agent accepts `sonnet`, `opus`, `haiku`, `fable`, a full model ID or `inherit`, and a model passed at launch wins over it; a subagent receives its own prompt, the delegation message, `CLAUDE.md` and a git status, never the conversation; a subagent can launch subagents unless `Agent` is left out of its `tools`; nothing in an agent definition stops the main session from delegating to it on its own, only the description guides that, and a deny rule on the agent would block the user's request too; the parent's `stream-json` carries a subagent's tool calls and results. Still to verify in a run: whether an agent file copied during the run is picked up in `claude -p`.
 
 ## Phases and stop criteria
 
@@ -104,7 +136,7 @@ Confirmed in the Claude Code docs: the `skills` field in an agent definition inj
    5. `init-project` as installer, tried on a fresh clone of a real project.
    6. `tune`, only once a project has at least 10 logged stages.
    7. The runner case and the A/B against phase 1.
-   8. Tester, validator, Haiku for code and parallelism, each only on a recorded failure that asks for it.
+   8. Tester, Haiku for code and parallelism, each only on a recorded failure that asks for it. The verifier has its own stage in `PLAN.md`.
 3. Only if unattended execution or real parallelism is needed: minimal TypeScript orchestrator (state machine and files). Later, if data justifies it: structured ledger with context slices per role, stable prefix for prompt caching, model per phase.
 
 Measuring phase 2: the same large task, in `evals/fixtures/acme-app`, needing an expand, migrate and contract, three runs with phase 1 and three with phase 2. Hidden tests and mutants, `red_before_code`, files outside the task, tokens and cost per model (`modelUsage`), time, and by hand whether a new session resumes after a cut. The runner can check in one turn that `/delegate` writes a `PLAN.md` with stages and checkpoints, delegates through `Task` to `implementer`, writes no code from the main session and launches no stage past a checkpoint; it cannot check several turns or a human review.
@@ -127,7 +159,7 @@ From the harness articles (Leiva, Anthropic), each with what brings it back:
 
 - A second adapter (pi, OpenCode): only when a real project works in that tool. The hands-on mode should port with the adapter alone; `delegate` needs its delegation rethought per tool, because `skills` preload, `SubagentStop` and resuming a subagent are Claude Code's. The fallback that works anywhere is another session given the task file path.
 - A JSON feature list as the source of state, which the model is less likely to overwrite than Markdown: only if a run shows `PLAN.md` or `PROGRESS.md` corrupted.
-- `passing` versus `accepted` as separate states: only if the validator comes back.
+- `passing` versus `accepted` as separate states: only if the verifier's verdict has to be stored between sessions.
 - Auto-applying `tune` proposals: never. If approval becomes the bottleneck, that is a phase 3 question.
 - A TypeScript installer instead of the `init-project` skill: only if the skill fails to install cleanly in two projects.
 - A fixed chain of specialist subagents: no. Leiva and the Terminal-Bench data agree it is cost without gain on frontier models.
