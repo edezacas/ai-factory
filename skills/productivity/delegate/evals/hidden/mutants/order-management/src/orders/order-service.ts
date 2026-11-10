@@ -31,8 +31,9 @@ export class OrderService {
     await this.orders.save(order)
     try {
       await this.emails.sendOrderConfirmation(email, order)
-    } catch {
+    } catch (err) {
       // The order is paid and saved; a failed email does not undo it.
+      console.error('Order confirmation email failed', err)
     }
     return order
   }
