@@ -55,7 +55,7 @@ Parallel: stages 2 and 3 are independent and can go in any order. `delegate` use
 
 ## Redesign of `delegate` (v0.3)
 
-Design and reasons are in `docs/brief.md`. The task for every measurement is `skills/productivity/delegate/evals/files/notes/order-management.md` on `evals/fixtures/acme-app`: the fixture already places and lists orders, so the work is the confirmation email, cancellation and the refund. Runs use `--configs with --model claude-opus-5-5`.
+Design and reasons are in `docs/brief.md`. The task for every measurement is `skills/productivity/delegate/evals/files/notes/order-management.md` on `evals/fixtures/acme-app`: the fixture already places and lists orders, so the work is the confirmation email, cancellation and the refund. Runs use `--configs with --model claude-opus-5-5 --permission-mode bypassPermissions --also tdd,code-design,write-why --budget 10`.
 
 | # | Stage | What changes | Behaviour to keep | Validation | Checkpoint |
 |---|-------|--------------|-------------------|------------|------------|
@@ -67,6 +67,19 @@ Design and reasons are in `docs/brief.md`. The task for every measurement is `sk
 | R6 | v0.3 against the baseline | Nothing in the code. The same runs as R3 on v0.3, with the same replies | Everything | Same measures as R3. v0.3 stays only if its cost is lower and `separated`, with the hidden tests and mutants as in the baseline; otherwise revert R5 | **yes**, the end |
 
 R4 is independent of R5 and R6 and can go in any order after R2, whose mutants it uses. The first real-repo task on v0.3 records the two figures the brief asks for about `Explore`.
+
+### R1 results (2026-11-10, iterations 118 to 122)
+
+- **Cost of one run to the first checkpoint** (iteration 122, one turn, stage 1 delegated): $0.465 in 124 s. Opus $0.403 (87 %, 164k tokens), Sonnet $0.062 (13 %, 49k tokens). The implementer took 25 s and 12.5k tokens. Checks 5/5, judge 5/8.
+- **Split by phase: possible.** Subagent messages carry `parent_tool_use_id` and their own model; each `Agent` result carries `totalTokens` and `totalDurationMs`; main-session messages group by the tools they call. Messages must be counted once by `id`: summing every event gives 292k Opus tokens instead of 164k.
+- **R3 decision:** a full run of three stages is estimated at $1 to $1.5, not measured, so R3 and R6 take three runs each to the end.
+- **What the case needed before it measured anything:**
+  - `dontAsk` refuses writes under `.claude/` even for allowed tools: the runner gained `--permission-mode` (iteration 118).
+  - The notes left real gaps (the email address, shipping), and Opus asked instead of planning: the notes now settle them (119). It then found smaller gaps each time, so the prompt tells it to take the option it recommends and say which (120).
+  - An agent copied to `.claude/agents/` during the session is not loaded in that session: v0.2 fell back to a `general-purpose` agent on Opus, for $0.536 with no Sonnet (121). The case now starts with the implementer installed, a symlink to `assets/implementer.md`. In a real repo the first `delegate` session pays that fallback.
+- **Carried into R2:**
+  - The judge sees the response and the files, not the tool calls, so it fails "implementer launched with the path" and "main session wrote no code" even when the events show both. The judge needs the list of subagents launched, or the runner decides these two by itself.
+  - "Placing, listing and cancelling in separate stages" is wrong for this fixture, which already lists orders.
 
 ## Recovery
 
