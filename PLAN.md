@@ -118,11 +118,12 @@ Three runs: $0.86, $0.91 and $1.13 (corrected, see R5); Opus about 81 % of the c
 - **Mutants:** in all three runs the agents tested details the notes leave open, which the reference does not follow. All three chose that a second concurrent cancel waits for the first and retries if its refund fails. Two of the three log a failed email with `console.error`, which the reference now does too. Mutants are now counted by `mutants/catch.mjs` (see `AGENTS.md`). The column above was re-checked on the run outputs from fresh workdirs after the change; `benchmark.json` still holds the old count.
 - The judge's only fail: run 2, the 24-hour reason.
 
-### Stage 5, the plugin (2026-11-10, branch `plugin`)
+### Stage 5, the plugin (2026-11-10)
 
 - `.claude-plugin/marketplace.json` and `plugin.json` at the root; `claude plugin validate .` passes, warning only that there is no icon. `delegate` 0.3.1 reaches its scripts through `${CLAUDE_SKILL_DIR}`; the README installs through the plugin.
 - Checked with `--plugin-dir` on the fixture: all eight skills are discovered from the four category folders, as `edai:<skill>`; the agent loads as `edai:implementer`, runs on Sonnet, and received `tdd` and `code-design` preloaded with their bare names (it quoted each one's first line). `${CLAUDE_SKILL_DIR}` is substituted with the skill's real folder, for a plugin skill and for one installed in a project's `.claude/skills/`, so the runner keeps working.
-- Installed from the local marketplace on an empty `CLAUDE_CONFIG_DIR`: added, installed, enabled, eight skills listed. `claude plugin details` counts 0 agents, with the agent declared by path and with it in a default `agents/` folder alike, so the count is not evidence either way. Still to check in a real session after `/plugin install`: `/agents` lists `edai:implementer`, and `/edai:delegate` launches it. Also left: the permission rule for the scripts under the plugin cache.
+- Installed from the local marketplace on an empty `CLAUDE_CONFIG_DIR`: added, installed, enabled, eight skills listed. `claude plugin details` counts 0 agents, with the agent declared by path and with it in a default `agents/` folder alike, so the count is not evidence either way.
+- Installed from GitHub (`/plugin marketplace add edezacas/ai-factory`, `/plugin install edai@ai-factory`) in the user's own configuration, merged as 4043ad5: a plain session launched `edai:implementer`, which ran on Sonnet with `tdd` and `code-design` preloaded. The plugin is `edai` ("edezacas ai") in the `ai-factory` marketplace. Left: the permission rule for the scripts under the plugin cache, and a full `/edai:delegate` run from the installed plugin.
 
 ### R5 results (iteration 126, 2026-11-10)
 
