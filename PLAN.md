@@ -116,6 +116,22 @@ Three runs: $0.86, $0.91 and $1.13 (corrected, see R5); Opus about 81 % of the c
 - **One run of v0.3** (`--runs 1`, as the stage asks): case 1 passed every check (the reference one is informational), the judge 8/8, 12/12 mutants, a `delegate/order-management` branch with seven commits on an untouched `main`, task files of 62 to 93 lines, and gate and scope lines in the log. Cases 2 and 3 passed: nothing is delegated before asking, and a one-change task is not delegated.
 - **Cost:** $1.33 (Opus $1.08, Sonnet $0.26) against the baseline's median $1.05. Per turn, v0.3 spent $0.71 on the plan and stage 1 against $0.47 to $0.51, $0.56 on stages 2 to 4 against $0.54 to $0.67, and $0.06 on a third turn, because the end is now a checkpoint and the reply only set `done`. The plan holds 32 % of the main session against 22 to 28 %: longer task files (19.9k characters against 14 to 15k) and reading the scripts. The review did not get cheaper on this fixture, where each stage's diff is small. One run is not evidence; R6 decides.
 
+### R6 results (iteration 127, 2026-11-10)
+
+| | v0.2.1 (iteration 125) | v0.3 (iteration 127) |
+|---|---|---|
+| Cost, median [range] | $1.05 [1.00-1.15] | $1.23 [1.19-1.29] |
+| Opus / Sonnet, median | $0.83 / $0.23 | $1.01 / $0.22 |
+| Time, median | 334 s | 349 s |
+| Stages | 4, 4, 4 | 4, 4, 4 |
+| Hidden tests | pass in all three | pass in all three |
+| Mutants caught | 12/12 in all three | 12/12 in all three |
+| Judge | 8, 7, 8 of 8 | 8, 7, 7 of 8 |
+
+- v0.3 costs 17 % more, `separated`, below the $1.37 cap, with the same hidden tests and mutants. Decision: the safety pieces stay (a branch per work, a commit per stage, the scope check, `main` untouched). The review rule waits for R7.
+- The difference is all Opus; Sonnet is unchanged. It sits in the plan, as R5 showed.
+- To watch: the judge failed "the 24-hour reason written as not stated" in two of three runs, against one of three. No run invented a reason; they just did not write `not stated`. Not separated, so not evidence.
+
 ## Recovery
 
 No data is touched. Each stage is one PR; revert the PR.
