@@ -23,8 +23,8 @@ Turn ai-factory from a set of skills plus `delegate` into a minimal harness kit 
     - Activation is measured with Opus. Sonnet opened `code-design` in 1 of 15 runs.
   - **The skills track is closed.** `angular-conventions`, `init-project` and `web-performance` stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
 - `delegate`: stage 2 done on 2026-11-08 with two tasks in a real repo. `skills` preload applies; red before code, only the listed files, the report fits. Cost: a one-line task took about 78k input tokens in the implementer (Sonnet) and about 570k in the Opus session that wrote the task file and reviewed it; a six-file task took about 196k in the implementer. Misses: the implementer chose a case the task did not cover instead of stopping, and reported it; it skipped tests the task file called optional; its report lists only tests, so the main session could not see other commands it ran.
-- `delegate` is at v0.3 (2026-11-10): R1, R2, R3, R5 and R6 are done, with their results below. A branch per work, a commit per stage, the scope check and an untouched `main` stay after R6: they cost 17 % more than v0.2.1 on case 1, below the 30 % cap, with the same result. Whether the review rule saves anything is decided in R7, on a larger task. R4 (verifier) is pending and independent.
-- Install: in Claude Code, one plugin from this repo as its own marketplace (stage 5, not built yet); until then, by hand into `~/.agents/skills/` and `~/.claude/agents/`. `gate.mjs` and `check-scope.mjs` live in `delegate`'s `assets/` and log the skill version; only `harness.json` lives in a project, at its root. `PLAN.md` and `PROGRESS.md` of a work go in `docs/plans/<work>/`. `delegate` is invoked by name only, and the user treats it as an agent, so it may name other skills. Other tools (pi, OpenCode, Codex) decide their own install when added.
+- `delegate` is at v0.6 (2026-11-10): R1, R2, R3, R5 and R6 are done, with their results below, and the first real run led to 0.3.2 to 0.6.0 (see "After the first real run"). A branch per work, a commit per stage, the scope check and an untouched `main` stay after R6: they cost 17 % more than v0.2.1 on case 1, below the 30 % cap, with the same result. Whether the review rule saves anything is decided in R7, on a larger task. R4 (verifier) is pending and independent.
+- Install: in Claude Code, the `edai` plugin from this repo as its own marketplace (stage 5, done). `gate.mjs`, `check-scope.mjs` and `stage.mjs` live in `delegate`'s `assets/` and log the skill version to `.harness/log.jsonl`, which git ignores; only `harness.json` is committed in a project, at its root. `PLAN.md`, `PROGRESS.md` and the task files of a work live in `docs/plans/<work>/` until the user approves the last checkpoint, then are deleted; the decisions stay in `docs/decisions/`. `delegate` is invoked by name only, and the user treats it as an agent, so it may name other skills. Other tools (pi, OpenCode, Codex) decide their own install when added.
 - Claude Code specific: `Agent`, `.claude/agents/`, `model`, `skills` preload. No `SubagentStop` hook and no session bootstrap yet.
 
 ## Decisions this plan adds to `docs/brief.md`
@@ -146,6 +146,24 @@ Three runs: $0.86, $0.91 and $1.13 (corrected, see R5); Opus about 81 % of the c
 - v0.3 costs 17 % more, `separated`, below the $1.37 cap, with the same hidden tests and mutants. Decision: the safety pieces stay (a branch per work, a commit per stage, the scope check, `main` untouched). The review rule waits for R7.
 - The difference is all Opus; Sonnet is unchanged. It sits in the plan, as R5 showed.
 - To watch: the judge failed "the 24-hour reason written as not stated" in two of three runs, against one of three. No run invented a reason; they just did not write `not stated`. Not separated, so not evidence.
+
+### After the first real run (2026-11-10, delegate 0.3.2 to 0.6.0)
+
+A full `/edai:delegate` run from the installed plugin in a real PHP repo (4 stages, two checkpoints, done and merged by the user) found three problems, and the user asked for two more changes.
+
+| Version | Change | Evidence |
+|---|---|---|
+| 0.3.2 | Step 1 runs the gate on the untouched tree and judges it by exit code | The real repo's suite exited 1 on old deprecation notices; the agent grepped `OK` and found out after stage 1. Case 5 (red base through `vitest.config.ts`) passes 3/3 on 0.3.1 and 0.3.2 alike, so its assertions are guardrails: the rule rests on the real run |
+| 0.3.3 | Speak the user's language throughout | The real run switched to English after writing the plan. Case 6 (Spanish prompt, until the first checkpoint): 2/2 on both versions, since the judge sees only each turn's final text; by hand, 0.3.2 sent English intermediate messages in 3/3 runs, 0.3.3 in 0/3. The user kept the runner as it is |
+| 0.4.0 | The log moves to `.harness/log.jsonl`, with a `.gitignore` holding `*` | The log was in every stage commit of a client repo. Named `.harness/` rather than after the plugin or the skill, which may be renamed and are not its only readers. It no longer survives a clone |
+| 0.5.0 | Once the last checkpoint is approved, `write-why`, then `docs/plans/<work>/` deleted in its own commit; what is left to test goes in the final report | User's choice: plans go stale and docs must not grow. Case 1 checks read git history; the runner shows the judge files deleted during a run in their last version. One run (iteration 130): 8/9, 23/24, $1.30 |
+| 0.6.0 | The plan, task files, branch and plan commit in one shell call; `stage.mjs` runs gate and scope and commits only if both pass, in the call that updates `PROGRESS.md` | The main session's cost is per request (cache rereads, $0.49 of $0.86), not output ($0.03). Iteration 131 against 7 earlier full runs: main calls 20 [16-21] against 24 [21-37], main $0.75 against $0.86, total $1.30 against $1.30, judge 9/9 in all three. Not separated; kept because it makes fewer calls with no loss and the script never commits a red stage |
+
+- The bluplat-specific choice the user made: plans stay in English in `docs/plans/` even where a project's own convention says otherwise (that repo wants `doc/plans/` in Spanish).
+- Not tried: fewer diff reads when the implementer reports decisions, now the largest share of avoidable main-session calls.
+- Runner: `--cases N` runs the first N cases; `--id` picks them.
+- Stage 5 leftovers: the full `/edai:delegate` run is done (above); the permission rule for the scripts under the plugin cache is still unchecked, because that run was in auto mode.
+- Next, unchanged: R7 (its task still needs the user's agreement) and R4.
 
 ## Recovery
 
