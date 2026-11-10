@@ -81,6 +81,12 @@ R4 is independent of R5 and R6 and can go in any order after R2, whose mutants i
   - The judge sees the response and the files, not the tool calls, so it fails "implementer launched with the path" and "main session wrote no code" even when the events show both. The judge needs the list of subagents launched, or the runner decides these two by itself.
   - "Placing, listing and cancelling in separate stages" is wrong for this fixture, which already lists orders.
 
+### R2 results (2026-11-10)
+
+- The notes settle the interface (another team already calls it), so hidden tests can call the agent's code: `evals/hidden/test/hidden/order-management.test.ts`, 10 tests, one per rule. They pass on the reference in `evals/hidden/mutants/order-management/src/`, and each of the 9 mutants (a `sed` on `order-service.ts`) fails them. Case 1 checks the agent's code against the hidden tests and the agent's tests against the reference and each mutant. Simulated: tests copied from the hidden ones catch 9/9, one weak test catches 0/9.
+- A case's `replies` are sent one per turn with `--resume`, until they run out, a turn fails, or `until` exits 0. Case 1 has five `continue` and stops when `PROGRESS.md` says `**Status:** done`. Smoke case 4: three turns, one `session_id`, check passed ($0.18, Sonnet).
+- The judge gets the subagents the main session launched, with model and start of prompt, and the code files it wrote itself, counted by write target, not by any path a heredoc mentions. On iterations 121 and 122 it lists the implementer that did not run, the Opus fallback, the Sonnet implementer, and no code from the main session. Case 1's assertions now describe a full run; the listing one is gone.
+
 ## Recovery
 
 No data is touched. Each stage is one PR; revert the PR.
