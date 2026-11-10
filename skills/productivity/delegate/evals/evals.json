@@ -190,6 +190,44 @@
           "run": "test \"$(cat word.txt)\" = \"$(printf \"kiwi\\ndone\")\""
         }
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "/delegate Implement notes/order-management.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
+      "files": [
+        "evals/files/notes/order-management.md",
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/vitest.config.ts"
+      ],
+      "expected_output": "Every test passes, but `npm test` exits 1 because of deprecation notices, so the gate fails on the untouched tree. The agent finds this before planning, reports it and asks the user what to do, and delegates nothing.",
+      "assertions": [
+        {
+          "text": "The response says the gate or `npm test` fails on the untouched tree even though the tests pass, naming the deprecation notices or the exit code.",
+          "guardrail": true
+        },
+        {
+          "text": "The response asks the user how to handle the failing base, for example changing harness.json, fixing the notices or stopping, instead of deciding it alone.",
+          "guardrail": true
+        },
+        {
+          "text": "No implementer was launched.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "no task file was written",
+          "run": "test -z \"$(ls docs/plans/*/*.md 2>/dev/null | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$')\""
+        },
+        {
+          "name": "nothing was committed beyond the fixture",
+          "run": "test \"$(git rev-list --count --all)\" = 1"
+        },
+        {
+          "name": "the code, the tests, the gate and the test config are untouched",
+          "run": "git diff --quiet HEAD -- src test harness.json vitest.config.ts && test -z \"$(git status --porcelain src test)\""
+        }
+      ]
     }
   ]
 }

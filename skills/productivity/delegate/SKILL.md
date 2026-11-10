@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.3.1"
+  version: "0.3.2"
 ---
 
 Finish work that does not fit one session without losing context, tests or decisions on the way. You analyse, plan, delegate, review and stop. You write no production code yourself, and the implementer analyses nothing: its task file is all it gets.
@@ -13,7 +13,7 @@ Finish work that does not fit one session without losing context, tests or decis
 **Needs.** The `implementer` agent, installed with this skill. `node ${CLAUDE_SKILL_DIR}/assets/gate.mjs` and `node ${CLAUDE_SKILL_DIR}/assets/check-scope.mjs <task file>`, run from the project root; never copy them into the project or write their path into a project file. `harness.json` at the project root, with the gate's ordered steps: `{"gate": [{"name": "tests", "run": "npm test"}]}`.
 
 0. **Start.** On a dirty tree, say what is uncommitted and stop. If `docs/plans/<work>/PROGRESS.md` exists, resume from it and its branch. If `harness.json` is missing, propose one from the project's test and type commands as one more decision in step 1, and write it once confirmed.
-1. **Analyse.** Explore and reason about the code yourself. A subagent only locates: it returns paths and line ranges, and you read what you will quote. Name dependencies, risks and alternatives. Settle every open decision with `ask-me` before any plan, the checkpoints among them: propose them after the first stage, before anything hard to reverse (data, a contract phase, a public API) and at the end, never one per stage by default.
+1. **Analyse.** Explore and reason about the code yourself. A subagent only locates: it returns paths and line ranges, and you read what you will quote. Name dependencies, risks and alternatives. Run the gate, or the commands you propose for it, on the untouched tree and judge it by its exit code, not its output: a base that fails is one more decision, never planned on. Settle every open decision with `ask-me` before any plan, the checkpoints among them: propose them after the first stage, before anything hard to reverse (data, a contract phase, a public API) and at the end, never one per stage by default.
 2. **Plan.** Before the first stage, write `docs/plans/<work>/PLAN.md` from `assets/PLAN.md` and every task file from `assets/task.md`, in the same folder. Small stages, each leaving the repo green, adding behaviour a test can observe and committable alone. A task file holds everything the implementer needs and nothing else, within the template's limits; copy into it the signatures and types it touches, and the gate steps' commands from `harness.json`. A later stage quotes the seam an earlier task file declares, not code that does not exist yet. A task with an open decision is not delegated. If the work touches data, write how to recover or revert. A schema or public API change others use is split into expand, migrate and contract.
 3. **Branch.** Create `delegate/<work>` from `HEAD`, record the branch and the commit it started from in `PROGRESS.md` from `assets/PROGRESS.md`, and commit the plan.
 4. **Delegate.** One stage at a time by default. Launch `implementer` with the path of the task file, never a summary. Give `haiku` only what `tdd` excludes: renames, formatting, moving files, documentation, fixtures. Run stages in parallel only if neither depends on the other, even through a criterion, and they change no file in common.
