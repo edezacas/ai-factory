@@ -264,24 +264,16 @@ const usageByModel = (result) =>
 const contextSize = ({ usage: u = {} }) =>
   (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
 
-// A run with replies has one result per turn: usage and cost add up, the last one ends it.
+// A run with replies has one result per turn. Turns and time are per turn, but a resumed
+// session reports cost and usage for the whole session so far: the last result holds them.
 function mergeResults(results) {
   if (results.length <= 1) return results[0];
-  const modelUsage = {};
-  for (const r of results) {
-    for (const [m, u] of Object.entries(r.modelUsage ?? {})) {
-      const sum = (modelUsage[m] ??= {});
-      for (const [k, v] of Object.entries(u)) if (typeof v === 'number') sum[k] = (sum[k] ?? 0) + v;
-    }
-  }
   const last = results.at(-1);
   return {
     ...last,
     result: results.map((r) => r.result ?? '').join('\n\n'),
     num_turns: results.reduce((n, r) => n + (r.num_turns ?? 0), 0),
-    total_cost_usd: results.reduce((n, r) => n + (r.total_cost_usd ?? 0), 0),
     is_error: results.some((r) => r.is_error),
-    modelUsage,
   };
 }
 

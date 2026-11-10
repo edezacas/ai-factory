@@ -12,7 +12,7 @@
       "assertions": [
         "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
         "Every stage adds behaviour a test can observe; no stage only adds a layer, an interface or a type.",
-        "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam, its files and its dependencies.",
+        "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam with the signatures it touches, the closest test, its files, its commands and its dependencies, and no open decision.",
         "The 24-hour cancellation decision has its reason written as not stated, with no invented reason.",
         "Every stage went to a subagent named implementer that ran, launched with the path of its task file, not with a summary of the task.",
         "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
@@ -35,6 +35,26 @@
         {
           "name": "tests pass",
           "run": "npm test --silent"
+        },
+        {
+          "name": "the work is on a delegate/ branch",
+          "run": "git branch --list 'delegate/*' | grep -q ."
+        },
+        {
+          "name": "main was neither merged into nor moved",
+          "run": "test \"$(git rev-list --count main)\" = 1"
+        },
+        {
+          "name": "at least one commit per stage on the branch",
+          "run": "b=$(git branch --list 'delegate/*' --format='%(refname:short)' | head -1); test \"$(git rev-list --count main..$b)\" -ge \"$(ls docs/plans/*/*.md | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\""
+        },
+        {
+          "name": "every task file within 120 lines",
+          "run": "for f in $(ls docs/plans/*/*.md | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$'); do test \"$(wc -l < $f)\" -le 120 || exit 1; done"
+        },
+        {
+          "name": "the gate and the scope check ran",
+          "run": "grep -q '\"script\":\"gate\"' docs/harness/log.jsonl && grep -q '\"script\":\"check-scope\"' docs/harness/log.jsonl"
         },
         {
           "name": "the code passes the hidden tests",
