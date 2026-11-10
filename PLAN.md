@@ -87,6 +87,28 @@ R4 is independent of R5 and R6 and can go in any order after R2, whose mutants i
 - A case's `replies` are sent one per turn with `--resume`, until they run out, a turn fails, or `until` exits 0. Case 1 has five `continue` and stops when `PROGRESS.md` says `**Status:** done`. Smoke case 4: three turns, one `session_id`, check passed ($0.18, Sonnet).
 - The judge gets the subagents the main session launched, with model and start of prompt, and the code files it wrote itself, counted by write target, not by any path a heredoc mentions. On iterations 121 and 122 it lists the implementer that did not run, the Opus fallback, the Sonnet implementer, and no code from the main session. Case 1's assertions now describe a full run; the listing one is gone.
 
+### R3, first attempt (iteration 124, discarded)
+
+Three runs: $1.31, $1.41 and $5.54; Opus about 84 % of the cost; 3, 3 and 4 stages. In the main session, analysis and plan took 19 to 31 % of the cost and everything after the first delegation 69 to 81 %, which does not contradict the review hypothesis. Weights were relative list prices, not the billed cost. Discarded because of the case, not the skill:
+
+- The reference failed in all three runs, so no mutant counted: the agents' tests asserted error messages and a concurrency rule the notes left open. The notes now settle the four messages, two concurrent cancels and shipping a cancelled or shipped order. There are 12 hidden tests and 12 mutants, all caught.
+- Run 3 wrote `PLAN.md` and `PROGRESS.md` under `docs/plans/order-management/`, so `until` never matched and two idle turns cost $1.1 each, since a resumed session reads its whole context again. `delegate` 0.2.1 now says both go in `docs/plans/<work>/`, and the checks and `until` look there.
+- The judge truncated each file at 4000 characters and failed a complete task file; the limit is now 8000 per file and 48 000 in all.
+- In review the main session runs its own mutations with `sed -i` on `src/` and restores the file. The judge counts that as the main session writing code. It stays counted: it is review cost.
+
+### R3 results: the v0.2.1 baseline (iteration 125, 2026-11-10)
+
+| Run | Cost | Opus | Sonnet | Time | Stages | Replies | Judge | Hidden tests | Mutants caught |
+|-----|------|------|--------|------|--------|---------|-------|--------------|----------------|
+| 1 | $1.62 | $1.33 | $0.29 | 371 s | 4 | 1 | 8/8 | pass | 12/12 |
+| 2 | $1.47 | $1.18 | $0.29 | 301 s | 4 | 1 | 7/8 | pass | 12/12 |
+| 3 | $1.56 | $1.29 | $0.27 | 334 s | 4 | 1 | 8/8 | pass | 12/12 |
+
+- Median cost $1.56 [1.47-1.62], Opus about 83 %. Median time 334 s [301-371]. Every run stopped after stage 1, took one `continue` and finished the other three stages in that turn.
+- **Split by phase:** in the main session, analysis and plan took 22 to 28 % of the cost, and launching, reviewing and recording after the first delegation took 72 to 78 %. This does not contradict the review hypothesis, so R5 keeps the design. The figures are relative list-price weights, not the billed cost.
+- **Mutants:** in all three runs the agents tested details the notes leave open, which the reference does not follow. All three chose that a second concurrent cancel waits for the first and retries if its refund fails. Two of the three log a failed email with `console.error`, which the reference now does too. Mutants are now counted by `mutants/catch.mjs` (see `AGENTS.md`). The column above was re-checked on the run outputs from fresh workdirs after the change; `benchmark.json` still holds the old count.
+- The judge's only fail: run 2, the 24-hour reason.
+
 ## Recovery
 
 No data is touched. Each stage is one PR; revert the PR.

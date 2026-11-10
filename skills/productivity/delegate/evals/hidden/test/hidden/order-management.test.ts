@@ -86,11 +86,21 @@ describe('listing', () => {
 })
 
 describe('shipping', () => {
-  it('marks an order as shipped', async () => {
+  it('marks an order as shipped, and again changes nothing', async () => {
     const { service, statusOf } = setup()
     const order = await service.place('c1', 'c1@example.com', [line])
     await service.markShipped(order.id)
+    await service.markShipped(order.id)
     expect(await statusOf('c1', order.id)).toBe('shipped')
+  })
+
+  it('cannot ship a cancelled order or a missing one', async () => {
+    const { service, statusOf } = setup()
+    const order = await service.place('c1', 'c1@example.com', [line])
+    await service.cancel('c1', order.id)
+    await expect(service.markShipped(order.id)).rejects.toThrow(/^Order already cancelled$/)
+    await expect(service.markShipped('no-such-order')).rejects.toThrow(/^Order not found$/)
+    expect(await statusOf('c1', order.id)).toBe('cancelled')
   })
 })
 
@@ -109,7 +119,7 @@ describe('cancelling', () => {
     const { service, refunds, at, statusOf } = setup()
     const order = await service.place('c1', 'c1@example.com', [line])
     at(24 * HOUR)
-    await expect(service.cancel('c1', order.id)).rejects.toThrow()
+    await expect(service.cancel('c1', order.id)).rejects.toThrow(/^Cancellation window has passed$/)
     expect(refunds).toEqual([])
     expect(await statusOf('c1', order.id)).toBe('placed')
   })
@@ -118,7 +128,7 @@ describe('cancelling', () => {
     const { service, refunds, statusOf } = setup()
     const order = await service.place('c1', 'c1@example.com', [line])
     await service.markShipped(order.id)
-    await expect(service.cancel('c1', order.id)).rejects.toThrow()
+    await expect(service.cancel('c1', order.id)).rejects.toThrow(/^Order already shipped$/)
     expect(refunds).toEqual([])
     expect(await statusOf('c1', order.id)).toBe('shipped')
   })
@@ -128,6 +138,7 @@ describe('cancelling', () => {
     const order = await service.place('c1', 'c1@example.com', [line])
     const missing = await errorOf(service.cancel('c2', 'no-such-order'))
     const foreign = await errorOf(service.cancel('c2', order.id))
+    expect(missing).toBe('Order not found')
     expect(foreign).toBe(missing)
     expect(refunds).toEqual([])
     expect(await statusOf('c1', order.id)).toBe('placed')
@@ -137,8 +148,19 @@ describe('cancelling', () => {
     const { service, refunds } = setup()
     const order = await service.place('c1', 'c1@example.com', [line])
     await service.cancel('c1', order.id)
-    await expect(service.cancel('c1', order.id)).rejects.toThrow()
+    await expect(service.cancel('c1', order.id)).rejects.toThrow(/^Order already cancelled$/)
     expect(refunds).toHaveLength(1)
+  })
+
+  it('refunds once when two cancels of the same order run at the same time', async () => {
+    const { service, refunds, statusOf } = setup()
+    const order = await service.place('c1', 'c1@example.com', [line])
+    const results = await Promise.allSettled([service.cancel('c1', order.id), service.cancel('c1', order.id)])
+    expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected'])
+    const rejected = results.find((r) => r.status === 'rejected') as PromiseRejectedResult
+    expect(rejected.reason.message).toBe('Order already cancelled')
+    expect(refunds).toHaveLength(1)
+    expect(await statusOf('c1', order.id)).toBe('cancelled')
   })
 
   it('leaves the order placed when the refund fails', async () => {
