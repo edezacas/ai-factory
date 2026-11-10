@@ -1,9 +1,18 @@
 {
-  "name": "ai-factory",
+  "name": "edai",
   "version": "0.1.0",
   "description": "Skills and subagents that take an agent from a prompt to validated code: clarify, design, test first, record decisions, and delegate work too big for one session.",
-  "author": { "name": "edezacas" },
+  "author": {
+    "name": "edezacas"
+  },
   "repository": "https://github.com/edezacas/ai-factory",
-  "skills": ["./skills/engineering", "./skills/performance", "./skills/productivity", "./skills/stack"],
-  "agents": ["./skills/productivity/delegate/assets/implementer.md"]
+  "skills": [
+    "./skills/engineering",
+    "./skills/performance",
+    "./skills/productivity",
+    "./skills/stack"
+  ],
+  "agents": [
+    "./skills/productivity/delegate/assets/implementer.md"
+  ]
 }
