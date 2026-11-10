@@ -118,6 +118,12 @@ Three runs: $0.86, $0.91 and $1.13 (corrected, see R5); Opus about 81 % of the c
 - **Mutants:** in all three runs the agents tested details the notes leave open, which the reference does not follow. All three chose that a second concurrent cancel waits for the first and retries if its refund fails. Two of the three log a failed email with `console.error`, which the reference now does too. Mutants are now counted by `mutants/catch.mjs` (see `AGENTS.md`). The column above was re-checked on the run outputs from fresh workdirs after the change; `benchmark.json` still holds the old count.
 - The judge's only fail: run 2, the 24-hour reason.
 
+### Stage 5, the plugin (2026-11-10, branch `plugin`)
+
+- `.claude-plugin/marketplace.json` and `plugin.json` at the root; `claude plugin validate .` passes, warning only that there is no icon. `delegate` 0.3.1 reaches its scripts through `${CLAUDE_SKILL_DIR}`; the README installs through the plugin.
+- Checked with `--plugin-dir` on the fixture: all eight skills are discovered from the four category folders, as `ai-factory:<skill>`; the agent loads as `ai-factory:implementer`, runs on Sonnet, and received `tdd` and `code-design` preloaded with their bare names (it quoted each one's first line). `${CLAUDE_SKILL_DIR}` is substituted with the skill's real folder, for a plugin skill and for one installed in a project's `.claude/skills/`, so the runner keeps working.
+- Installed from the local marketplace on an empty `CLAUDE_CONFIG_DIR`: added, installed, enabled, eight skills listed. `claude plugin details` counts 0 agents, with the agent declared by path and with it in a default `agents/` folder alike, so the count is not evidence either way. Still to check in a real session after `/plugin install`: `/agents` lists `ai-factory:implementer`, and `/ai-factory:delegate` launches it. Also left: the permission rule for the scripts under the plugin cache.
+
 ### R5 results (iteration 126, 2026-11-10)
 
 - **Runner fix.** A resumed session reports `total_cost_usd` and `modelUsage` for the whole session so far, while `num_turns` and `duration_ms` are per turn: in iteration 126 the third turn had 3 turns and 11 s, and reported $1.33. The runner had summed every turn's result and over-counted every case with replies. It now takes cost and usage from the last result. `timing.json` and `benchmark.json` of iterations 123 to 126 were recomputed from their events; the figures above are the corrected ones.

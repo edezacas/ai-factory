@@ -6,11 +6,14 @@ An agent is at its most dangerous when it sounds sure of itself. It fills the ga
 
 ## Quick start
 
-The skills are built and measured on [Claude Code](https://claude.com/claude-code). Install them and start a new session:
+The skills are built and measured on [Claude Code](https://claude.com/claude-code), where they install as one plugin, the `implementer` subagent included. In a Claude Code session:
 
-```bash
-npx skills add edezacas/ai-factory
 ```
+/plugin marketplace add edezacas/ai-factory
+/plugin install ai-factory@ai-factory
+```
+
+The plugin is active right away. Its skills are named `ai-factory:<skill>`, so `delegate` is invoked as `/ai-factory:delegate <task>`. You get a new version when the plugin's version goes up; to get it, update from `/plugin`, or turn on auto-update for this marketplace there.
 
 Then ask for something a little vague, such as "Add a CSV export for orders". If the skill doesn't start by itself, ask for it by name: "Use the ask-me skill".
 
@@ -34,7 +37,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
 - **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
 - **[write-why](skills/productivity/write-why/SKILL.md)**: When the work is done, the agent records the decisions the code can't explain and that are hard to reverse or surprising, and writes nothing if none qualifies.
-- **[delegate](skills/productivity/delegate/SKILL.md)**: For work too big for one session, and a quota that can pay for it. Invoked with `/delegate <task>`: the session plans in small stages, delegates each one to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, reviews the result and stops at checkpoints for you. It never starts on its own.
+- **[delegate](skills/productivity/delegate/SKILL.md)**: For work too big for one session, and a quota that can pay for it. Invoked with `/ai-factory:delegate <task>`, in a project with a `harness.json` at its root that lists the gate's steps (it proposes one if there is none): the session plans in small stages, delegates each one to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, reviews the result and stops at checkpoints for you. It never starts on its own.
 
 ## How we know it works
 
