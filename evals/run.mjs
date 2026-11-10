@@ -355,6 +355,26 @@ async function collectOutputs(workdir, outputsDir, expected) {
     await writeFile(target, content);
     changed.push({ rel, content });
   }
+  // A file the agent committed and later deleted, such as a finished plan, is shown in
+  // its last version, so the judge can still grade it. Fixture files deleted are
+  // already reported through the baseline.
+  const git = (...argv) => execFileSync('git', argv, { cwd: workdir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  let commit = null;
+  const seen = new Set();
+  for (const line of git('log', '--all', '--diff-filter=D', '--name-only', '--format=@%H').split('\n')) {
+    if (line.startsWith('@')) { commit = line.slice(1); continue; }
+    const file = line.trim();
+    if (!file || seen.has(file) || expected.has(file) || existsSync(path.join(workdir, file))) continue;
+    seen.add(file);
+    let content;
+    try { content = git('show', `${commit}^:${file}`); } catch { continue; }
+    if (content.length > 200_000) continue;
+    const rel = `${file} [deleted in commit ${commit.slice(0, 7)}; last version]`;
+    const target = path.join(outputsDir, rel);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, content);
+    changed.push({ rel, content });
+  }
   return changed;
 }
 

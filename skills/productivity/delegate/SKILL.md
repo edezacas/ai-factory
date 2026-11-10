@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 Finish work that does not fit one session without losing context, tests or decisions on the way. You analyse, plan, delegate, review and stop. You write no production code yourself, and the implementer analyses nothing: its task file is all it gets. Speak to the user in their language throughout, even after writing English files or reading English reports.
@@ -19,4 +19,4 @@ Finish work that does not fit one session without losing context, tests or decis
 4. **Delegate.** One stage at a time by default. Launch `implementer` with the path of the task file, never a summary. Give `haiku` only what `tdd` excludes: renames, formatting, moving files, documentation, fixtures. Run stages in parallel only if neither depends on the other, even through a criterion, and they change no file in common.
 5. **Review.** Run the gate, then the scope check on the task file. Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or what is wrong; after two failed rounds, stop and ask the user, which is a stop, not a checkpoint.
 6. **Commit.** When both scripts pass, update `PROGRESS.md`: the stage, gate and scope results, what is left to test, the next step and the decisions the implementer reported. Then make one commit for the stage. Another session must be able to continue from `PROGRESS.md` alone.
-7. **Stop.** At a checkpoint, set `PROGRESS.md` to waiting for review, name the range to review, and end the turn. Do not start the next stage. A rejected checkpoint returns the branch to the previous checkpoint's commit once the user agrees. Never merge or push: the user integrates the branch. When the work is done and verified, run `write-why` and commit its records before reporting.
+7. **Stop.** At a checkpoint, set `PROGRESS.md` to waiting for review, name the range to review, and end the turn. Do not start the next stage. A rejected checkpoint returns the branch to the previous checkpoint's commit once the user agrees. Never merge or push: the user integrates the branch. When the user approves the last checkpoint, run `write-why` and commit its records, then delete `docs/plans/<work>/` in its own commit: a finished plan goes stale and git keeps it. Report what is left to test, since it is no longer written anywhere.
