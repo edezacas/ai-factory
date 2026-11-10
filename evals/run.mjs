@@ -245,6 +245,17 @@ function redBeforeCode(calls, events) {
   return { seen: null, sameCommand: false };
 }
 
+// Per model, so a session that delegates to another model shows each one's share.
+const usageByModel = (result) =>
+  mapValues(result?.modelUsage ?? {}, (u) => ({
+    input_tokens: u.inputTokens,
+    output_tokens: u.outputTokens,
+    cache_read_tokens: u.cacheReadInputTokens,
+    cache_write_tokens: u.cacheCreationInputTokens,
+    total_tokens: u.inputTokens + u.outputTokens + u.cacheReadInputTokens + u.cacheCreationInputTokens,
+    cost_usd: u.costUSD,
+  }));
+
 const contextSize = ({ usage: u = {} }) =>
   (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
 
@@ -271,6 +282,7 @@ function summarize(events, skillName = null) {
       cache_hit_rate: prompted ? +(tokens.cacheRead / prompted).toFixed(3) : 0,
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
+      by_model: usageByModel(result),
       skills_used: calls.filter((c) => c.name === 'Skill').map((c) => c.input?.skill),
       wrote_code: calls.some((c) => writtenFiles(c).some(isCodeFile)),
       red_before_code: redBeforeCode(calls, events).seen,
@@ -541,6 +553,20 @@ function tally(results, label) {
   return [...entries.values()];
 }
 
+// A model a run did not use counts as zero in that run, so the medians stay over the same runs.
+function byModelStats(runs) {
+  const models = [...new Set(runs.flatMap((r) => Object.keys(r.timing.by_model ?? {})))];
+  return Object.fromEntries(
+    models.map((m) => [
+      m,
+      {
+        total_tokens: statsOf(runs.map((r) => r.timing.by_model?.[m]?.total_tokens ?? 0)),
+        cost_usd: statsOf(runs.map((r) => r.timing.by_model?.[m]?.cost_usd ?? 0)),
+      },
+    ]),
+  );
+}
+
 function configStats(runs) {
   if (!runs.length) return null;
   const graded = runs.filter((r) => r.grading?.summary?.total);
@@ -565,6 +591,7 @@ function configStats(runs) {
     efficiency_of_complete_runs: mapValues(EFFICIENCY, (metric) =>
       statsOf(complete.map((r) => metric(r.timing))),
     ),
+    by_model_of_complete_runs: byModelStats(complete),
     assertions: tally(graded.flatMap((r) => r.grading.assertion_results), 'text'),
     checks: tally(runs.flatMap((r) => validChecks(r.checks)), 'name'),
     red_in_same_command_runs: runs.filter((r) => r.timing.red_in_same_command).length,
@@ -624,6 +651,10 @@ function benchmark(runs) {
     total_runs: runs.length,
     agent_cost_usd: +runs.reduce((sum, r) => sum + r.timing.cost_usd, 0).toFixed(4),
     judge_cost_usd: +runs.reduce((sum, r) => sum + (r.grading?.judge_cost_usd ?? 0), 0).toFixed(4),
+    agent_cost_usd_by_model: runs.reduce((sums, r) => {
+      for (const [m, u] of Object.entries(r.timing.by_model ?? {})) sums[m] = +((sums[m] ?? 0) + u.cost_usd).toFixed(4);
+      return sums;
+    }, {}),
     delta_summary: deltaSummary(cases),
     cases,
   };
