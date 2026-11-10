@@ -70,6 +70,17 @@ A checkpoint is the end of the turn. Nothing enforces it: if the main session go
 
 Parallel stages only if neither depends on the other, even through a criterion, and they change no file in common. A schema or public API change others use is split into expand, migrate and contract. Default is one stage at a time; parallelism only when a task asks for it. Subagents only when they just report; agent teams only if they must talk to each other.
 
+### Redesign of `delegate`
+
+Why: in an earlier orchestrator built on the same idea, results were good but runs were slow and expensive. Subagents received context that was not narrow enough and had to analyse the code again to fill it in. In v0.2 the cost also sits in the main session: about 570k Opus tokens to write and review a one-line task.
+
+Lessons from that orchestrator, both observed in real use:
+
+- The analysis and the answers from `ask-me` stay in the main session. When a subagent did the clarifying, the orchestrator lacked part of the information.
+- A verifier that starts from empty context, on a different model from the implementer, caught failures that had slipped past. This is the evidence the validator entry below asks for; whether it comes back is decided in the redesign.
+
+Goal: subagents start from empty context with only what their task needs; the orchestrator keeps the whole analysis and delegates only test and code; a separate agent validates at the end. Measured on the baseline task in `PLAN.md`.
+
 Left out of the first version, each with what would bring it back:
 
 - **tester** (isolated, never sees the implementation): forces the interface to be fixed before the code, which pulls against `code-design`. Comes back if tests appear written after the code.
