@@ -39,7 +39,7 @@ PLAN.md                          # the stages of the current work on the kit, on
 - An eval assertion marked `guardrail` is a rule the model already follows; it never counts as evidence the skill adds value
 
 ## Gotchas
-- A `claude -p` eval is a single turn, so `ask-me` cases can only check one round, not a whole interview
+- A `claude -p` eval is a single turn unless the case has `replies`: the runner sends them one per turn, resuming the same session, until they run out or the case's `until` command exits 0. Fixed replies cannot answer what the agent asks, so `ask-me` cases still check one round, not a whole interview
 - `red_before_code` reads the tool calls and results: a test seen failing before any code was written. It is null when a run wrote no code, and a file written in an unusual way can escape it. `red_in_same_command` marks a test that failed first inside the same shell command that wrote the code, so nobody saw the failure before writing it
 - A case's `checks` are shell commands, passed on exit 0, that need no judge; prefer them to an assertion whenever a command can decide
 - A check marked `mutant` seeds an error; it counts only in runs whose `reference` check, the tests on correct code, passed

@@ -106,7 +106,9 @@ function projectFolder(cwd) {
 
 // Project settings only: the user's own skills, plugins, MCP servers and CLAUDE.md
 // would otherwise reach both configs and contaminate the baseline.
-function claude(argv, { cwd, timeout, input }) {
+// `keepSession` leaves the session on disk so the next turn can resume it; the caller
+// then removes the project folder itself.
+function claude(argv, { cwd, timeout, input, keepSession = false }) {
   return new Promise((resolve) => {
     const started = Date.now();
     const child = spawn(
@@ -115,7 +117,7 @@ function claude(argv, { cwd, timeout, input }) {
         '-p',
         '--output-format', 'stream-json',
         '--verbose',
-        '--no-session-persistence',
+        ...(keepSession ? [] : ['--no-session-persistence']),
         '--setting-sources', 'project',
         '--strict-mcp-config',
         ...argv,
@@ -130,7 +132,7 @@ function claude(argv, { cwd, timeout, input }) {
     child.stdin.end(input);
     const done = async (err) => {
       if (timer) clearTimeout(timer);
-      await rm(projectFolder(cwd), { recursive: true, force: true });
+      if (!keepSession) await rm(projectFolder(cwd), { recursive: true, force: true });
       resolve({ err, stdout, stderr, durationMs: Date.now() - started, timedOut: child.killed });
     };
     timer = setTimeout(() => child.kill('SIGKILL'), timeout);
@@ -262,8 +264,29 @@ const usageByModel = (result) =>
 const contextSize = ({ usage: u = {} }) =>
   (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
 
+// A run with replies has one result per turn: usage and cost add up, the last one ends it.
+function mergeResults(results) {
+  if (results.length <= 1) return results[0];
+  const modelUsage = {};
+  for (const r of results) {
+    for (const [m, u] of Object.entries(r.modelUsage ?? {})) {
+      const sum = (modelUsage[m] ??= {});
+      for (const [k, v] of Object.entries(u)) if (typeof v === 'number') sum[k] = (sum[k] ?? 0) + v;
+    }
+  }
+  const last = results.at(-1);
+  return {
+    ...last,
+    result: results.map((r) => r.result ?? '').join('\n\n'),
+    num_turns: results.reduce((n, r) => n + (r.num_turns ?? 0), 0),
+    total_cost_usd: results.reduce((n, r) => n + (r.total_cost_usd ?? 0), 0),
+    is_error: results.some((r) => r.is_error),
+    modelUsage,
+  };
+}
+
 function summarize(events, skillName = null) {
-  const result = events.find((e) => e.type === 'result');
+  const result = mergeResults(events.filter((e) => e.type === 'result'));
   const messages = assistantMessages(events);
   const lastText = (messages.at(-1)?.content ?? [])
     .filter((c) => c.type === 'text')
@@ -730,6 +753,35 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
   return grading;
 }
 
+// A case's `replies` are sent one per turn, resuming the same session, until they run
+// out, a turn fails, or the case's `until` command exits 0 in the workdir.
+async function converse(testCase, argv, cwd) {
+  const replies = testCase.replies ?? [];
+  const keepSession = replies.length > 0;
+  const turns = [];
+  let sessionId = null;
+  for (const input of [testCase.prompt, ...replies]) {
+    const resume = sessionId ? ['--resume', sessionId] : [];
+    const turn = await claude([...argv, ...resume], { cwd, timeout: RUN_TIMEOUT_MS, input, keepSession });
+    turns.push(turn);
+    const result = parseEvents(turn.stdout).find((e) => e.type === 'result');
+    sessionId = result?.session_id;
+    if (!sessionId || turn.timedOut || result.is_error || result.subtype !== 'success') break;
+    if (testCase.until && untilReached(testCase.until, cwd)) break;
+  }
+  if (keepSession) await rm(projectFolder(cwd), { recursive: true, force: true });
+  return turns;
+}
+
+function untilReached(command, cwd) {
+  try {
+    execFileSync('bash', ['-c', command], { cwd, env: cleanEnv(), timeout: CHECK_TIMEOUT_MS, stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function runCase(skill, testCase, itDir, repetition) {
   const caseDir = path.join(itDir, slug(skill.name), `eval-${testCase.id}-${slug(testCase.prompt)}`);
 
@@ -759,12 +811,16 @@ async function runCase(skill, testCase, itDir, repetition) {
       '--max-budget-usd', budget,
     ];
     const started = Date.now();
-    const { stdout, stderr, timedOut } = await claude(argv, {
-      cwd: workdir,
-      timeout: RUN_TIMEOUT_MS,
-      input: testCase.prompt,
-    });
-    const { text, metrics } = summarize(parseEvents(stdout), skill.name);
+    const turns = await converse(testCase, argv, workdir);
+    const stdout = turns.map((t) => t.stdout).join('');
+    const stderr = turns.map((t) => t.stderr).join('');
+    const timedOut = turns.some((t) => t.timedOut);
+    const { text: lastText, metrics } = summarize(parseEvents(stdout), skill.name);
+    metrics.replies_sent = turns.length - 1;
+    // The judge reads every turn, with the reply that started it.
+    const text = turns.length > 1
+      ? turns.map((t, i) => (i ? `--- user: ${testCase.replies[i - 1]} ---\n\n` : '') + summarize(parseEvents(t.stdout)).text).join('\n\n')
+      : lastText;
     await writeFile(path.join(dir, 'events.jsonl'), stdout);
     if (stderr.trim()) await writeFile(path.join(dir, 'stderr.log'), stderr);
 

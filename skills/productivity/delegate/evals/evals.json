@@ -100,7 +100,15 @@
           "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/return orders.sort(/return orders.filter((o) => o.status !== '\\''cancelled'\\'').sort(/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
           "mutant": true
         }
-      ]
+      ],
+      "replies": [
+        "continue",
+        "continue",
+        "continue",
+        "continue",
+        "continue"
+      ],
+      "until": "grep -qiE '^\\*\\*Status:\\*\\* *done' PROGRESS.md"
     },
     {
       "id": 2,
@@ -129,6 +137,22 @@
         {
           "name": "no plan was written",
           "run": "test ! -f PLAN.md && test ! -d docs/plans"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Runner smoke test, not a task: remember the word kiwi and reply only OK.",
+      "replies": [
+        "Write the word I asked you to remember to word.txt, nothing else.",
+        "Append the word done on a new line of word.txt."
+      ],
+      "expected_output": "The second and third turns resume the first session: word.txt holds kiwi, then done.",
+      "assertions": [],
+      "checks": [
+        {
+          "name": "the replies resumed one session",
+          "run": "test \"$(cat word.txt)\" = \"$(printf \"kiwi\\ndone\")\""
         }
       ]
     }
