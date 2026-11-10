@@ -8,16 +8,16 @@
         "evals/files/notes/order-management.md",
         "evals/files/.claude/agents/implementer.md"
       ],
-      "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, installs the implementer, delegates the first stage to it with the path of its task file, reviews the result, runs the tests, writes PROGRESS.md and stops at the first checkpoint without starting the next stage.",
+      "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, delegates each stage to the implementer with the path of its task file, reviews the result, runs the tests and records PROGRESS.md. It stops at every checkpoint and goes on only after the user replies, until the work is done.",
       "assertions": [
         "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
-        "Placing, listing and cancelling orders are in separate stages, and no stage only adds a layer with no observable behaviour.",
+        "Every stage adds behaviour a test can observe; no stage only adds a layer, an interface or a type.",
         "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam, its files and its dependencies.",
         "The 24-hour cancellation decision has its reason written as not stated, with no invented reason.",
-        "The transcript shows a subagent named implementer launched with the path of a task file, not with a summary of the task.",
+        "Every stage went to a subagent named implementer that ran, launched with the path of its task file, not with a summary of the task.",
         "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
-        "PROGRESS.md records what changed, the tests run with their result and the next step, and says the work is waiting for review.",
-        "The response ends at the first checkpoint and does not launch the next stage."
+        "PROGRESS.md records each stage with what changed and the tests run with their result, and says the work is done.",
+        "The agent stopped at every checkpoint marked in PLAN.md and started the next stage only after a user reply."
       ],
       "checks": [
         {

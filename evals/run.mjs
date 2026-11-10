@@ -436,7 +436,40 @@ async function copyCaseFiles(testCase, workdir, skillDir, expected) {
 const assertionText = (a) => (typeof a === 'string' ? a : a.text);
 const isGuardrail = (a) => typeof a === 'object' && a.guardrail === true;
 
-function gradingPrompt(testCase, response, files, baseline = []) {
+// Files a call writes, and only those: a heredoc that writes PLAN.md may mention a .ts
+// path without writing it. Shell writes count by redirection, tee, sed -i and perl -i.
+function writeTargets(call) {
+  if (call.name === 'Write' || call.name === 'Edit') return [String(call.input?.file_path)];
+  if (call.name !== 'Bash') return [];
+  const command = String(call.input?.command).replace(/<<-?\s*['"]?(\w+)['"]?\n[\s\S]*?\n\1\b/g, '');
+  return [
+    ...[...command.matchAll(/(?:^|[^0-9&<])>>?\s*([^\s;&|<>]+)/g)].map((m) => m[1]),
+    ...[...command.matchAll(/\btee\s+(?:-a\s+)?([^\s;&|<>]+)/g)].map((m) => m[1]),
+    ...command
+      .split(/&&|\|\||;|\n/)
+      .filter((part) => /\b(sed|perl)\s+-i/.test(part))
+      .flatMap((part) => [...part.matchAll(/[\w./-]+\.[jt]sx?\b/g)].map((m) => m[0])),
+  ];
+}
+
+// What the judge cannot read in the response or the files: which subagents the main
+// session launched, and which code it wrote itself.
+function activityOf(events) {
+  const main = toolCalls(events.filter((e) => !e.parent_tool_use_id));
+  const launched = main
+    .filter((c) => c.name === 'Agent' || c.name === 'Task')
+    .map((c) => {
+      const model = events.find((e) => e.type === 'assistant' && e.parent_tool_use_id === c.id)?.message?.model ?? 'did not run';
+      return `- ${c.input?.subagent_type ?? 'general-purpose'} (${model}): ${JSON.stringify(String(c.input?.prompt ?? '').slice(0, 300))}`;
+    });
+  const wrote = [...new Set(main.flatMap(writeTargets).filter((f) => /\.[jt]sx?$/.test(f)))];
+  return [
+    `SUBAGENTS THE MAIN SESSION LAUNCHED, WITH THEIR MODEL AND THE START OF THEIR PROMPT:\n${launched.join('\n') || '(none)'}`,
+    `CODE AND TEST FILES THE MAIN SESSION WROTE ITSELF (subagents excluded):\n${wrote.map((f) => `- ${f}`).join('\n') || '(none)'}`,
+  ].join('\n\n');
+}
+
+function gradingPrompt(testCase, response, files, baseline = [], activity = null) {
   const fileBlock = files.length
     ? files
         .map((f) => `--- ${f.rel} ---\n${f.content.slice(0, 4000)}${f.content.length > 4000 ? '\n[truncated]' : ''}`)
@@ -475,6 +508,7 @@ function gradingPrompt(testCase, response, files, baseline = []) {
     '',
     `FILES PROVIDED AS INPUT, WITH THEIR ORIGINAL CONTENT:\n${baselineBlock}`,
     '',
+    ...(activity ? [activity, ''] : []),
     'ASSERTIONS:',
     ...testCase.assertions.map((a, i) => `${i + 1}. ${assertionText(a)}`),
     '',
@@ -715,6 +749,8 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
   let judgeCost = 0;
   // Outside this repo, so the judge does not load its CLAUDE.md.
   const judgeDir = await mkdtemp(path.join(os.tmpdir(), 'ai-factory-judge-'));
+  const eventsFile = path.join(dir, 'events.jsonl');
+  const activity = existsSync(eventsFile) ? activityOf(parseEvents(await readFile(eventsFile, 'utf8'))) : null;
   for (const attempt of [1, 2]) {
     const {
       stdout,
@@ -726,7 +762,7 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
         cwd: judgeDir,
         timeout: GRADE_TIMEOUT_MS,
         input:
-          gradingPrompt(testCase, response, files, baseline) +
+          gradingPrompt(testCase, response, files, baseline, activity) +
           (attempt === 2 ? '\n\nPrevious answer was not valid JSON. Answer with the JSON object only.' : ''),
       },
     );
