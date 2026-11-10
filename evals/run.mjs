@@ -472,9 +472,9 @@ function activityOf(events) {
 function gradingPrompt(testCase, response, files, baseline = [], activity = null) {
   const fileBlock = files.length
     ? files
-        .map((f) => `--- ${f.rel} ---\n${f.content.slice(0, 4000)}${f.content.length > 4000 ? '\n[truncated]' : ''}`)
+        .map((f) => `--- ${f.rel} ---\n${f.content.slice(0, 8000)}${f.content.length > 8000 ? '\n[truncated]' : ''}`)
         .join('\n\n')
-        .slice(0, 24_000)
+        .slice(0, 48_000)
     : '(none)';
   // Input files the agent did not touch, so "leaves X unchanged" and "keeps the old
   // records" are verifiable instead of failing for lack of a baseline.

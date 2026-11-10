@@ -58,9 +58,9 @@ Everything runs from one Claude Code session on Opus, invoked with `/delegate <t
 
 Documents:
 
-- `PLAN.md`: the index of small stages, each with what must change, what behaviour to keep, how to validate it, and whether it is a checkpoint. If the task touches data, how to recover or revert.
+- `PLAN.md`, in `docs/plans/<work>/` with the task files: the index of small stages, each with what must change, what behaviour to keep, how to validate it, and whether it is a checkpoint. If the task touches data, how to recover or revert.
 - One task file per stage in `docs/plans/<work>/`, from the template kept from `splitting`: goal, criteria, decisions, open decisions, seam, files, dependencies. A subagent does not see the conversation, so the file carries everything it needs. Opus launches subagents with the file path, not a summary.
-- `PROGRESS.md`: what changed, which tests ran and their results, what is left to test and the next step, so another session can take over after a cut or a `/clear`. It holds state, while `write-why` holds reasons. At a checkpoint it says the work is waiting for review.
+- `PROGRESS.md`, in the same folder: what changed, which tests ran and their results, what is left to test and the next step, so another session can take over after a cut or a `/clear`. It holds state, while `write-why` holds reasons. At a checkpoint it says the work is waiting for review.
 
 Review after each stage is two deterministic checks, not a judgement: the tests pass (`core/scripts/gate.mjs`: the ordered, named steps in `harness.json`, such as install, types, tests and build, stopping at the first that fails), and the files changed since the base, untracked ones included, stay inside the backticked paths of the task file's `## Files` (`core/scripts/check-scope.mjs`). The scripts are Node with no dependencies, so they run the same on Windows, macOS and Linux; bash and jq would leave out native Windows. Both append one JSON line to `docs/harness/log.jsonl` in the project on every run, pass or fail, so there is evidence to tune on; the log is committed, so it survives a clone. The Claude Code adapter runs them from a hook after each delegation; a human, or a future adapter, runs the same scripts. Only then Opus reads the diff against the criteria.
 

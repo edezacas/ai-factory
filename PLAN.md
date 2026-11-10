@@ -87,6 +87,15 @@ R4 is independent of R5 and R6 and can go in any order after R2, whose mutants i
 - A case's `replies` are sent one per turn with `--resume`, until they run out, a turn fails, or `until` exits 0. Case 1 has five `continue` and stops when `PROGRESS.md` says `**Status:** done`. Smoke case 4: three turns, one `session_id`, check passed ($0.18, Sonnet).
 - The judge gets the subagents the main session launched, with model and start of prompt, and the code files it wrote itself, counted by write target, not by any path a heredoc mentions. On iterations 121 and 122 it lists the implementer that did not run, the Opus fallback, the Sonnet implementer, and no code from the main session. Case 1's assertions now describe a full run; the listing one is gone.
 
+### R3, first attempt (iteration 124, discarded)
+
+Three runs: $1.31, $1.41 and $5.54; Opus about 84 % of the cost; 3, 3 and 4 stages. In the main session, analysis and plan took 19 to 31 % of the cost and everything after the first delegation 69 to 81 %, which does not contradict the review hypothesis. Weights were relative list prices, not the billed cost. Discarded because of the case, not the skill:
+
+- The reference failed in all three runs, so no mutant counted: the agents' tests asserted error messages and a concurrency rule the notes left open. The notes now settle the four messages, two concurrent cancels and shipping a cancelled or shipped order. There are 12 hidden tests and 12 mutants, all caught.
+- Run 3 wrote `PLAN.md` and `PROGRESS.md` under `docs/plans/order-management/`, so `until` never matched and two idle turns cost $1.1 each, since a resumed session reads its whole context again. `delegate` 0.2.1 now says both go in `docs/plans/<work>/`, and the checks and `until` look there.
+- The judge truncated each file at 4000 characters and failed a complete task file; the limit is now 8000 per file and 48 000 in all.
+- In review the main session runs its own mutations with `sed -i` on `src/` and restores the file. The judge counts that as the main session writing code. It stays counted: it is review cost.
+
 ## Recovery
 
 No data is touched. Each stage is one PR; revert the PR.

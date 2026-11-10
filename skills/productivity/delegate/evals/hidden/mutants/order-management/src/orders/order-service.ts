@@ -14,6 +14,8 @@ export class OrderService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
+  private readonly cancelling = new Set<string>()
+
   async place(customerId: string, email: string, lines: OrderLine[]): Promise<Order> {
     const total = totalCents(lines)
     const { chargeId } = await this.payments.charge(customerId, total)
@@ -43,6 +45,8 @@ export class OrderService {
   async markShipped(orderId: string): Promise<void> {
     const order = await this.orders.findById(orderId)
     if (!order) throw new Error('Order not found')
+    if (order.status === 'cancelled') throw new Error('Order already cancelled')
+    if (order.status === 'shipped') return
     await this.orders.save({ ...order, status: 'shipped' })
   }
 
@@ -50,11 +54,18 @@ export class OrderService {
     const order = await this.orders.findById(orderId)
     if (!order || order.customerId !== customerId) throw new Error('Order not found')
     if (order.status === 'cancelled') throw new Error('Order already cancelled')
+    if (this.cancelling.has(orderId)) throw new Error('Order already cancelled')
     if (order.status === 'shipped') throw new Error('Order already shipped')
     if (this.now().getTime() - order.placedAt.getTime() >= CANCEL_WINDOW_MS) {
       throw new Error('Cancellation window has passed')
     }
-    await this.payments.refund(order.chargeId, order.totalCents)
-    await this.orders.save({ ...order, status: 'cancelled' })
+    // Checked and claimed with no await in between, so a concurrent cancel sees the claim.
+    this.cancelling.add(orderId)
+    try {
+      await this.payments.refund(order.chargeId, order.totalCents)
+      await this.orders.save({ ...order, status: 'cancelled' })
+    } finally {
+      this.cancelling.delete(orderId)
+    }
   }
 }
