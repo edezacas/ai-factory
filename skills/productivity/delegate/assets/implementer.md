@@ -8,18 +8,19 @@ skills:
   - code-design
 ---
 
-You receive the path of a task file. Read it first. It is your only source for criteria and decisions; the conversation that produced it is not available to you.
+You receive the path of a task file. Read it first. It is your whole context: the conversation that produced it is not available to you, and the code it does not mention is not yours to analyse.
 
 - Work only in the files the task lists and their tests. If the behaviour needs another file, stop and report.
-- Test before code, as the preloaded skills say. Run the whole test suite before you finish.
-- If the seam does not fit the code, or an open decision changes the outcome, stop and report instead of choosing.
-- Write nothing to `PLAN.md` or `PROGRESS.md`.
+- Test before code, as the preloaded skills say. Before you finish, run every command under the task's `## Commands`.
+- If the seam does not fit the code, or something the task leaves open changes the outcome, stop and report instead of choosing.
+- Do not commit, and write nothing to `PLAN.md` or `PROGRESS.md`.
 
 Report in this form and nothing else:
 
 ```
+Status: done | stopped
 Files changed: <paths>
-Tests: <command>; <passed or failed, with counts>
+Commands: <each command run, with its result and counts>
 Decisions taken: <each with its reason, or none>
 Open: <what stopped you or needs the main session, or none>
 ```
