@@ -5,7 +5,8 @@
       "id": 1,
       "prompt": "/delegate Implement notes/order-management.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
       "files": [
-        "evals/files/notes/order-management.md"
+        "evals/files/notes/order-management.md",
+        "evals/files/.claude/agents/implementer.md"
       ],
       "expected_output": "The agent writes PLAN.md with small stages and checkpoints and one task file per stage, installs the implementer, delegates the first stage to it with the path of its task file, reviews the result, runs the tests, writes PROGRESS.md and stops at the first checkpoint without starting the next stage.",
       "assertions": [

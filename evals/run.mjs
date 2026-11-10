@@ -399,7 +399,8 @@ async function copyCaseFiles(testCase, workdir, skillDir, expected) {
     const rel = file.includes('/files/') ? file.slice(file.indexOf('/files/') + 7) : path.basename(file);
     const target = path.join(workdir, rel);
     await mkdir(path.dirname(target), { recursive: true });
-    await cp(source, target, { force: true });
+    // A case file can be a symlink to the skill's own asset, so the two never drift apart.
+    await cp(source, target, { force: true, dereference: true });
     expected.set(rel, await readFile(source, 'utf8'));
   }
 }
