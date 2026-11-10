@@ -12,3 +12,32 @@ Customers can place, list and cancel their orders, with an email when an order i
 - A cancelled order is refunded in full to the original payment method through the payment provider. If the refund fails, the order is not cancelled.
 - The confirmation email goes out when an order is placed, through the email provider, to the customer's email address, which placing an order receives. If the email fails, the order stays placed. Cancellation sends no email.
 - Orders are kept in memory for now, behind the existing `OrderService` in `src/orders/`.
+
+## Interface
+
+Another team already calls this code, so the names and signatures are settled too:
+
+```ts
+// src/orders/order.ts
+type OrderStatus = 'placed' | 'shipped' | 'cancelled' // Order gains `status: OrderStatus`
+
+// src/payments/payment-gateway.ts
+interface PaymentGateway {
+  charge(customerId: string, amountCents: number): Promise<{ chargeId: string }>
+  refund(chargeId: string, amountCents: number): Promise<void>
+}
+
+// src/notifications/email-sender.ts
+interface EmailSender {
+  sendOrderConfirmation(to: string, order: Order): Promise<void>
+}
+
+// src/orders/order-service.ts
+class OrderService {
+  constructor(orders: OrderRepository, payments: PaymentGateway, emails: EmailSender, now?: () => Date)
+  place(customerId: string, email: string, lines: OrderLine[]): Promise<Order>
+  listForCustomer(customerId: string): Promise<Order[]>
+  markShipped(orderId: string): Promise<void>
+  cancel(customerId: string, orderId: string): Promise<void>
+}
+```

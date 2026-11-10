@@ -33,12 +33,72 @@
           "run": "test -f PROGRESS.md"
         },
         {
-          "name": "implementer installed",
-          "run": "test -f .claude/agents/implementer.md"
-        },
-        {
           "name": "tests pass",
           "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/order-management.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/order-management.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on a correct implementation",
+          "files": [
+            "evals/hidden/mutants/order-management/src/orders/order.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-repository.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-service.ts",
+            "evals/hidden/mutants/order-management/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/order-management/src/notifications/email-sender.ts"
+          ],
+          "run": "cp -r mutants/order-management/src/. src/ && npx vitest run --exclude test/hidden/**",
+          "reference": true
+        },
+        {
+          "name": "agent tests catch: a cancel is still allowed at exactly 24 hours",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/>= CANCEL_WINDOW_MS/> CANCEL_WINDOW_MS/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancel does not refund",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/this.payments.refund(/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a shipped order can be cancelled",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/status === '\\''shipped'\\''/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an order already cancelled is refunded again",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i '/status === '\\''cancelled'\\'') throw/d' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed refund still cancels the order",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/^    await this.payments.refund(order.chargeId, order.totalCents)$/    await this.payments.refund(order.chargeId, order.totalCents).catch(() => {})/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: another customer's order gives a different error",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/if (!order || order.customerId !== customerId) throw new Error('\\''Order not found'\\'')/if (!order) throw new Error('\\''Order not found'\\''); if (order.customerId !== customerId) throw new Error('\\''Not your order'\\'')/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed email fails the order",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/} catch {/} catch (err) { throw err/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the email goes to the customer id",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/sendOrderConfirmation(email, order)/sendOrderConfirmation(customerId, order)/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelled orders drop out of the list",
+          "run": "cp -r mutants/order-management/src/. src/ && sed -i 's/return orders.sort(/return orders.filter((o) => o.status !== '\\''cancelled'\\'').sort(/' src/orders/order-service.ts && ! npx vitest run --exclude 'test/hidden/**'",
+          "mutant": true
         }
       ]
     },
