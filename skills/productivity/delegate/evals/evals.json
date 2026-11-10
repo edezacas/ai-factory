@@ -228,6 +228,31 @@
           "run": "git diff --quiet HEAD -- src test harness.json vitest.config.ts && test -z \"$(git status --porcelain src test)\""
         }
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "/delegate Implementa notes/order-management.md. Todo lo que dice está decidido. Donde las notas dejen un detalle abierto, elige la opción que recomendarías y di cuál.",
+      "files": [
+        "evals/files/notes/order-management.md",
+        "evals/files/.claude/agents/implementer.md"
+      ],
+      "expected_output": "The user writes in Spanish. The agent writes PLAN.md and the task files in English, delegates the first stage and stops at the first checkpoint, and every message it sends the user, the checkpoint report included, is in Spanish.",
+      "assertions": [
+        "Every message to the user, in every turn, is in Spanish; code, paths, identifiers and quoted file content may stay as they are.",
+        "The report at the first checkpoint, after a stage ran, is in Spanish."
+      ],
+      "checks": [
+        {
+          "name": "the run reached a checkpoint",
+          "run": "grep -qiE '^\\*\\*Status:\\*\\* *(waiting|done)' docs/plans/*/PROGRESS.md"
+        }
+      ],
+      "replies": [
+        "Adelante.",
+        "Adelante.",
+        "Adelante."
+      ],
+      "until": "grep -qiE '^\\*\\*Status:\\*\\* *(waiting|done)' docs/plans/*/PROGRESS.md"
     }
   ]
 }

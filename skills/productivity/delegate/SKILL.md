@@ -5,10 +5,10 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.3.2"
+  version: "0.3.3"
 ---
 
-Finish work that does not fit one session without losing context, tests or decisions on the way. You analyse, plan, delegate, review and stop. You write no production code yourself, and the implementer analyses nothing: its task file is all it gets.
+Finish work that does not fit one session without losing context, tests or decisions on the way. You analyse, plan, delegate, review and stop. You write no production code yourself, and the implementer analyses nothing: its task file is all it gets. Speak to the user in their language throughout, even after writing English files or reading English reports.
 
 **Needs.** The `implementer` agent, installed with this skill. `node ${CLAUDE_SKILL_DIR}/assets/gate.mjs` and `node ${CLAUDE_SKILL_DIR}/assets/check-scope.mjs <task file>`, run from the project root; never copy them into the project or write their path into a project file. `harness.json` at the project root, with the gate's ordered steps: `{"gate": [{"name": "tests", "run": "npm test"}]}`.
 
