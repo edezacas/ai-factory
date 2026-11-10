@@ -2,9 +2,11 @@
 // Fails if a file outside the task file's "## Files" section changed since the base.
 // Usage: node check-scope.mjs <task file> [--base <ref>]   (from the project root; the script itself lives in the delegate skill's assets/)
 import { execFileSync } from 'node:child_process';
-import { readFileSync, appendFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 
-const LOG = 'docs/harness/log.jsonl';
+// The log is evidence for this machine, not part of the project: .harness/ ignores itself,
+// so it never shows up in git status or in a stage's commit.
+const LOG = '.harness/log.jsonl';
 const start = Date.now();
 // The skill version goes on every log line: the scripts are shared by every project that
 // uses the installed skill, so the log must say which version ran.
@@ -18,7 +20,8 @@ const VERSION = (() => {
 const [task, flag, base = 'HEAD'] = process.argv.slice(2);
 
 function finish(result, outOfScope, code) {
-  mkdirSync('docs/harness', { recursive: true });
+  mkdirSync('.harness', { recursive: true });
+  if (!existsSync('.harness/.gitignore')) writeFileSync('.harness/.gitignore', '*\n');
   appendFileSync(LOG, JSON.stringify({
     ts: new Date().toISOString(), script: 'check-scope', version: VERSION, result, task, base, outOfScope,
     durationMs: Date.now() - start,
@@ -43,7 +46,6 @@ try {
 const section = text.split(/^## /m).find(s => s.startsWith('Files')) ?? '';
 const allowed = new Set([...section.matchAll(/`([^`]+)`/g)].map(m => m[1].trim()));
 allowed.add(task);
-allowed.add(LOG);
 
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).split('\n').filter(Boolean);
 const changed = new Set([

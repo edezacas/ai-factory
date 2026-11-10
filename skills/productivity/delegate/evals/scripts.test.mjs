@@ -31,7 +31,7 @@ function run(script, dir, ...args) {
 }
 
 function log(dir) {
-  return readFileSync(join(dir, 'docs/harness/log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  return readFileSync(join(dir, '.harness/log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
 }
 
 const pass = 'node -e "process.exit(0)"';
@@ -129,12 +129,20 @@ test('check-scope fails on a changed or new file outside the list and names it',
   assert.deepEqual(line.outOfScope.sort(), ['src/c.ts', 'src/d/e.ts']);
 });
 
-test('check-scope ignores the log and the task file itself', () => {
-  const p = project({ 'src/a.ts': 'a', 'docs/harness/log.jsonl': '' });
+test('check-scope ignores the task file itself', () => {
+  const p = project({ 'src/a.ts': 'a' });
   p.write('docs/plans/w/01.md', task);
-  p.write('docs/harness/log.jsonl', '{}\n');
   const r = run('check-scope.mjs', p.dir, 'docs/plans/w/01.md');
   assert.equal(r.status, 0);
+});
+
+test('the log stays out of git: both scripts leave the tree clean', () => {
+  const p = project({ 'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: pass }] }), 'task.md': '## Files\n' });
+  assert.equal(run('gate.mjs', p.dir).status, 0);
+  assert.equal(run('check-scope.mjs', p.dir, 'task.md').status, 0);
+  assert.equal(run('check-scope.mjs', p.dir, 'task.md').status, 0);
+  assert.equal(readFileSync(join(p.dir, '.harness/.gitignore'), 'utf8'), '*\n');
+  assert.equal(p.git('status', '--porcelain').toString(), '');
 });
 
 test('check-scope with --base counts commits since the base and not before', () => {

@@ -54,7 +54,7 @@
         },
         {
           "name": "the gate and the scope check ran",
-          "run": "grep -q '\"script\":\"gate\"' docs/harness/log.jsonl && grep -q '\"script\":\"check-scope\"' docs/harness/log.jsonl"
+          "run": "grep -q '\"script\":\"gate\"' .harness/log.jsonl && grep -q '\"script\":\"check-scope\"' .harness/log.jsonl"
         },
         {
           "name": "the code passes the hidden tests",

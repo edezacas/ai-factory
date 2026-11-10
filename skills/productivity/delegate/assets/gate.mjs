@@ -2,9 +2,11 @@
 // Runs the steps in harness.json in order and stops at the first that fails.
 // Usage: node gate.mjs   (from the project root; the script itself lives in the delegate skill's assets/)
 import { spawnSync } from 'node:child_process';
-import { readFileSync, appendFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 
-const LOG = 'docs/harness/log.jsonl';
+// The log is evidence for this machine, not part of the project: .harness/ ignores itself,
+// so it never shows up in git status or in a stage's commit.
+const LOG = '.harness/log.jsonl';
 const TAIL = 40;
 const start = Date.now();
 // The skill version goes on every log line: the scripts are shared by every project that
@@ -18,7 +20,8 @@ const VERSION = (() => {
 })();
 
 function finish(result, step, code) {
-  mkdirSync('docs/harness', { recursive: true });
+  mkdirSync('.harness', { recursive: true });
+  if (!existsSync('.harness/.gitignore')) writeFileSync('.harness/.gitignore', '*\n');
   appendFileSync(LOG, JSON.stringify({
     ts: new Date().toISOString(), script: 'gate', version: VERSION, result, step, durationMs: Date.now() - start,
   }) + '\n');

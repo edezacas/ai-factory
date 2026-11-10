@@ -1,6 +1,6 @@
 {
   "name": "edai",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Skills and subagents that take an agent from a prompt to validated code: clarify, design, test first, record decisions, and delegate work too big for one session.",
   "author": {
     "name": "edezacas"
