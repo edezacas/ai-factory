@@ -10,7 +10,7 @@ The skills are built and measured on [Claude Code](https://claude.com/claude-cod
 
 ```
 /plugin marketplace add edezacas/ai-factory
-/plugin install edai@edezacas
+/plugin install edai@ai-factory
 ```
 
 The plugin is active right away. Its skills are named `edai:<skill>`, so `delegate` is invoked as `/edai:delegate <task>`. You get a new version when the plugin's version goes up; to get it, update from `/plugin`, or turn on auto-update for this marketplace there.
