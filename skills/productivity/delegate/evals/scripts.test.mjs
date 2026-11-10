@@ -27,7 +27,7 @@ function project(files) {
 }
 
 function run(script, dir, ...args) {
-  return spawnSync(process.execPath, [join(here, script), ...args], { cwd: dir, encoding: 'utf8' });
+  return spawnSync(process.execPath, [join(here, '..', 'assets', script), ...args], { cwd: dir, encoding: 'utf8' });
 }
 
 function log(dir) {
@@ -46,6 +46,14 @@ test('gate passes when every step passes and logs it', () => {
   assert.equal(line.result, 'pass');
   assert.equal(line.step, null);
   assert.equal(typeof line.durationMs, 'number');
+});
+
+test('both scripts log the version of the skill they belong to', () => {
+  const version = readFileSync(join(here, '..', 'SKILL.md'), 'utf8').match(/version:\s*"([^"]+)"/)[1];
+  const p = project({ 'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: pass }] }), 'task.md': '## Files\n' });
+  run('gate.mjs', p.dir);
+  run('check-scope.mjs', p.dir, 'task.md');
+  assert.deepEqual(log(p.dir).map(l => [l.script, l.version]), [['gate', version], ['check-scope', version]]);
 });
 
 test('gate stops at the first failing step, shows its output and logs the step', () => {
