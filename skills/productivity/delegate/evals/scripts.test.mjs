@@ -164,3 +164,63 @@ test('check-scope without a task file fails with a clear error', () => {
   assert.equal(r.status, 2);
   assert.match(r.stderr, /missing\.md/);
 });
+
+test('check-scope allows the PROGRESS.md next to the task file', () => {
+  const p = project({ 'docs/plans/w/01.md': task, 'docs/plans/w/PROGRESS.md': 'p', 'src/a.ts': 'a' });
+  p.write('docs/plans/w/PROGRESS.md', 'p2');
+  p.write('src/a.ts', 'a2');
+  assert.equal(run('check-scope.mjs', p.dir, 'docs/plans/w/01.md').status, 0);
+});
+
+function stageProject(gate) {
+  return project({
+    'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: gate }] }),
+    'docs/plans/w/01.md': task, 'docs/plans/w/PROGRESS.md': 'p', 'src/a.ts': 'a', 'src/c.ts': 'c',
+  });
+}
+const head = (p) => p.git('rev-parse', 'HEAD').toString().trim();
+
+test('stage commits the stage with its message when the gate and the scope pass', () => {
+  const p = stageProject(pass);
+  p.write('src/a.ts', 'a2');
+  p.write('src/b.ts', 'b');
+  p.write('docs/plans/w/PROGRESS.md', 'p2');
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1: a and b');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(p.git('log', '-1', '--format=%s').toString().trim(), 'stage 1: a and b');
+  assert.deepEqual(p.git('show', '--name-only', '--format=', 'HEAD').toString().trim().split('\n').sort(),
+    ['docs/plans/w/PROGRESS.md', 'src/a.ts', 'src/b.ts']);
+  assert.equal(p.git('status', '--porcelain').toString(), '');
+  assert.deepEqual(log(p.dir).map(l => [l.script, l.result]), [['gate', 'pass'], ['check-scope', 'pass']]);
+});
+
+test('stage commits nothing when the gate fails, and shows why', () => {
+  const p = stageProject(fail);
+  p.write('src/a.ts', 'a2');
+  const before = head(p);
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout + r.stderr, /boom/);
+  assert.equal(head(p), before);
+  assert.match(p.git('status', '--porcelain').toString(), /src\/a\.ts/);
+});
+
+test('stage commits nothing when a file outside the task changed, and names it', () => {
+  const p = stageProject(pass);
+  p.write('src/c.ts', 'c2');
+  const before = head(p);
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout + r.stderr, /src\/c\.ts/);
+  assert.equal(head(p), before);
+});
+
+test('stage without a message fails with usage and commits nothing', () => {
+  const p = stageProject(pass);
+  p.write('src/a.ts', 'a2');
+  const before = head(p);
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md');
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /usage/);
+  assert.equal(head(p), before);
+});

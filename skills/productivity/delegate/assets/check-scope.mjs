@@ -2,6 +2,7 @@
 // Fails if a file outside the task file's "## Files" section changed since the base.
 // Usage: node check-scope.mjs <task file> [--base <ref>]   (from the project root; the script itself lives in the delegate skill's assets/)
 import { execFileSync } from 'node:child_process';
+import { posix } from 'node:path';
 import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 
 // The log is evidence for this machine, not part of the project: .harness/ ignores itself,
@@ -46,6 +47,8 @@ try {
 const section = text.split(/^## /m).find(s => s.startsWith('Files')) ?? '';
 const allowed = new Set([...section.matchAll(/`([^`]+)`/g)].map(m => m[1].trim()));
 allowed.add(task);
+// The main session updates the work's PROGRESS.md before it commits the stage.
+allowed.add(posix.join(posix.dirname(task), 'PROGRESS.md'));
 
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).split('\n').filter(Boolean);
 const changed = new Set([
