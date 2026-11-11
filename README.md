@@ -17,6 +17,12 @@ The plugin is active right away. Its skills are named `edai:<skill>`, so `delega
 
 Then ask for something a little vague, such as "Add a CSV export for orders". If the skill doesn't start by itself, ask for it by name: "Use the ask-me skill".
 
+## Two ways to work
+
+**Hands-on.** You work with the agent in one session, and each skill steps in when it is needed. `ask-me` clears up what is undecided, `code-design` and `tdd` shape the code, and `write-why` records the decisions at the end.
+
+**Delegate.** You invoke `/edai:delegate <task>` and the session works in order. It clarifies with you, writes a plan in small stages, hands each stage to an `implementer` subagent with only the context it needs, checks every stage with scripts and stops at checkpoints for your review. It suits any task, large or small, and keeps the work going across sessions without losing context. On tasks that fit one session it costs about 2.3 times a hands-on session with the same quality, which is the price of the order and traceability it gives. Use Opus as the main session.
+
 ## Skills
 
 ### Engineering
@@ -37,19 +43,21 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
 - **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
 - **[write-why](skills/productivity/write-why/SKILL.md)**: When the work is done, the agent records the decisions the code can't explain and that are hard to reverse or surprising, and writes nothing if none qualifies.
-- **[delegate](skills/productivity/delegate/SKILL.md)**: For work too big for one session, and a quota that can pay for it. Invoked with `/edai:delegate <task>`, in a project with a `harness.json` at its root that lists the gate's steps (it proposes one if there is none): the session plans in small stages, delegates each one to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, reviews the result and stops at checkpoints for you. It never starts on its own.
+- **[delegate](skills/productivity/delegate/SKILL.md)** is an ordered way to do any task with agents. It needs a `harness.json` at the project root with the gate's steps, and proposes one if there is none. Each stage goes to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, works only in the files its task lists and stops instead of deciding behaviour the task leaves open. The work stays on its own branch with one commit per stage, and you merge it. It never starts on its own.
 
 ## How we know it works
 
-Instructions that read well don't always change what an agent does, so we test them. Each task runs several times, with and without the skill, and reports:
+Instructions that read well don't always change what an agent does, so we test them. Each task runs several times and reports three things.
 
-- **Quality:** did the result meet the assertions, according to a judge on a different model?
-- **Activation:** did the agent pick up the skill when it should, and leave it alone when it shouldn't?
-- **Efficiency:** turns, tool calls, tokens, cache use, peak context and cost.
+- **Quality.** A judge on a different model checks the assertions, and shell commands check what a command can decide, such as hidden tests the agent never saw and seeded errors its tests should catch.
+- **Activation.** Did the agent pick up the skill when it should, and leave it alone when it shouldn't?
+- **Efficiency.** Turns, tool calls, tokens, cache use, peak context and cost.
 
-This has already paid off. With its first short description, `ask-me` triggered in 1 of 10 runs on two vague requests. Rewording the description took that to 10 of 10, and the skill still stayed out of the way on a simple rename and on a question about a file. Without `tdd`, the agent wrote no tests on two small coding tasks in any of 10 runs; with it, it wrote them in all 10.
+A skill is compared with the same task without it. `delegate` is compared with doing the same task hands-on.
 
-These results are early: one model (Sonnet), a small test project and each skill measured on its own. A real project may behave differently.
+This has already paid off. With its first short description, `ask-me` triggered in 1 of 10 runs on two vague requests, and rewording it took that to 10 of 10 while it still stayed out of the way on a rename and on a question. Without `tdd`, the agent wrote no tests on two small coding tasks in any of 10 runs, and with it in all 10. Given a task that left a rounding rule open, the `implementer` stopped and asked in 3 of 3 runs after its rules were tightened, against 1 of 3 before.
+
+The skills are measured on Sonnet and Opus, on a small test project and on five tasks in real projects. Few runs separate clearly, so a real project may still behave differently.
 
 To run an evaluation you need Node 20.11 or later and the Claude Code CLI. It uses your Claude Code account, so each run has a real cost:
 
@@ -61,7 +69,7 @@ node evals/run.mjs --only ask-me --id 6 --runs 1
 
 - **One skill, one problem.** If it needs an "and" to explain, it's two skills.
 - **Short.** The goal and the constraints, not steps a good model already knows.
-- **Discovered, not summoned.** A skill's description should get it used at the right moment, without anyone asking.
+- **Discovered, not summoned.** A skill's description should get it used at the right moment, without anyone asking. `delegate` is the one exception, because it is a way of working you choose.
 - **Measured, or removed.** A skill stays only if the numbers show it helps.
 
 ## Credits
