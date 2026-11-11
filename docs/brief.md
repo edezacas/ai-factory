@@ -39,7 +39,7 @@ The project serves two kinds of user, and each gets a mode:
   3. `write-why`, when development is finished and verified, before reporting it, while the agent that did the work still has the context.
 - **Orchestrated (phase 2):** an ordered way to do any task with agents, large or small, for a quota that can pay for it. A small change is one stage with a single checkpoint at the end; a large one gets more stages without losing context across sessions. The developer invokes it by name; an Opus session plans, delegates each stage to subagents, reviews and stops at checkpoints. It reuses the phase 1 skills inside the subagents. Details below.
 
-Phase 2 is a mode the user chooses, not a remedy for phase 1 failing. It is still measured against phase 1 on the same task; whether it costs less than phase 1 on a small task is not measured yet.
+Phase 2 is a mode the user chooses, not a remedy for phase 1 failing. It is still measured against phase 1 on the same task; on tasks that fit one session it costs about 2.3 times a hands-on Opus session, with the same quality, and the extra is the orchestration in the main session; accepted for the order and traceability it gives (2026-11-11).
 
 ## Skills
 
