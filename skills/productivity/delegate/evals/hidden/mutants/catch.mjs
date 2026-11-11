@@ -1,5 +1,6 @@
 // Did the agent's tests catch a seeded error? Run from the workdir:
-//   node mutants/catch.mjs '<sed expression applied to src/orders/order-service.ts>'
+//   node mutants/catch.mjs '<sed expression>' [reference src dir] [file the sed applies to]
+// The defaults are the order-management reference and src/orders/order-service.ts.
 // Caught means some agent test that passes on the reference fails on the mutant, so a
 // test of a rule the notes left open, which the reference may not follow, decides nothing.
 import { execFileSync } from 'node:child_process'
@@ -23,9 +24,10 @@ const failing = () => {
   return names
 }
 
-cpSync('mutants/order-management/src', 'src', { recursive: true })
+const [, , expression, reference = 'mutants/order-management/src', target = 'src/orders/order-service.ts'] = process.argv
+cpSync(reference, 'src', { recursive: true })
 const onReference = failing()
-execFileSync('sed', ['-i', process.argv[2], 'src/orders/order-service.ts'])
+execFileSync('sed', ['-i', expression, target])
 const onMutant = failing()
 const caught = [...onMutant].filter((name) => !onReference.has(name))
 console.log(`fail on reference: ${onReference.size}, fail on mutant: ${onMutant.size}, caught by: ${caught.join('; ') || 'none'}`)

@@ -142,11 +142,11 @@
         }
       ],
       "replies": [
-        "continue",
-        "continue",
-        "continue",
-        "continue",
-        "continue"
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
       ],
       "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
     },
@@ -297,6 +297,234 @@
           "run": "! grep -qE \"Math\\.(round|floor|ceil|trunc)|toFixed\" src/orders/order.ts"
         }
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "/delegate Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/implementer.md"
+      ],
+      "expected_output": "Cost pair with case 9: the same small task through delegate, one stage, one checkpoint at the end.",
+      "assertions": [
+        "The agent implemented every rule in the notes, or said which it left out and why."
+      ],
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/bulk-discount.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/bulk-discount.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference",
+          "files": [
+            "evals/hidden/mutants/bulk-discount/src/orders/order.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/bulk-discount/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: no discount at exactly 10 units",
+          "run": "node mutants/catch.mjs 's/if (units < BULK_UNITS)/if (units <= BULK_UNITS)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the threshold counts lines",
+          "run": "node mutants/catch.mjs 's/units += line.quantity/units += 1/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the total is rounded instead of the discount",
+          "run": "node mutants/catch.mjs 's/return total - Math.floor(total \\/ 10)/return Math.floor(total * 0.9)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the discount is rounded up",
+          "run": "node mutants/catch.mjs 's/return total - Math.floor(total \\/ 10)/return total - Math.ceil(total \\/ 10)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: every order gets the discount",
+          "run": "node mutants/catch.mjs '/if (units < BULK_UNITS) return total/d' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
+    },
+    {
+      "id": 9,
+      "prompt": "Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md"
+      ],
+      "expected_output": "Cost pair with case 8: the same small task hands-on, without delegate.",
+      "assertions": [
+        "The agent implemented every rule in the notes, or said which it left out and why."
+      ],
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/bulk-discount.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/bulk-discount.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference",
+          "files": [
+            "evals/hidden/mutants/bulk-discount/src/orders/order.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/bulk-discount/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: no discount at exactly 10 units",
+          "run": "node mutants/catch.mjs 's/if (units < BULK_UNITS)/if (units <= BULK_UNITS)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the threshold counts lines",
+          "run": "node mutants/catch.mjs 's/units += line.quantity/units += 1/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the total is rounded instead of the discount",
+          "run": "node mutants/catch.mjs 's/return total - Math.floor(total \\/ 10)/return Math.floor(total * 0.9)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the discount is rounded up",
+          "run": "node mutants/catch.mjs 's/return total - Math.floor(total \\/ 10)/return total - Math.ceil(total \\/ 10)/' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: every order gets the discount",
+          "run": "node mutants/catch.mjs '/if (units < BULK_UNITS) return total/d' mutants/bulk-discount/src src/orders/order.ts",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "npm test --silent >/dev/null 2>&1 && test -n \"$(git status --porcelain src test)\""
+    },
+    {
+      "id": 10,
+      "prompt": "Implement notes/order-management.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
+      "files": [
+        "evals/files/notes/order-management.md"
+      ],
+      "expected_output": "Cost pair with case 1: the same notes hands-on, without delegate.",
+      "assertions": [
+        "The agent implemented every rule in the notes, or said which it left out and why."
+      ],
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/order-management.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/order-management.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference, open details included",
+          "files": [
+            "evals/hidden/mutants/order-management/src/orders/order.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-repository.ts",
+            "evals/hidden/mutants/order-management/src/orders/order-service.ts",
+            "evals/hidden/mutants/order-management/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/order-management/src/notifications/email-sender.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/order-management/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: a cancel is still allowed at exactly 24 hours",
+          "run": "node mutants/catch.mjs 's/>= CANCEL_WINDOW_MS/> CANCEL_WINDOW_MS/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancel does not refund",
+          "run": "node mutants/catch.mjs '/this.payments.refund(/d'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a shipped order can be cancelled",
+          "run": "node mutants/catch.mjs '/status === '\\''shipped'\\'') throw/d'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an order already cancelled is refunded again",
+          "run": "node mutants/catch.mjs '/async cancel/,/^  }/{/status === '\\''cancelled'\\'') throw/d}'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels at the same time both refund",
+          "run": "node mutants/catch.mjs '/this.cancelling.has(orderId)/d'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed refund still cancels the order",
+          "run": "node mutants/catch.mjs 's/await this.payments.refund(order.chargeId, order.totalCents)$/await this.payments.refund(order.chargeId, order.totalCents).catch(() => {})/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: another customer's order gives a different error",
+          "run": "node mutants/catch.mjs 's/if (!order || order.customerId !== customerId) throw new Error('\\''Order not found'\\'')/if (!order) throw new Error('\\''Order not found'\\''); if (order.customerId !== customerId) throw new Error('\\''Not your order'\\'')/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled order can be shipped",
+          "run": "node mutants/catch.mjs '/async markShipped/,/^  }/{/status === '\\''cancelled'\\'') throw/d}'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the window error has another message",
+          "run": "node mutants/catch.mjs 's/Cancellation window has passed/Too late to cancel/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed email fails the order",
+          "run": "node mutants/catch.mjs 's/} catch (err) {/} catch (err) { throw err/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the email goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendOrderConfirmation(email, order)/sendOrderConfirmation(customerId, order)/'",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelled orders drop out of the list",
+          "run": "node mutants/catch.mjs 's/return orders.sort(/return orders.filter((o) => o.status !== '\\''cancelled'\\'').sort(/'",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "npm test --silent >/dev/null 2>&1 && test -n \"$(git status --porcelain src test)\""
     }
   ]
 }
