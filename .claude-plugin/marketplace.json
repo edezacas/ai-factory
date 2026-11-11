@@ -1,11 +1,11 @@
 {
-  "name": "ai-factory",
+  "name": "edezacas",
   "owner": {
     "name": "edezacas"
   },
   "plugins": [
     {
-      "name": "edai",
+      "name": "ai-factory",
       "source": "./",
       "description": "Skills and subagents that take an agent from a prompt to validated code."
     }

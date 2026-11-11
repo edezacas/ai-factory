@@ -10,10 +10,10 @@ The skills are built and measured on [Claude Code](https://claude.com/claude-cod
 
 ```
 /plugin marketplace add edezacas/ai-factory
-/plugin install edai@ai-factory
+/plugin install ai-factory@edezacas
 ```
 
-The plugin is active right away. Its skills are named `edai:<skill>`, so `delegate` is invoked as `/edai:delegate <task>`. You get a new version when the plugin's version goes up; to get it, update from `/plugin`, or turn on auto-update for this marketplace there.
+The plugin is active right away. Its skills are named `ai-factory:<skill>`, so `delegate` is invoked as `/ai-factory:delegate <task>`. You get a new version when the plugin's version goes up; to get it, update from `/plugin`, or turn on auto-update for this marketplace there.
 
 Then ask for something a little vague, such as "Add a CSV export for orders". If the skill doesn't start by itself, ask for it by name: "Use the ask-me skill".
 
@@ -21,7 +21,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 
 **Hands-on.** You work with the agent in one session, and each skill steps in when it is needed. `ask-me` clears up what is undecided, `code-design` and `tdd` shape the code, and `write-why` records the decisions at the end.
 
-**Delegate.** You invoke `/edai:delegate <task>` and the session works in order. It clarifies with you, writes a plan in small stages, hands each stage to an `implementer` subagent with only the context it needs, checks every stage with scripts and stops at checkpoints for your review. It suits any task, large or small, and keeps the work going across sessions without losing context. On tasks that fit one session it costs about 2.3 times a hands-on session with the same quality, which is the price of the order and traceability it gives. Use Opus as the main session.
+**Delegate.** You invoke `/ai-factory:delegate <task>` and the session works in order. It clarifies with you, writes a plan in small stages, hands each stage to an `implementer` subagent with only the context it needs, checks every stage with scripts and stops at checkpoints for your review. It suits any task, large or small, and keeps the work going across sessions without losing context. On tasks that fit one session it costs about 2.3 times a hands-on session with the same quality, which is the price of the order and traceability it gives. Use Opus as the main session.
 
 ## Skills
 
