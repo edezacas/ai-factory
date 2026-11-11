@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 Do any task with agents in order. Clarify before planning, plan before writing code, give each agent only the context it needs, check every stage with scripts and record the decisions at the end.
@@ -50,12 +50,12 @@ Do all of this in one shell call.
 
 1. **Delegate.** Launch `implementer` with the path of the task file, never a summary. Run one stage at a time, and two in parallel only if neither needs the other's code, seam or result and they change no file in common. Launch `implementer` with the `haiku` model only for what `tdd` excludes, which is renames, formatting, moving files, documentation and fixtures.
 2. **Review.** Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or with what is wrong. After two failed rounds stop and ask the user, which is a stop and not a checkpoint.
-3. **Commit.** In one call update `PROGRESS.md` with the stage, the gate and scope results, what is left to test, the next step and the decisions the implementer reported, then run `stage.mjs` with the stage's commit message. If it fails nothing is committed and you go back to review. Another session must be able to continue from `PROGRESS.md` alone.
+3. **Commit.** In one call update `PROGRESS.md` with the stage and its base, the gate and scope results, what is left to test, the next step and the decisions the implementer reported, then run `stage.mjs` with the stage's commit message. If it fails nothing is committed and you go back to review. Another session must be able to continue from `PROGRESS.md` alone.
 
 ### 4. Checkpoint
 
 - In the commit step, set `PROGRESS.md` to waiting for review. Then name the range to review and end the turn without starting the next stage.
-- If the user rejects a checkpoint, return the branch to the previous checkpoint's commit once they agree.
+- If the user rejects a checkpoint, return the branch to the start of the review range once they agree.
 
 ### 5. Finish
 
