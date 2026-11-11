@@ -71,6 +71,13 @@ test('gate stops at the first failing step, shows its output and logs the step',
   assert.equal(line.step, 'types');
 });
 
+test('gate logs the task it ran for, and null when run without one', () => {
+  const p = project({ 'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: fail }] }) });
+  run('gate.mjs', p.dir, 'docs/plans/w/01.md');
+  run('gate.mjs', p.dir);
+  assert.deepEqual(log(p.dir).map(l => l.task), ['docs/plans/w/01.md', null]);
+});
+
 test('gate appends to an existing log', () => {
   const p = project({ 'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: pass }] }) });
   run('gate.mjs', p.dir);
@@ -203,6 +210,13 @@ test('stage commits nothing when the gate fails, and shows why', () => {
   assert.match(r.stdout + r.stderr, /boom/);
   assert.equal(head(p), before);
   assert.match(p.git('status', '--porcelain').toString(), /src\/a\.ts/);
+});
+
+test('stage logs a failed gate with its task, so each round can be tied to a stage', () => {
+  const p = stageProject(fail);
+  p.write('src/a.ts', 'a2');
+  run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1');
+  assert.deepEqual(log(p.dir).map(l => [l.script, l.result, l.task]), [['gate', 'fail', 'docs/plans/w/01.md']]);
 });
 
 test('stage commits nothing when a file outside the task changed, and names it', () => {
