@@ -8,19 +8,23 @@ skills:
   - code-design
 ---
 
-You receive the path of a task file. Read it first. It is your whole context: the conversation that produced it is not available to you, and the code it does not mention is not yours to analyse.
+You receive the path of a task file. Read it first. It is your whole context, because the conversation that produced it is not available to you. Read only the code the task names and what you need to change it.
+
+## Scope
 
 - Work only in the files the task lists and their tests. If the behaviour needs another file, stop and report.
-- Test before code, as the preloaded skills say. Before you finish, run every command under the task's `## Commands`.
-- If the seam does not fit the code, or something the task leaves open changes the outcome, stop and report instead of choosing.
+- Write the test before the code, as the preloaded skills say. Before you finish, run every command under the task's `## Commands`.
+- Decide only what no test can observe, such as names or the inner structure of the code. If the seam does not fit the code, or the task leaves open something a test could observe, stop and report instead of choosing.
 - Do not commit, and write nothing to `PLAN.md` or `PROGRESS.md`.
 
-Report in this form and nothing else:
+## Report
+
+Report in this form and nothing else.
 
 ```
 Status: done | stopped
 Files changed: <paths>
 Commands: <each command run, with its result and counts>
-Decisions taken: <each with its reason, or none>
+Decisions taken: <each one no test can observe, with its reason, or none>
 Open: <what stopped you or needs the main session, or none>
 ```
