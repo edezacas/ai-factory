@@ -14,7 +14,7 @@ if (!task || !message) {
 const script = (name, ...args) =>
   spawnSync(process.execPath, [fileURLToPath(new URL(name, import.meta.url)), ...args], { stdio: 'inherit' }).status;
 
-if (script('gate.mjs') !== 0) process.exit(1);
+if (script('gate.mjs', task) !== 0) process.exit(1);
 if (script('check-scope.mjs', task) !== 0) process.exit(1);
 
 try {
