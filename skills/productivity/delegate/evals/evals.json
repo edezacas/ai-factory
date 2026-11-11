@@ -168,17 +168,36 @@
     {
       "id": 3,
       "prompt": "/delegate Export a constant VERSION with the value 1.0.0 from src/index.ts.",
-      "expected_output": "The work fits in one change, so the agent says so and does it, or asks, with no plan and no subagent.",
+      "files": [
+        "evals/files/.claude/agents/implementer.md"
+      ],
+      "expected_output": "A small change goes through the same flow at its smallest size: one stage in a plan, built by the implementer, a single checkpoint at the end, then the plan folder is deleted.",
       "assertions": [
-        "The response says the work does not need delegation, or simply does it.",
-        "The response writes no PLAN.md and launches no implementer."
+        "PLAN.md lists exactly one stage, and its only checkpoint is at the end.",
+        "The stage went to a subagent named implementer, launched with the path of its task file, not with a summary of the task.",
+        "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
+        "The final report says what is left to test, or that nothing is."
       ],
       "checks": [
         {
-          "name": "no plan was written",
-          "run": "test ! -f PLAN.md && test ! -d docs/plans"
+          "name": "one task file was committed",
+          "run": "test \"$(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\" -eq 1"
+        },
+        {
+          "name": "VERSION was committed",
+          "run": "git log --all -p -- src/index.ts | grep -q \"VERSION.*1\\.0\\.0\""
+        },
+        {
+          "name": "the plan folder was deleted at the end",
+          "run": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
         }
-      ]
+      ],
+      "replies": [
+        "continue",
+        "continue",
+        "continue"
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
     },
     {
       "id": 4,

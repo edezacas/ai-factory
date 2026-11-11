@@ -1,22 +1,66 @@
 ---
 name: delegate
-description: Runs work too big for one session from a session that plans, delegates each stage to the implementer subagent, reviews it and stops at checkpoints. Invoked by name only, with the task as argument. Do not use it for work one session finishes in one go, or for a question.
+description: An ordered way to do any coding task with agents, large or small. The main session clarifies and plans, the implementer subagent builds each stage from a task file, scripts check every stage and the work stops at agreed checkpoints. Invoked by name only, with the task as argument. Do not use it for a question.
 disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
-Finish work that does not fit one session without losing context, tests or decisions on the way. You analyse, plan, delegate, review and stop. You write no production code yourself, and the implementer analyses nothing: its task file is all it gets. Speak to the user in their language throughout, even after writing English files or reading English reports.
+Do any task with agents in order. Clarify before planning, plan before writing code, give each agent only the context it needs, check every stage with scripts and record the decisions at the end.
 
-**Needs.** The `implementer` agent, installed with this skill. `node ${CLAUDE_SKILL_DIR}/assets/gate.mjs`, `node ${CLAUDE_SKILL_DIR}/assets/check-scope.mjs <task file>` and `node ${CLAUDE_SKILL_DIR}/assets/stage.mjs <task file> "<message>"`, which runs both and commits only if both pass, all run from the project root; never copy them into the project or write their path into a project file. `harness.json` at the project root, with the gate's ordered steps: `{"gate": [{"name": "tests", "run": "npm test"}]}`.
+## Always
 
-0. **Start.** On a dirty tree, say what is uncommitted and stop. If `docs/plans/<work>/PROGRESS.md` exists, resume from it and its branch. If `harness.json` is missing, propose one from the project's test and type commands as one more decision in step 1, and write it once confirmed.
-1. **Analyse.** Explore and reason about the code yourself. A subagent only locates: it returns paths and line ranges, and you read what you will quote. Name dependencies, risks and alternatives. Run the gate, or the commands you propose for it, on the untouched tree and judge it by its exit code, not its output: a base that fails is one more decision, never planned on. Settle every open decision with `ask-me` before any plan, the checkpoints among them: propose them after the first stage, before anything hard to reverse (data, a contract phase, a public API) and at the end, never one per stage by default.
-2. **Plan.** Before the first stage, write `docs/plans/<work>/PLAN.md` from `assets/PLAN.md` and every task file from `assets/task.md`, in the same folder. Small stages, each leaving the repo green, adding behaviour a test can observe and committable alone. A task file holds everything the implementer needs and nothing else, within the template's limits; copy into it the signatures and types it touches, and the gate steps' commands from `harness.json`. A later stage quotes the seam an earlier task file declares, not code that does not exist yet. A task with an open decision is not delegated. If the work touches data, write how to recover or revert. A schema or public API change others use is split into expand, migrate and contract. Every tool call rereads the whole session, so write all these files and do step 3 in one shell call.
-3. **Branch.** Create `delegate/<work>` from `HEAD`, record the branch and the commit it started from in `PROGRESS.md` from `assets/PROGRESS.md`, and commit the plan.
-4. **Delegate.** One stage at a time by default. Launch `implementer` with the path of the task file, never a summary. Give `haiku` only what `tdd` excludes: renames, formatting, moving files, documentation, fixtures. Run stages in parallel only if neither depends on the other, even through a criterion, and they change no file in common.
-5. **Review.** Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or what is wrong; after two failed rounds, stop and ask the user, which is a stop, not a checkpoint.
-6. **Commit.** In one call, update `PROGRESS.md` (the stage, gate and scope as passed, what is left to test, the next step and the decisions the implementer reported) and run `stage.mjs` on the task file with the stage's commit message. It makes the stage's one commit only if the gate and the scope check pass; if either fails, nothing is committed and you fix the stage as in step 5. Another session must be able to continue from `PROGRESS.md` alone.
-7. **Stop.** At a checkpoint, the step 6 update sets `PROGRESS.md` to waiting for review; name the range to review, and end the turn. Do not start the next stage. A rejected checkpoint returns the branch to the previous checkpoint's commit once the user agrees. Never merge or push: the user integrates the branch. When the user approves the last checkpoint, run `write-why` and commit its records, then delete `docs/plans/<work>/` in its own commit: a finished plan goes stale and git keeps it. Report what is left to test, since it is no longer written anywhere.
+- Speak to the user in their language, even after writing English files or reading English reports.
+- You write no production code. The implementer analyses nothing, so its task file is all it gets.
+- Run the scripts from the project root. Never copy them into the project or write their path into a project file.
+  - `node ${CLAUDE_SKILL_DIR}/assets/gate.mjs` runs the gate steps listed in `harness.json` at the project root, for example `{"gate": [{"name": "tests", "run": "npm test"}]}`.
+  - `node ${CLAUDE_SKILL_DIR}/assets/stage.mjs <task file> "<message>"` runs the gate and the scope check and commits only if both pass.
+- Every tool call rereads the whole session, so put in one shell call whatever can go together.
+- Never merge or push. The user integrates the branch.
+
+## On load
+
+1. If the tree is dirty, say what is uncommitted and stop.
+2. If `docs/plans/<work>/PROGRESS.md` exists, resume from it and its branch.
+3. If `harness.json` is missing, propose one from the project's test and type commands as one more decision of the analysis, and write it once the user confirms.
+
+## Flow
+
+### 1. Analyse
+
+- Explore and reason about the code yourself. A subagent only locates code and returns paths and line ranges, and you read what you will quote.
+- Name dependencies, risks and alternatives.
+- Run the gate on the untouched tree and judge it by its exit code, not its output. A base that fails is one more decision and never something to plan on.
+- Settle every open decision with `ask-me` before any plan. The checkpoints are one of them. Propose one after the first stage, one before anything hard to reverse such as data, a contract phase or a public API, and one at the end, never one per stage by default.
+
+### 2. Plan and branch
+
+Do all of this in one shell call.
+
+- Size the work in stages. A small change is one stage with a single checkpoint at the end.
+- Write `PLAN.md` from `assets/PLAN.md` and every task file from `assets/task.md` in `docs/plans/<work>/`, even when there is only one stage.
+- Each stage is small, leaves the repo green, adds behaviour a test can observe and can be committed alone.
+- A task file holds everything the implementer needs and nothing else, within the template's limits. Copy into it the signatures and types it touches and the gate commands from `harness.json`. A later stage quotes the seam an earlier task file declares, not code that does not exist yet.
+- If the work touches data, write how to recover or revert it. A schema or public API change that others use is split into expand, migrate and contract.
+- Create `delegate/<work>` from `HEAD`, record the branch and its starting commit in `PROGRESS.md` from `assets/PROGRESS.md`, and commit the plan.
+
+### 3. Each stage
+
+1. **Delegate.** Launch `implementer` with the path of the task file, never a summary. Run one stage at a time, and two in parallel only if neither needs the other's code, seam or result and they change no file in common. Launch `implementer` with the `haiku` model only for what `tdd` excludes, which is renames, formatting, moving files, documentation and fixtures.
+2. **Review.** Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or with what is wrong. After two failed rounds stop and ask the user, which is a stop and not a checkpoint.
+3. **Commit.** In one call update `PROGRESS.md` with the stage, the gate and scope results, what is left to test, the next step and the decisions the implementer reported, then run `stage.mjs` with the stage's commit message. If it fails nothing is committed and you go back to review. Another session must be able to continue from `PROGRESS.md` alone.
+
+### 4. Checkpoint
+
+- In the commit step, set `PROGRESS.md` to waiting for review. Then name the range to review and end the turn without starting the next stage.
+- If the user rejects a checkpoint, return the branch to the previous checkpoint's commit once they agree.
+
+### 5. Finish
+
+These steps run once the user approves the last checkpoint.
+
+1. Run `write-why` and commit its records.
+2. Delete `docs/plans/<work>/` in its own commit, because a finished plan goes stale and git keeps it.
+3. Report what is left to test, since it is no longer written anywhere.
