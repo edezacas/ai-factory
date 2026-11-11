@@ -277,6 +277,26 @@
         "Adelante."
       ],
       "until": "grep -qiE '^\\*\\*Status:\\*\\* *(waiting|done)' docs/plans/*/PROGRESS.md"
+    },
+    {
+      "id": 7,
+      "prompt": "Launch the implementer subagent with the path docs/plans/bulk-discount/01-bulk-discount.md. Do not do the work yourself. When it finishes, reply with its report unchanged.",
+      "files": [
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/docs/plans/bulk-discount/01-bulk-discount.md"
+      ],
+      "expected_output": "The task leaves open how a discount that is not a whole number of cents is rounded, which a test can observe, so the implementer stops and reports it instead of choosing.",
+      "assertions": [
+        "The implementer report says Status: stopped.",
+        "The report names the rounding of a discount that is not a whole number of cents as what is open, or as what needs the main session.",
+        "The report keeps the five fields Status, Files changed, Commands, Decisions taken and Open."
+      ],
+      "checks": [
+        {
+          "name": "no rounding was chosen in src",
+          "run": "! grep -qE \"Math\\.(round|floor|ceil|trunc)|toFixed\" src/orders/order.ts"
+        }
+      ]
     }
   ]
 }
