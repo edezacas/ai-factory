@@ -264,6 +264,39 @@ const usageByModel = (result) =>
 const contextSize = ({ usage: u = {} }) =>
   (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
 
+// The main session's cost before and after its first delegation, so the cost of reviewing
+// stages can be told from the cost of planning them. The stream gives exact input and cache
+// tokens per message but only partial output, so each message is weighed by its input side
+// at list-price ratios to the input price, and a model's cost is shared out over the weights
+// of all its messages, subagents' included. Null without a delegation.
+const INPUT_WEIGHTS = { input: 1, cacheRead: 0.1, cacheWrite5m: 1.25, cacheWrite1h: 2 };
+
+function mainCostSplit(events, result) {
+  const messages = new Map();
+  for (const e of events) {
+    if (e.type !== 'assistant') continue;
+    const known = messages.get(e.message.id);
+    messages.set(e.message.id, {
+      ...e.message,
+      parent: e.parent_tool_use_id,
+      content: [...(known?.content ?? []), ...(e.message.content ?? [])],
+    });
+  }
+  const weightOf = ({ usage: u = {} }) =>
+    (u.input_tokens ?? 0) * INPUT_WEIGHTS.input +
+    (u.cache_read_input_tokens ?? 0) * INPUT_WEIGHTS.cacheRead +
+    (u.cache_creation?.ephemeral_5m_input_tokens ?? u.cache_creation_input_tokens ?? 0) * INPUT_WEIGHTS.cacheWrite5m +
+    (u.cache_creation?.ephemeral_1h_input_tokens ?? 0) * INPUT_WEIGHTS.cacheWrite1h;
+  const weights = {};
+  for (const m of messages.values()) weights[m.model] = (weights[m.model] ?? 0) + weightOf(m);
+  const costOf = (m) => (weights[m.model] ? (weightOf(m) / weights[m.model]) * (result?.modelUsage?.[m.model]?.costUSD ?? 0) : 0);
+  const main = [...messages.values()].filter((m) => !m.parent);
+  const first = main.findIndex((m) => (m.content ?? []).some((c) => c.type === 'tool_use' && (c.name === 'Agent' || c.name === 'Task')));
+  if (first < 0) return { before: null, after: null };
+  const sum = (list) => +list.reduce((t, m) => t + costOf(m), 0).toFixed(4);
+  return { before: sum(main.slice(0, first + 1)), after: sum(main.slice(first + 1)) };
+}
+
 // A run with replies has one result per turn. Turns and time are per turn, but a resumed
 // session reports cost and usage for the whole session so far: the last result holds them.
 function mergeResults(results) {
@@ -301,6 +334,8 @@ function summarize(events, skillName = null) {
       peak_context_tokens: Math.max(0, ...messages.map(contextSize)),
       cost_usd: result?.total_cost_usd ?? 0,
       by_model: usageByModel(result),
+      main_cost_before_first_delegation_usd: mainCostSplit(events, result).before,
+      main_cost_after_first_delegation_usd: mainCostSplit(events, result).after,
       skills_used: calls.filter((c) => c.name === 'Skill').map((c) => c.input?.skill),
       wrote_code: calls.some((c) => writtenFiles(c).some(isCodeFile)),
       red_before_code: redBeforeCode(calls, events).seen,
@@ -605,6 +640,8 @@ const EFFICIENCY = {
   cache_hit_rate: (t) => t.cache_hit_rate,
   peak_context_tokens: (t) => t.peak_context_tokens,
   cost_usd: (t) => t.cost_usd,
+  main_cost_before_first_delegation_usd: (t) => t.main_cost_before_first_delegation_usd,
+  main_cost_after_first_delegation_usd: (t) => t.main_cost_after_first_delegation_usd,
 };
 
 // A seeded error only counts as caught if the tests also pass on correct code: tests
@@ -662,7 +699,8 @@ function configStats(runs) {
       ),
     },
     efficiency_of_complete_runs: mapValues(EFFICIENCY, (metric) =>
-      statsOf(complete.map((r) => metric(r.timing))),
+      // A metric a run does not have, such as a split with no delegation, is left out.
+      statsOf(complete.map((r) => metric(r.timing)).filter((v) => v !== null && v !== undefined)),
     ),
     by_model_of_complete_runs: byModelStats(complete),
     assertions: tally(graded.flatMap((r) => r.grading.assertion_results), 'text'),
@@ -802,7 +840,8 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
 }
 
 // A case's `replies` are sent one per turn, resuming the same session, until they run
-// out, a turn fails, or the case's `until` command exits 0 in the workdir.
+// out, a turn fails, or the case's `until` command exits 0 in the workdir. A case with
+// long turns, such as several stages between checkpoints, sets its own `timeout_s` per turn.
 async function converse(testCase, argv, cwd) {
   const replies = testCase.replies ?? [];
   const keepSession = replies.length > 0;
@@ -810,7 +849,8 @@ async function converse(testCase, argv, cwd) {
   let sessionId = null;
   for (const input of [testCase.prompt, ...replies]) {
     const resume = sessionId ? ['--resume', sessionId] : [];
-    const turn = await claude([...argv, ...resume], { cwd, timeout: RUN_TIMEOUT_MS, input, keepSession });
+    const timeout = testCase.timeout_s ? testCase.timeout_s * 1000 : RUN_TIMEOUT_MS;
+    const turn = await claude([...argv, ...resume], { cwd, timeout, input, keepSession });
     turns.push(turn);
     const result = parseEvents(turn.stdout).find((e) => e.type === 'result');
     sessionId = result?.session_id;
@@ -847,6 +887,10 @@ async function runCase(skill, testCase, itDir, repetition) {
     if (config === 'with') {
       await installSkill(skill, workdir);
       for (const name of alsoInstall) await installSkill(await findSkill(name), workdir);
+      // A case file under .claude/skills/ replaces the installed one, so a case can run a
+      // variant of a skill, such as one rule taken out, against the same notes.
+      const variants = (testCase.files ?? []).filter((f) => f.includes('/files/.claude/skills/'));
+      if (variants.length) await copyCaseFiles({ files: variants }, workdir, skill.dir, new Map());
     }
     const outputsDir = path.join(dir, 'outputs');
     await mkdir(outputsDir, { recursive: true });

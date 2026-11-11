@@ -525,6 +525,499 @@
         "Yes, go with what you recommend, and continue."
       ],
       "until": "npm test --silent >/dev/null 2>&1 && test -n \"$(git status --porcelain src test)\""
+    },
+    {
+      "id": 11,
+      "prompt": "/delegate Implement notes/customer-accounts.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
+      "files": [
+        "evals/files/notes/customer-accounts.md",
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/src/orders/order.ts",
+        "evals/files/src/orders/order-repository.ts",
+        "evals/files/src/orders/order-service.ts",
+        "evals/files/src/payments/payment-gateway.ts",
+        "evals/files/src/notifications/email-sender.ts",
+        "evals/files/src/clients/storefront.ts",
+        "evals/files/test/orders/order-service.test.ts",
+        "evals/files/test/clients/storefront.test.ts"
+      ],
+      "expected_output": "R7: a task of six to eight stages with an expand, migrate and contract, on top of order management. The agent writes PLAN.md with small stages and checkpoints and one task file per stage, delegates each stage to the implementer with the path of its task file, reviews the result, runs the tests and records PROGRESS.md. It stops at every checkpoint and goes on only after the user replies, until the work is done. Once the user approves the last checkpoint, it records the decisions with write-why and deletes docs/plans/<work>/ in its own commit.",
+      "assertions": [
+        "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
+        "Every stage adds behaviour a test can observe; no stage only adds a layer, an interface or a type.",
+        "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam with the signatures it touches, the closest test, its files, its commands and its dependencies, and no open decision.",
+        "Every stage went to a subagent named implementer that ran, launched with the path of its task file, not with a summary of the task.",
+        "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
+        "PROGRESS.md, in its last committed version, records each stage with what changed and the tests run with their result.",
+        "The agent stopped at every checkpoint marked in PLAN.md and started the next stage only after a user reply.",
+        "The final report says what is left to test, or that nothing is.",
+        "The change to place went in three steps, each committed or finished with every test passing: expand (both forms accepted), migrate (storefront.ts calls the new form), contract (the old form removed)."
+      ],
+      "checks": [
+        {
+          "name": "a plan with a checkpoint was committed",
+          "run": "git log --all -p -- 'docs/plans/*/PLAN.md' | grep -qi checkpoint"
+        },
+        {
+          "name": "task files were committed, one per stage",
+          "run": "test \"$(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\" -ge 2"
+        },
+        {
+          "name": "progress was committed",
+          "run": "git log --all --format=%h -- 'docs/plans/*/PROGRESS.md' | grep -q ."
+        },
+        {
+          "name": "the plan folder is gone once the work is done",
+          "run": "test -z \"$(ls -A docs/plans 2>/dev/null)\""
+        },
+        {
+          "name": "the work is on a delegate/ branch",
+          "run": "git branch --list 'delegate/*' | grep -q ."
+        },
+        {
+          "name": "main was neither merged into nor moved",
+          "run": "test \"$(git rev-list --count main)\" = 1"
+        },
+        {
+          "name": "at least one commit per stage on the branch",
+          "run": "b=$(git branch --list 'delegate/*' --format='%(refname:short)' | head -1); test \"$(git rev-list --count main..$b)\" -ge \"$(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\""
+        },
+        {
+          "name": "every task file within 120 lines",
+          "run": "for f in $(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$'); do c=$(git log --all --diff-filter=AM --format=%H -1 -- \"$f\"); test \"$(git show \"$c:$f\" | wc -l)\" -le 120 || exit 1; done"
+        },
+        {
+          "name": "the gate and the scope check ran",
+          "run": "grep -q '\"script\":\"gate\"' .harness/log.jsonl && grep -q '\"script\":\"check-scope\"' .harness/log.jsonl"
+        },
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests, old forms of place and checkout removed",
+          "files": [
+            "evals/hidden/test/hidden/customer-accounts.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/customer-accounts.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference, open details included",
+          "files": [
+            "evals/hidden/mutants/customer-accounts/src/orders/order.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-service.ts",
+            "evals/hidden/mutants/customer-accounts/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/customer-accounts/src/notifications/email-sender.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/clients/storefront.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/customer-accounts/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: the confirmation goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendOrderConfirmation(customer.email, order)/sendOrderConfirmation(customerId, order)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an unknown customer is still charged",
+          "run": "node mutants/catch.mjs '/if (!customer) throw new Error('\\''Customer not found'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a repeated sku is accepted",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Duplicate sku'\\'')/d' mutants/customer-accounts/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line is refunded the whole order total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, order.totalCents)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line refund still cancels the line",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, lineCents(line)).catch(() => {})/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line leaves the total unchanged",
+          "run": "node mutants/catch.mjs 's/totalCents: order.totalCents - lineCents(line),/totalCents: order.totalCents,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line drops out of the order",
+          "run": "node mutants/catch.mjs 's/const lines = order.lines.map((l) => (l === line ? { ...l, status: '\\''cancelled'\\'' as const } : l))/const lines = order.lines.filter((l) => l !== line)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the last line leaves the order placed",
+          "run": "node mutants/catch.mjs 's/status: lines.every((l) => l.status === '\\''cancelled'\\'') ? '\\''cancelled'\\'' : order.status,/status: order.status,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the order after a line refunds the original total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, order.totalCents)$/refund(order.chargeId, order.lines.reduce((t, l) => t + l.quantity * l.unitPriceCents, 0))/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the line email goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendLineCancellation(customer!.email, updated, sku)/sendLineCancellation(customerId, updated, sku)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line email fails the cancel",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/} catch (err) {/} catch (err) { throw err/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line of a shipped order or past the window can be cancelled",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/await this.cancellable(customerId, orderId)/(await this.orders.findById(orderId))!/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line already cancelled is refunded again",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Line already cancelled'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of the same line both refund",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /((work) => work())(/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of different lines lose one",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /this.exclusive(orderId + sku, /}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\"",
+      "timeout_s": 900
+    },
+    {
+      "id": 12,
+      "prompt": "Implement notes/customer-accounts.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
+      "files": [
+        "evals/files/notes/customer-accounts.md",
+        "evals/files/src/orders/order.ts",
+        "evals/files/src/orders/order-repository.ts",
+        "evals/files/src/orders/order-service.ts",
+        "evals/files/src/payments/payment-gateway.ts",
+        "evals/files/src/notifications/email-sender.ts",
+        "evals/files/src/clients/storefront.ts",
+        "evals/files/test/orders/order-service.test.ts",
+        "evals/files/test/clients/storefront.test.ts"
+      ],
+      "expected_output": "Cost pair with case 11: the same notes hands-on, without delegate.",
+      "assertions": [
+        "The agent implemented every rule in the notes, or said which it left out and why.",
+        "The change to place went in three steps, each committed or finished with every test passing: expand (both forms accepted), migrate (storefront.ts calls the new form), contract (the old form removed)."
+      ],
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests, old forms of place and checkout removed",
+          "files": [
+            "evals/hidden/test/hidden/customer-accounts.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/customer-accounts.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference, open details included",
+          "files": [
+            "evals/hidden/mutants/customer-accounts/src/orders/order.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-service.ts",
+            "evals/hidden/mutants/customer-accounts/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/customer-accounts/src/notifications/email-sender.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/clients/storefront.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/customer-accounts/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: the confirmation goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendOrderConfirmation(customer.email, order)/sendOrderConfirmation(customerId, order)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an unknown customer is still charged",
+          "run": "node mutants/catch.mjs '/if (!customer) throw new Error('\\''Customer not found'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a repeated sku is accepted",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Duplicate sku'\\'')/d' mutants/customer-accounts/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line is refunded the whole order total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, order.totalCents)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line refund still cancels the line",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, lineCents(line)).catch(() => {})/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line leaves the total unchanged",
+          "run": "node mutants/catch.mjs 's/totalCents: order.totalCents - lineCents(line),/totalCents: order.totalCents,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line drops out of the order",
+          "run": "node mutants/catch.mjs 's/const lines = order.lines.map((l) => (l === line ? { ...l, status: '\\''cancelled'\\'' as const } : l))/const lines = order.lines.filter((l) => l !== line)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the last line leaves the order placed",
+          "run": "node mutants/catch.mjs 's/status: lines.every((l) => l.status === '\\''cancelled'\\'') ? '\\''cancelled'\\'' : order.status,/status: order.status,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the order after a line refunds the original total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, order.totalCents)$/refund(order.chargeId, order.lines.reduce((t, l) => t + l.quantity * l.unitPriceCents, 0))/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the line email goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendLineCancellation(customer!.email, updated, sku)/sendLineCancellation(customerId, updated, sku)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line email fails the cancel",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/} catch (err) {/} catch (err) { throw err/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line of a shipped order or past the window can be cancelled",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/await this.cancellable(customerId, orderId)/(await this.orders.findById(orderId))!/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line already cancelled is refunded again",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Line already cancelled'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of the same line both refund",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /((work) => work())(/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of different lines lose one",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /this.exclusive(orderId + sku, /}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "npm test --silent >/dev/null 2>&1 && ! grep -q email src/clients/storefront.ts",
+      "timeout_s": 900
+    },
+    {
+      "id": 13,
+      "prompt": "/delegate Implement notes/customer-accounts.md. Everything in it is settled. Where the notes leave a detail open, take the option you would recommend and say which.",
+      "files": [
+        "evals/files/notes/customer-accounts.md",
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/src/orders/order.ts",
+        "evals/files/src/orders/order-repository.ts",
+        "evals/files/src/orders/order-service.ts",
+        "evals/files/src/payments/payment-gateway.ts",
+        "evals/files/src/notifications/email-sender.ts",
+        "evals/files/src/clients/storefront.ts",
+        "evals/files/test/orders/order-service.test.ts",
+        "evals/files/test/clients/storefront.test.ts",
+        "evals/files/.claude/skills/delegate/SKILL.md"
+      ],
+      "expected_output": "R7 control for case 11: the same task with a variant of delegate that reads the diff of every stage, the review rule taken out. R7: a task of six to eight stages with an expand, migrate and contract, on top of order management. The agent writes PLAN.md with small stages and checkpoints and one task file per stage, delegates each stage to the implementer with the path of its task file, reviews the result, runs the tests and records PROGRESS.md. It stops at every checkpoint and goes on only after the user replies, until the work is done. Once the user approves the last checkpoint, it records the decisions with write-why and deletes docs/plans/<work>/ in its own commit.",
+      "assertions": [
+        "PLAN.md lists several stages, each with what changes, what behaviour to keep, how to validate it and whether it is a checkpoint.",
+        "Every stage adds behaviour a test can observe; no stage only adds a layer, an interface or a type.",
+        "Every task file has criteria in Given/When/Then with literal values, the decisions it relies on, its seam with the signatures it touches, the closest test, its files, its commands and its dependencies, and no open decision.",
+        "Every stage went to a subagent named implementer that ran, launched with the path of its task file, not with a summary of the task.",
+        "The main session wrote no code under src/ or test/ itself; code changes came from the subagent.",
+        "PROGRESS.md, in its last committed version, records each stage with what changed and the tests run with their result.",
+        "The agent stopped at every checkpoint marked in PLAN.md and started the next stage only after a user reply.",
+        "The final report says what is left to test, or that nothing is.",
+        "The change to place went in three steps, each committed or finished with every test passing: expand (both forms accepted), migrate (storefront.ts calls the new form), contract (the old form removed)."
+      ],
+      "checks": [
+        {
+          "name": "a plan with a checkpoint was committed",
+          "run": "git log --all -p -- 'docs/plans/*/PLAN.md' | grep -qi checkpoint"
+        },
+        {
+          "name": "task files were committed, one per stage",
+          "run": "test \"$(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\" -ge 2"
+        },
+        {
+          "name": "progress was committed",
+          "run": "git log --all --format=%h -- 'docs/plans/*/PROGRESS.md' | grep -q ."
+        },
+        {
+          "name": "the plan folder is gone once the work is done",
+          "run": "test -z \"$(ls -A docs/plans 2>/dev/null)\""
+        },
+        {
+          "name": "the work is on a delegate/ branch",
+          "run": "git branch --list 'delegate/*' | grep -q ."
+        },
+        {
+          "name": "main was neither merged into nor moved",
+          "run": "test \"$(git rev-list --count main)\" = 1"
+        },
+        {
+          "name": "at least one commit per stage on the branch",
+          "run": "b=$(git branch --list 'delegate/*' --format='%(refname:short)' | head -1); test \"$(git rev-list --count main..$b)\" -ge \"$(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$' | wc -l)\""
+        },
+        {
+          "name": "every task file within 120 lines",
+          "run": "for f in $(git log --all --name-only --format= -- docs/plans | sort -u | grep '\\.md$' | grep -v -e '/PLAN.md$' -e '/PROGRESS.md$'); do c=$(git log --all --diff-filter=AM --format=%H -1 -- \"$f\"); test \"$(git show \"$c:$f\" | wc -l)\" -le 120 || exit 1; done"
+        },
+        {
+          "name": "the gate and the scope check ran",
+          "run": "grep -q '\"script\":\"gate\"' .harness/log.jsonl && grep -q '\"script\":\"check-scope\"' .harness/log.jsonl"
+        },
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests, old forms of place and checkout removed",
+          "files": [
+            "evals/hidden/test/hidden/customer-accounts.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/customer-accounts.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the agent tests pass on the reference, open details included",
+          "files": [
+            "evals/hidden/mutants/customer-accounts/src/orders/order.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/orders/order-service.ts",
+            "evals/hidden/mutants/customer-accounts/src/payments/payment-gateway.ts",
+            "evals/hidden/mutants/customer-accounts/src/notifications/email-sender.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer.ts",
+            "evals/hidden/mutants/customer-accounts/src/customers/customer-repository.ts",
+            "evals/hidden/mutants/customer-accounts/src/clients/storefront.ts",
+            "evals/hidden/mutants/catch.mjs"
+          ],
+          "run": "cp -r mutants/customer-accounts/src/. src/ && npx vitest run --exclude 'test/hidden/**'"
+        },
+        {
+          "name": "agent tests catch: the confirmation goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendOrderConfirmation(customer.email, order)/sendOrderConfirmation(customerId, order)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: an unknown customer is still charged",
+          "run": "node mutants/catch.mjs '/if (!customer) throw new Error('\\''Customer not found'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a repeated sku is accepted",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Duplicate sku'\\'')/d' mutants/customer-accounts/src src/orders/order.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line is refunded the whole order total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, order.totalCents)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line refund still cancels the line",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, lineCents(line))/refund(order.chargeId, lineCents(line)).catch(() => {})/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line leaves the total unchanged",
+          "run": "node mutants/catch.mjs 's/totalCents: order.totalCents - lineCents(line),/totalCents: order.totalCents,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a cancelled line drops out of the order",
+          "run": "node mutants/catch.mjs 's/const lines = order.lines.map((l) => (l === line ? { ...l, status: '\\''cancelled'\\'' as const } : l))/const lines = order.lines.filter((l) => l !== line)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the last line leaves the order placed",
+          "run": "node mutants/catch.mjs 's/status: lines.every((l) => l.status === '\\''cancelled'\\'') ? '\\''cancelled'\\'' : order.status,/status: order.status,/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: cancelling the order after a line refunds the original total",
+          "run": "node mutants/catch.mjs 's/refund(order.chargeId, order.totalCents)$/refund(order.chargeId, order.lines.reduce((t, l) => t + l.quantity * l.unitPriceCents, 0))/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: the line email goes to the customer id",
+          "run": "node mutants/catch.mjs 's/sendLineCancellation(customer!.email, updated, sku)/sendLineCancellation(customerId, updated, sku)/' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a failed line email fails the cancel",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/} catch (err) {/} catch (err) { throw err/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line of a shipped order or past the window can be cancelled",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/await this.cancellable(customerId, orderId)/(await this.orders.findById(orderId))!/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: a line already cancelled is refunded again",
+          "run": "node mutants/catch.mjs '/throw new Error('\\''Line already cancelled'\\'')/d' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of the same line both refund",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /((work) => work())(/}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        },
+        {
+          "name": "agent tests catch: two cancels of different lines lose one",
+          "run": "node mutants/catch.mjs '/async cancelLine/,/^  }/{s/this.exclusive(orderId, /this.exclusive(orderId + sku, /}' mutants/customer-accounts/src src/orders/order-service.ts",
+          "mutant": true
+        }
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\"",
+      "timeout_s": 900
     }
   ]
 }
