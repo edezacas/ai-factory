@@ -30,6 +30,9 @@ All on Opus as the main session, with Sonnet as the implementer. Costs are per r
 | Branch per work, commit per stage and scope check (v0.3) against v0.2.1, order management | 125, 127 | $1.23 [1.19-1.29] against $1.05 [1.00-1.15], 17 % more, `separated`. Opus $1.01 against $0.83, Sonnet $0.22 against $0.23. 349 s against 334 s. Hidden tests pass and 12 of 12 mutants in all six runs |
 | Plan and stage each in one shell call (0.6.0) against 7 earlier runs | 131 | Main-session calls 20 [16-21] against 24 [21-37], main $0.75 against $0.86, total $1.30 against $1.30. Not separated, kept for fewer calls |
 | Implementer stops on open behaviour (0.8.0) against 0.6.0, case 7 | 134, 135 | Stopped in 3 of 3 against 1 of 3, about $0.06 a run. Not separated |
+| The same rule, same text, case 7 again | 158-160 | Stopped in 4 of 13. Of the 9 that did not, 8 chose `Math.round(total * 0.9)` and 1 returned a fraction of a cent, all reporting `done` with the rounding under `Open`. The 3 of 3 above was a small sample |
+| Two rewordings of that rule, case 7 | 161, 162 | Naming the preloaded skill's "report it as open": stopped in 2 of 10. "Never finish a behaviour without its test": 1 of 10. Neither kept |
+| `delegate` on notes that leave the rounding open, a case not kept | 163, 164 | The main session asked the user how to round before any plan in 3 of 3, with a recommendation and the alternatives, and the task file carried the answer. About $0.40 a run |
 | 0.8.0 on order management, case 1 | 133 | Judge 9, 8 and 9 of 9, 12 of 12 mutants each, $1.065 to $1.085, so no regression |
 | `delegate` against hands-on, small task, cases 8 and 9 | 139 | $0.37 [0.345-0.390] against $0.16 [0.144-0.177], `separated`. Opus $0.31-0.35, Sonnet $0.04. Mutants 8 of 8 on both sides |
 | `delegate` against hands-on, medium task, cases 1 and 10 | 139 | $1.01 [0.90-1.11] against $0.42 [0.37-0.44], `separated`. Mutants 12, 11 and 12 of 12 against 12 of 12 |

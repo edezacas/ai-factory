@@ -25,7 +25,7 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 - A session bootstrap header in `PROGRESS.md`, if a real session fails to resume from it. `delegate` already resumes on load.
 - A `SubagentStop` hook running the scripts, if a run shows the main session skipping them.
 - A JSON feature list as the source of state, if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
-- A rule for when the implementer may leave a criterion untested, if a second real work shows it reporting `done` with one under `Open`. `tdd` says to report what it could not test as open, and the implementer is told to stop when a task leaves something a test could observe. Seen once, in a real work.
+- A way to hold a stage whose report carries a behaviour the implementer chose, if a real work commits such a choice without the user being asked. The implementer stops on a gap in its task file in about 3 runs of 10 and two rewordings did not change it, but it names the choice under `Open` every time, and the main session's analysis asked about the same gap in 3 of 3 runs. Seen once in a real work, where the main session relayed it at the checkpoint. The place for it is `delegate`'s review step, not the implementer.
 - Tests for `evals/run.mjs`, if the runner fails again in a way a test would have caught. Its functions would first have to be split from its start-up.
 - A tester that never sees the implementation, if tests appear written after the code. It forces the interface to be fixed before the code, which pulls against `code-design`.
 - Haiku for code, if a task shows that delegating and reviewing it costs less than Sonnet.
