@@ -6,7 +6,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 
 - The kit installs in Claude Code as the `ai-factory` plugin, from this repo as its own marketplace.
 - The skills track is closed. Every skill but `web-performance` is measured, and the five real tasks of phase 1 are done. A skill reopens only on a failure that repeats in real work.
-- `delegate` is at 0.12.0. Its figures were measured up to 0.11.0, against hands-on work on small and large tasks. 0.12.0 only takes out parallel stages and is not measured.
+- `delegate` is at 0.11.0, measured against hands-on work on small and large tasks.
 - The verifier is built, at `agents/verifier.md`. It meets its criteria on a small change, and is not measured on a large one.
 - The evals runner keeps cost per model, resumes a session with fixed replies, and checks hidden tests and seeded mutants. Its gotchas are in `AGENTS.md`.
 
@@ -17,6 +17,7 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
 | 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
+| 8 | `delegate` without parallel stages | `delegate` allows two stages in parallel, and its plan template has a `Parallel` line, but the scripts cannot close them. `check-scope.mjs` compares the whole tree with one task file, so it fails on the other stage's files, and `stage.mjs` commits with `git add -A`, so one commit would take both. Decided on 2026-11-12: the option is removed, because the way out is a worktree per stage and worktrees are not wanted in this mode. The skill says one stage at a time, the template loses the line, and the versions of the skill and the plugin go up. The variant of the skill that case 13 installs still carries the sentence and is reviewed too | The skill and the template no longer offer parallel stages, and the tests of the scripts pass |
 
 ## Left out, and what brings it back
 

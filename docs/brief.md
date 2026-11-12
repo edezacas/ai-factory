@@ -70,7 +70,7 @@ So the main session keeps the whole analysis and delegates only tests and code, 
 - **The gate runs on the untouched tree before any plan.** Starting on a broken repo makes every later stage harder to judge, so a base that fails is a decision for the user.
 - **Checkpoints are one more decision of the analysis.** The minimum is one after the first stage, one before anything hard to reverse and one at the end, never one per stage by default. Two failed rounds in a stage are a stop, not a checkpoint.
 - **A checkpoint is the end of the turn, and nothing enforces it.** If the main session goes on past checkpoints, that failure is what justifies phase 3, not a patch in the skill.
-- **One stage at a time, never two in parallel.** Subagents are for work that only reports back, and agent teams only if the agents must talk to each other. Until 0.11.0 the skill allowed two independent stages in parallel, and the scripts could not close them: the scope check compares the whole tree with one task file, so each stage failed on the other's files, and the commit takes everything. The way out is a worktree per stage, which is not wanted in this mode, so the option was removed. It comes back with the unattended mode.
+- **One stage at a time by default.** Subagents are for work that only reports back, and agent teams only if the agents must talk to each other. The skill still allows two independent stages in parallel, which the scripts cannot close, because the scope check and the commit both see the whole tree. The option is to be removed, since the way out is a worktree per stage and that is not wanted in this mode. It is item 8 in `PLAN.md`, and parallel stages come back with the unattended mode.
 
 Rejected for good:
 
