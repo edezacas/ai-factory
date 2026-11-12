@@ -6,7 +6,7 @@
 // workspace described in AGENTS.md:
 //
 //   evals/workspace/iteration-N/<skill>/eval-<id>-<slug>/
-//     with_skill/run-K/{outputs,events.jsonl,transcript.md,timing.json,grading.json}
+//     with_skill/run-K/{outputs,events.jsonl,transcript.md,timing.json,grading.json,baseline.json}
 //     without_skill/{...}
 //   evals/workspace/iteration-N/benchmark.json
 //
@@ -907,9 +907,10 @@ async function runCase(skill, testCase, itDir, repetition) {
     const expected = await prepareWorkdir(workdir);
     await copyCaseFiles(testCase, workdir, skill.dir, expected);
     initGit(workdir);
+    // Companions go on both sides, so the two differ only in the skill under test.
+    for (const name of alsoInstall) await installSkill(await findSkill(name), workdir);
     if (config === 'with') {
       await installSkill(skill, workdir);
-      for (const name of alsoInstall) await installSkill(await findSkill(name), workdir);
       // A case file under .claude/skills/ replaces the installed one, so a case can run a
       // variant of a skill, such as one rule taken out, against the same notes.
       const variants = (testCase.files ?? []).filter((f) => f.includes('/files/.claude/skills/'));
@@ -955,6 +956,8 @@ async function runCase(skill, testCase, itDir, repetition) {
           ? 'unchanged'
           : 'deleted',
     }));
+    // Kept so --regrade shows the judge the same input files as the first grading did.
+    await writeFile(path.join(dir, 'baseline.json'), JSON.stringify(baseline) + '\n');
     // The agent may npm-install into workdir; keep only outputs/ after grading.
     await rm(workdir, { recursive: true, force: true });
 
@@ -1044,7 +1047,10 @@ async function regradeIteration(itDir) {
           })),
         )
       : [];
-    run.grading = await gradeCase(testCase, run.config, transcript.trim(), files, run.runDir);
+    const baselineFile = path.join(run.runDir, 'baseline.json');
+    const baseline = existsSync(baselineFile) ? JSON.parse(await readFile(baselineFile, 'utf8')) : undefined;
+    if (!baseline) console.warn(`  WARNING ${run.runDir}: no baseline.json, so the judge does not see the input files`);
+    run.grading = await gradeCase(testCase, run.config, transcript.trim(), files, run.runDir, baseline);
     console.log(`  re-graded ${run.skill} #${run.id} ${run.config}: ${run.grading.summary.passed}/${run.grading.summary.total}`);
   }
   const meta = JSON.parse(await readFile(path.join(itDir, 'benchmark.json'), 'utf8'));
