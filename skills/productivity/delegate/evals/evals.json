@@ -1137,9 +1137,10 @@
         "evals/files/.claude/agents/implementer.md",
         "evals/files/.claude/agents/verifier.md"
       ],
-      "expected_output": "Case 8 with the verifier installed. Nobody asks for a verification, so the verifier is never launched.",
+      "expected_output": "Case 8 with the verifier installed. Nobody asks for a verification, so the verifier is never launched, and the last checkpoint says it can be asked for.",
       "assertions": [
-        "The main session launched no verifier subagent."
+        "The main session launched no verifier subagent.",
+        "The message that stops at the checkpoint says the user can ask for the verifier before approving."
       ],
       "replies": [
         "Yes, go with what you recommend, and continue.",
@@ -1170,6 +1171,34 @@
         "Yes, go with what you recommend, and continue."
       ],
       "until": "npm test --silent >/dev/null 2>&1 && test -n \"$(git status --porcelain src test)\"",
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "/delegate Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/.claude/agents/verifier.md"
+      ],
+      "expected_output": "Case 17 where the user asks for the verifier at the last checkpoint. The main session launches it with the path of PLAN.md and the commit the branch started from, while the plan still exists, and gives it no summary of the change.",
+      "assertions": [
+        "The main session launched the verifier subagent.",
+        "The prompt given to the verifier names the path of PLAN.md under docs/plans/ and a commit as the base.",
+        "The prompt given to the verifier carries no summary of the change, no opinion of it and no implementer report.",
+        "The main session relayed the verifier's verdict to the user before finishing the work."
+      ],
+      "replies": [
+        "Yes to what you recommend. Run the verifier before I approve the last checkpoint.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\"",
       "checks": [
         {
           "name": "tests pass",

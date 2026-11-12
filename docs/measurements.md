@@ -50,7 +50,7 @@ The cost after the first delegation is 11 % lower with the rule, `separated` by 
 
 ## Verifier
 
-The change is the bulk discount, left uncommitted over a clean `HEAD`, with tests that pass and never use a total whose discount is not a whole number of cents. The seeded error rounds the discount up. The session and the verifier run on the same model, because the verifier inherits it. Cases 15 to 18 of `delegate`.
+The change is the bulk discount, left uncommitted over a clean `HEAD`, with tests that pass and never use a total whose discount is not a whole number of cents. The seeded error rounds the discount up. The session and the verifier run on the same model, because the verifier inherits it. Cases 15 to 19 of `delegate`.
 
 | What | Iteration | Model | Result |
 |---|---|---|---|
@@ -59,6 +59,8 @@ The change is the bulk discount, left uncommitted over a clean `HEAD`, with test
 | Nobody asks for a verification | 154 | Opus | Never launched in 3 of 3 `delegate` runs and 3 of 3 hands-on runs. They cost $0.36 and $0.13-0.18, as cases 8 and 9 without it |
 | Seeded error, without the rule that a green suite is not evidence | 155 | Opus | `fail` in 3 of 3, the failure seen by running it in 3 of 3, as with the rule |
 | Seeded error, with and without that rule | 156 | Sonnet | `fail` in 3 of 3 on both sides. The failure was seen by running it in 3 of 3 with the rule and 0 of 3 without. One of those three probed only totals that divide evenly, and in the other two the probe hung or timed out. $0.06-0.07 a run |
+| `delegate` 0.11.0, which offers it at the last checkpoint, nobody asks | 157 | Opus | Offered in the checkpoint message and not launched in 3 of 3. $0.38-0.39 a run |
+| `delegate` 0.11.0, the user asks at the last checkpoint | 157 | Opus | Launched in 3 of 3 with the path of `PLAN.md` and the branch's starting commit and nothing else, verdict relayed, and the work waited for approval in 3 of 3. $0.45-0.51 a run |
 
 The judge cannot tell the two sides apart, because its assertion takes a file and line as evidence, so the difference on Sonnet was read by hand. The reports had small faults that did not change a verdict: a proposed fix the form does not ask for, an example corrected in place and left, and "overcharged" for a customer who pays a cent less. The variant without the rule was not kept as a case.
 

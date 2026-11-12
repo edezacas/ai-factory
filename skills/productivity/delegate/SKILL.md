@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.10.3"
+  version: "0.11.0"
 ---
 
 Do any task with agents in order. Clarify before planning, plan before writing code, give each agent only the context it needs, check every stage with scripts and record the decisions at the end.
@@ -56,6 +56,7 @@ Do all of this in one shell call.
 
 - In the commit step, set `PROGRESS.md` to waiting for review. Then name the range to review and end the turn without starting the next stage.
 - If the user rejects a checkpoint, return the branch to the start of the review range once they agree.
+- At the last checkpoint, say that the user can ask for the `verifier` before approving. If they ask, launch it with the path of `PLAN.md` and the branch's starting commit, never a summary or an implementer's report.
 
 ### 5. Finish
 
