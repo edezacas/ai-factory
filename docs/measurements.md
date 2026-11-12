@@ -48,6 +48,20 @@ Cases 11 to 13, iteration 141. The task is customer accounts on top of order man
 
 The cost after the first delegation is 11 % lower with the rule, `separated` by two cents. Totals are not separated. In one run without the rule the main session wrote code itself. One hands-on run's tests disagree with the reference on a detail the notes leave open, so its mutants do not count. The split before and after is an estimate, described in `AGENTS.md`.
 
+## Verifier
+
+The change is the bulk discount, left uncommitted over a clean `HEAD`, with tests that pass and never use a total whose discount is not a whole number of cents. The seeded error rounds the discount up. The session and the verifier run on the same model, because the verifier inherits it. Cases 15 to 18 of `delegate`.
+
+| What | Iteration | Model | Result |
+|---|---|---|---|
+| Correct change | 154 | Opus | `pass` in 3 of 3, no criterion counted as not met, the rounding tried by hand and reported as uncovered. Tree unchanged in 3 of 3. $0.14 a run |
+| Seeded error, suite green | 154 | Opus | `fail` in 3 of 3, naming the rounding down, with an input and the observed total. Tree unchanged in 3 of 3. $0.14-0.16 a run |
+| Nobody asks for a verification | 154 | Opus | Never launched in 3 of 3 `delegate` runs and 3 of 3 hands-on runs. They cost $0.36 and $0.13-0.18, as cases 8 and 9 without it |
+| Seeded error, without the rule that a green suite is not evidence | 155 | Opus | `fail` in 3 of 3, the failure seen by running it in 3 of 3, as with the rule |
+| Seeded error, with and without that rule | 156 | Sonnet | `fail` in 3 of 3 on both sides. The failure was seen by running it in 3 of 3 with the rule and 0 of 3 without. One of those three probed only totals that divide evenly, and in the other two the probe hung or timed out. $0.06-0.07 a run |
+
+The judge cannot tell the two sides apart, because its assertion takes a file and line as evidence, so the difference on Sonnet was read by hand. The reports had small faults that did not change a verdict: a proposed fix the form does not ask for, an example corrected in place and left, and "overcharged" for a customer who pays a cent less. The variant without the rule was not kept as a case.
+
 ## Real works with `delegate`
 
 Not comparisons, since no work was done twice. They are what the evals cannot show.

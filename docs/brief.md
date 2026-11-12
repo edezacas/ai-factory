@@ -23,7 +23,7 @@ What is being built and why. How each piece works is in its own file, the skill,
 - Everything a skill needs lives in its folder. An agent lives next to the skill that launches it, or in `agents/` when no skill owns it.
 - A project holds only its own files: `harness.json` at the root, `AGENTS.md`, `docs/decisions/`, `docs/plans/<work>/` while that work is open, and `.harness/log.jsonl`, which ignores itself in git.
 - The scripts read the project's gate steps from `harness.json`, written by `delegate` during its analysis. No other skill writes it, because the file serves only `delegate`. Parsing `AGENTS.md` was rejected, since it is written for people and breaks when reworded.
-- The main session runs on the model the user has chosen, Opus or Fable, and `delegate` does not set it. Every figure here was measured with Opus as the main session, and nothing is measured with Fable. The implementer runs on Sonnet, exploration and what `tdd` excludes on Haiku, the verifier on Fable.
+- The main session runs on the model the user has chosen, Opus or Fable, and `delegate` does not set it. Every figure here was measured with Opus as the main session, and nothing is measured with Fable. The implementer runs on Sonnet, exploration and what `tdd` excludes on Haiku, and the verifier on the session's model.
 - What a project learns stays in the project, in its `AGENTS.md`, local skills and policy. It moves into the kit only when it repeats in two projects, by hand, with an eval.
 - The harness does not edit itself. Scripts write a log, a skill invoked by name reads it and proposes, and the user approves.
 - Unattended execution is not a requirement. The orchestrated mode advances on its own between checkpoints, and that is enough until data says otherwise.
@@ -79,24 +79,15 @@ Rejected for good:
 - **A required model for the main session.** The redesign rejected Fable because the measured problem is the cost of the main session. Since 2026-11-12 the model is the user's choice per work, and one real work has run on Fable. Its cost against Opus is not measured.
 - **Auto-applying `tune` proposals.** If approval becomes the bottleneck, that is a phase 3 question.
 
+## Verifier
+
+Verification is outside `delegate`. `agents/verifier.md` is a subagent with no skill, installed with the plugin. It receives what to verify against, a task file, a plan or the user's description, and a git base, and takes the diff itself. It starts from empty context and never receives the author's report or opinion, because that is what caught failures that had slipped past in the earlier orchestrator. It has no edit, write or delegation tool. Its shell can still write, so its text keeps scratch files outside the repo. Its report is fixed and short, and its form is in the agent file.
+
+- **It inherits the session's model**, as `delegate` does, so nobody spends a model they did not choose, and whoever launches it can name another. In `delegate` it still differs from the implementer, which runs on Sonnet. In a hands-on session it is the author's own model and only its empty context differs. What that loses is not measured.
+- **It runs only when the user asks.** Its description says so, and nothing else can enforce it. With it installed it was never launched in three `delegate` runs and three hands-on runs that did not ask for it, and those runs cost the same as without it.
+- **Its rules are few, and only one has been measured.** On a small change it passed a correct implementation and failed a seeded error under a green suite in 3 of 3 Opus runs each, naming the criterion and leaving the tree as it was. Without the rule that a green suite is not evidence, Opus did the same. On Sonnet the verdict was also the same, but the verifier saw the failure by running it in 3 of 3 runs with the rule and 0 of 3 without, where two of the three were probes that broke. The rule stays on that weak signal. The seeded error can be found by reading one line, so nothing here shows the verifier on a large change, or on a failure that only running reveals.
+
 ## Designed, not built
-
-### Verifier
-
-Verification is outside `delegate`. A `verifier` subagent with no skill, in `agents/verifier.md`, installed with the plugin. It starts from empty context, can read and run tests but has no edit, write or delegation tool, and writes nothing in the repo. It runs on Fable, a different model from the implementer in `delegate`. In a hands-on session on Fable it would not differ from the author, which is open. Its description says it is used only when the user asks for it, never on the main session's initiative, and `delegate` only suggests it when the work ends.
-
-It receives what to verify against, a task file, `PLAN.md` or the user's description, and a git base, and takes the diff itself. It never receives the implementer's report or opinion. It checks the criteria, looks for cases no test covers and tries to break the change. If the main session hands it summaries instead of paths and a base, the first fix is a line in `AGENTS.md`, and a skill only if the failure repeats. Its report is fixed and short, about 30 lines at most:
-
-```
-Verdict: pass | fail | cannot verify
-Checked against: <path or description>; base <sha>; <n> files in diff
-Criteria: <n> met, <n> not met
-- not met: <criterion>: <file:line or command and output>
-Uncovered: <cases with no test, each with a concrete input, or none>
-Broken: <input, command, observed vs expected, or none>
-Commands: <each run, with result>
-Tree: <git status at the end>
-```
 
 ### tune
 
@@ -123,7 +114,7 @@ Confirmed in its docs, except the last item.
 ## Phases and stop criteria
 
 1. Hands-on: the skills, each discovered on its own, in a single session. Done, on five real tasks.
-2. Orchestrated: `delegate`, the implementer and the scripts are built and measured against phase 1. The verifier and `tune` are left, in `PLAN.md`.
+2. Orchestrated: `delegate`, the implementer and the scripts are built and measured against phase 1, and the verifier is built and measured on a small change. `tune` is left, in `PLAN.md`.
 3. Only if unattended execution or real parallelism is needed: a minimal TypeScript orchestrator, a state machine and files. Later, if data justifies it, a structured ledger with context slices per role, a stable prefix for prompt caching and a model per phase.
 
 Each phase measures tokens, time and failures detected per task against the previous one. If it does not improve, do not move on.

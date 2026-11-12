@@ -1058,6 +1058,124 @@
         "Approved. Go on and finish."
       ],
       "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
+    },
+    {
+      "id": 15,
+      "prompt": "Use the verifier subagent to verify the uncommitted change against notes/bulk-discount.md, with HEAD as the base. When it finishes, reply with its report unchanged.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/verifier.md"
+      ],
+      "uncommitted": [
+        {
+          "file": "evals/hidden/mutants/bulk-discount/src/orders/order.ts",
+          "as": "src/orders/order.ts"
+        },
+        {
+          "file": "evals/uncommitted/bulk-discount/test/orders/bulk-discount.test.ts",
+          "as": "test/orders/bulk-discount.test.ts"
+        }
+      ],
+      "expected_output": "The change is correct. Its tests pass but none exercises the rounding of a discount that is not a whole number of cents, so the verifier tries such a total itself, sees it rounded down, and passes the change while reporting the case as uncovered.",
+      "assertions": [
+        "The verifier report says Verdict: pass.",
+        "The report counts no criterion as not met.",
+        "The report names the rounding of a discount that is not a whole number of cents as uncovered by the tests, or shows a command that tried such a total.",
+        "The report keeps the fields Verdict, Checked against, Criteria, Uncovered, Broken, Commands and Tree.",
+        {
+          "text": "The main session launched the verifier subagent and wrote no code or test file itself.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "the tree, the commits and the stash are as they started",
+          "run": "test \"$(git status --porcelain)\" = \"$(printf ' M src/orders/order.ts\\n?? test/orders/bulk-discount.test.ts')\" && test \"$(git hash-object src/orders/order.ts)\" = a5554ee9fe1d842c2f2864d6db6edd14b0657b55 && test \"$(git hash-object test/orders/bulk-discount.test.ts)\" = 7fb64e858b406fa8230579c70b8cd792e57a7fff && test \"$(git rev-list --count --all)\" = 1 && test -z \"$(git stash list)\""
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Use the verifier subagent to verify the uncommitted change against notes/bulk-discount.md, with HEAD as the base. When it finishes, reply with its report unchanged.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/verifier.md"
+      ],
+      "uncommitted": [
+        {
+          "file": "evals/uncommitted/bulk-discount-rounded-up/src/orders/order.ts",
+          "as": "src/orders/order.ts"
+        },
+        {
+          "file": "evals/uncommitted/bulk-discount/test/orders/bulk-discount.test.ts",
+          "as": "test/orders/bulk-discount.test.ts"
+        }
+      ],
+      "expected_output": "The change rounds the discount up where the notes say down. The suite is green because no test uses a total whose discount is not a whole number of cents. The verifier tries such a total, sees one cent too much taken off, and fails the change naming that criterion.",
+      "assertions": [
+        "The verifier report says Verdict: fail.",
+        "The report names the discount being rounded down to a whole cent as the criterion not met.",
+        "The report gives a concrete input with the observed and the expected total, or the file and line of the rounding.",
+        "The report keeps the fields Verdict, Checked against, Criteria, Uncovered, Broken, Commands and Tree.",
+        {
+          "text": "The main session launched the verifier subagent and wrote no code or test file itself.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "the tree, the commits and the stash are as they started",
+          "run": "test \"$(git status --porcelain)\" = \"$(printf ' M src/orders/order.ts\\n?? test/orders/bulk-discount.test.ts')\" && test \"$(git hash-object src/orders/order.ts)\" = ad57bbad2f6ab9cdebec6fa700bb1cf82effb307 && test \"$(git hash-object test/orders/bulk-discount.test.ts)\" = 7fb64e858b406fa8230579c70b8cd792e57a7fff && test \"$(git rev-list --count --all)\" = 1 && test -z \"$(git stash list)\""
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "/delegate Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/implementer.md",
+        "evals/files/.claude/agents/verifier.md"
+      ],
+      "expected_output": "Case 8 with the verifier installed. Nobody asks for a verification, so the verifier is never launched.",
+      "assertions": [
+        "The main session launched no verifier subagent."
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\"",
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/verifier.md"
+      ],
+      "expected_output": "Case 9 with the verifier installed. Nobody asks for a verification, so the verifier is never launched.",
+      "assertions": [
+        "The main session launched no verifier subagent."
+      ],
+      "replies": [
+        "Yes, go with what you recommend, and continue.",
+        "Yes, go with what you recommend, and continue."
+      ],
+      "until": "npm test --silent >/dev/null 2>&1 && test -n \"$(git status --porcelain src test)\"",
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        }
+      ]
     }
   ]
 }

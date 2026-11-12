@@ -7,6 +7,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 - The kit installs in Claude Code as the `ai-factory` plugin, from this repo as its own marketplace.
 - The skills track is closed. Every skill but `web-performance` is measured, and the five real tasks of phase 1 are done. A skill reopens only on a failure that repeats in real work.
 - `delegate` is at 0.10.3, measured against hands-on work on small and large tasks.
+- The verifier is built, at `agents/verifier.md`. It meets its criteria on a small change, and is not measured on a large one.
 - The evals runner keeps cost per model, resumes a session with fixed replies, and checks hidden tests and seeded mutants. Its gotchas are in `AGENTS.md`.
 
 The figures behind each of these are in `docs/measurements.md`, and the brief gives the decision each supports.
@@ -15,7 +16,6 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
-| R4 | Verifier | `agents/verifier.md`, installed with the plugin | It passes a correct implementation, fails a mutant naming the criterion, leaves `git status` unchanged, and is never launched in three Opus runs that do not mention it |
 | 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
 
 ## Left out, and what brings it back
@@ -31,6 +31,9 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 - Haiku for code, if a task shows that delegating and reviewing it costs less than Sonnet.
 - An advisor before stopping, if in two stages the stop after two failed rounds is resolved by an answer that was not the user's decision to make. Try Claude Code's own advisor first, which is experimental and needs the Anthropic API.
 - A worktree per work, the first time the user needs to work in the repo while `delegate` runs, or to run two works at once. Then `git worktree add` in a sibling folder, which is plain git.
+- `delegate` suggesting the verifier when a work ends, if a verification asked by hand at the end of two real works finds something the checkpoints missed.
+- Measuring the verifier on a large change, with the customer-accounts reference and its 15 mutants, or on a failure that only running reveals, if it passes a real change that later proves wrong. Its cases use a seeded error that reading one line finds.
+- A verifier on a model other than the author's in a hands-on session, if a verification by the author's own model passes what another model catches.
 - A hook that blocks writes from the verifier's shell, the first time the verifier leaves the tree changed, which its report shows. A shell can write even without edit tools, and a deny rule is not a boundary.
 - `passing` and `accepted` as separate states, if the verifier's verdict has to be stored between sessions.
 - `Explore` returning code fragments instead of only locations, if a real work shows the main session's cost before the plan dominating while no implementer explores beyond its task file.
