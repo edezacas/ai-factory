@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.10.2"
+  version: "0.10.3"
 ---
 
 Do any task with agents in order. Clarify before planning, plan before writing code, give each agent only the context it needs, check every stage with scripts and record the decisions at the end.
@@ -42,7 +42,7 @@ Do all of this in one shell call.
 - Size the work in stages. A small change is one stage with a single checkpoint at the end.
 - Write `PLAN.md` from `assets/PLAN.md` and every task file from `assets/task.md` in `docs/plans/<work>/`, even when there is only one stage.
 - Each stage is small, leaves the repo green, adds behaviour a test can observe and can be committed alone.
-- A task file holds everything the implementer needs and nothing else, within the template's limits. Copy into it the signatures and types it touches and the gate commands from `harness.json`. A later stage quotes the seam an earlier task file declares, not code that does not exist yet.
+- A task file holds everything the implementer needs and nothing else, within the template's limits. Copy into it the signatures and types it touches and the gate commands from `harness.json`. The scope check passes only the paths its `## Files` section names in backticks, so name there every file the stage may change or create, tests included. A later stage quotes the seam an earlier task file declares, not code that does not exist yet.
 - If the work touches data, write how to recover or revert it. A schema or public API change that others use is split into expand, migrate and contract.
 - Create `delegate/<work>` from `HEAD`, record the branch and its starting commit in `PROGRESS.md` from `assets/PROGRESS.md`, and commit the plan.
 
