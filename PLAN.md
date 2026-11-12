@@ -52,6 +52,15 @@ Fewer diff reads when the implementer reports decisions is dropped as an idea. I
 - A JSON feature list as the source of state, if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
 - A rule for when the implementer may leave a criterion untested, if a second real work shows it reporting `done` with one under `Open`. `tdd` says to report what it could not test as open, and the implementer is told to stop when a task leaves something a test could observe. Seen once, in `bluplat-api`.
 - Tests for `evals/run.mjs`, if the runner fails again in a way a test would have caught. Its functions would first have to be split from its start-up.
-- Tester, Haiku for code and parallelism, each on a recorded failure as the brief says.
-- From the redesign, each with its condition in the brief, an advisor before stopping, a worktree per work and a hook blocking writes from the verifier.
-- Auto-applying `tune` proposals, never. If approval becomes a bottleneck, that is a question for a phase 3 orchestrator.
+- A tester that never sees the implementation, if tests appear written after the code. It forces the interface to be fixed before the code, which pulls against `code-design`.
+- Haiku for code, if a task shows that delegating and reviewing it costs less than Sonnet.
+- An advisor before stopping, if in two stages the stop after two failed rounds is resolved by an answer that was not the user's decision to make. Try Claude Code's own advisor first, which is experimental and needs the Anthropic API.
+- A worktree per work, the first time the user needs to work in the repo while `delegate` runs, or to run two works at once. Then `git worktree add` in a sibling folder, which is plain git.
+- A hook that blocks writes from the verifier's shell, the first time the verifier leaves the tree changed, which its report shows. A shell can write even without edit tools, and a deny rule is not a boundary.
+- `passing` and `accepted` as separate states, if the verifier's verdict has to be stored between sessions.
+- `Explore` returning code fragments instead of only locations, if a real work shows the main session's cost before the plan dominating while no implementer explores beyond its task file.
+- `write-why` adding one line to `AGENTS.md` that points to the records folder, if agents miss a recorded decision twice, in a real project or in an eval like write-why case 8. A script or hook only if the line fails too.
+- Rewriting records that a change contradicts, or a periodic pass that finds stale ones, if stale records show up in use. It can live in `tune` or in its own skill.
+- A `hexagonal` skill, no. `code-design` covers most of it, and a skill that can add layers would pull against one that holds them back. If a dependency that makes tests slow or brittle needs a port, that is a line in `code-design`.
+- A `tidy` skill, if the agent is seen leaving code dirty after green, and then only after trying `/simplify` and a stronger Refactor step in `tdd`. Neither this nor `hexagonal` was measured, so both are judgement.
+- With no condition yet: llm-council, strategy and OKRs, double red and emoji narration in `tdd`, starter markers, a fact cache with hash, and model routing per phase beyond the fixed model per subagent.
