@@ -238,3 +238,60 @@ test('stage without a message fails with usage and commits nothing', () => {
   assert.match(r.stderr, /usage/);
   assert.equal(head(p), before);
 });
+
+const fixProject = () => {
+  const p = project({
+    'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: pass }] }),
+    'task.md': '## Files\n- `src/a.ts`\n',
+    'src/a.ts': 'one\n',
+  });
+  p.write('src/a.ts', 'two\n');
+  return p;
+};
+
+test('stage logs a fix after review once it is committed, with who sent the stage back and why', () => {
+  const version = readFileSync(join(here, '..', 'SKILL.md'), 'utf8').match(/version:\s*"([^"]+)"/)[1];
+  const p = fixProject();
+  const r = run('stage.mjs', p.dir, 'task.md', 'fix: faster query', 'user', 'candidate query too slow on a large agency');
+  assert.equal(r.status, 0);
+  assert.equal(p.git('log', '-1', '--format=%s').toString().trim(), 'fix: faster query');
+  const lines = log(p.dir);
+  assert.deepEqual(lines.map(l => l.script), ['gate', 'check-scope', 'review']);
+  const line = lines[2];
+  assert.equal(line.version, version);
+  assert.equal(line.task, 'task.md');
+  assert.equal(line.by, 'user');
+  assert.equal(line.reason, 'candidate query too slow on a large agency');
+  assert.equal(Number.isNaN(Date.parse(line.ts)), false);
+  assert.equal(p.git('status', '--porcelain').toString(), '');
+});
+
+test('stage accepts the main session as the one who sent the stage back', () => {
+  const p = fixProject();
+  assert.equal(run('stage.mjs', p.dir, 'task.md', 'fix: history rows', 'main', 'extra history rows').status, 0);
+  assert.equal(log(p.dir)[2].by, 'main');
+});
+
+test('stage without a sender logs no review line', () => {
+  const p = fixProject();
+  assert.equal(run('stage.mjs', p.dir, 'task.md', 'feat: a').status, 0);
+  assert.deepEqual(log(p.dir).map(l => l.script), ['gate', 'check-scope']);
+});
+
+test('stage logs no review line when the fix is not committed', () => {
+  const p = fixProject();
+  p.write('src/b.ts', 'outside\n');
+  assert.equal(run('stage.mjs', p.dir, 'task.md', 'fix: a', 'user', 'too slow').status, 1);
+  assert.deepEqual(log(p.dir).map(l => l.script), ['gate', 'check-scope']);
+});
+
+test('stage with an unknown sender or without a reason fails with usage and runs nothing', () => {
+  const p = fixProject();
+  for (const extra of [['script', 'gate failed'], ['user'], ['user', '  ']]) {
+    const r = run('stage.mjs', p.dir, 'task.md', 'fix: a', ...extra);
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /usage/);
+  }
+  assert.equal(existsSync(join(p.dir, '.harness/log.jsonl')), false);
+  assert.equal(p.git('log', '--oneline').toString().trim().split('\n').length, 1);
+});

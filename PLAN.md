@@ -6,7 +6,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 
 - The kit installs in Claude Code as the `ai-factory` plugin, from this repo as its own marketplace. A project holds only `harness.json` at its root and its own documents.
 - The skills track is closed. `ask-me`, `tdd`, `code-design`, `write-why` and `init-project` are measured, and the five real tasks of phase 1 are done. `angular-conventions`, `init-project` and `web-performance` evals stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
-- `delegate` is at 0.9.1. It is an ordered way to do any task with agents, and three figures guide what comes next.
+- `delegate` is at 0.10.0. It is an ordered way to do any task with agents, and three figures guide what comes next.
   - A branch per work, a commit per stage and the scope check cost 17 % more than v0.2.1 with the same result, and they stay.
   - On tasks that fit one session it costs about 2.3 times a hands-on Opus session with the same quality. The extra is the orchestration, accepted for the order it gives.
   - Since 0.8.0 the implementer stops when a task leaves behaviour open, 3 of 3 runs against 1 of 3 before.
@@ -19,7 +19,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 |---|------|--------------|-----------|
 | R4 | Verifier | `agents/verifier.md`, installed with the plugin | It passes a correct implementation, fails a mutant naming the criterion, leaves `git status` unchanged, and is never launched in three Opus runs that do not mention it |
 | 6 | Project setup | `init-project` writes `harness.json` from the project's commands | On a fresh clone of a real project the file is written and the gate passes |
-| 7 | Tune skill | `skills/productivity/tune` reads `.harness/log.jsonl` and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
+| 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
 | P | Script permissions | The permission rule for `delegate`'s scripts under the plugin cache | A run outside auto mode starts the scripts without a prompt |
 
 ## R7 results
@@ -39,7 +39,7 @@ Delegate cases 11 to 13, iteration 141, three Opus runs each. The task is `notes
 - Delegating a large task costs about twice a hands-on Opus session, with the same hidden tests and mutants. One hands-on run's tests disagree with the reference on a detail the notes leave open, so its mutants do not count.
 - The split is an estimate from input-side weights, described in `AGENTS.md`.
 
-An idea not tried yet is fewer diff reads when the implementer reports decisions, now the largest share of avoidable calls in the main session.
+Fewer diff reads when the implementer reports decisions is dropped as an idea. In two real works on `bluplat-api` nearly every report carried decisions, and reading those diffs found a design flaw and two fixture problems with the gate green.
 
 ## Left out, and what brings it back
 

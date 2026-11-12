@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: <the task>
 metadata:
   author: edezacas
-  version: "0.9.1"
+  version: "0.10.0"
 ---
 
 Do any task with agents in order. Clarify before planning, plan before writing code, give each agent only the context it needs, check every stage with scripts and record the decisions at the end.
@@ -16,7 +16,7 @@ Do any task with agents in order. Clarify before planning, plan before writing c
 - You write no production code. The implementer analyses nothing, so its task file is all it gets.
 - Run the scripts from the project root. Never copy them into the project or write their path into a project file.
   - `node ${CLAUDE_SKILL_DIR}/assets/gate.mjs` runs the gate steps listed in `harness.json` at the project root, for example `{"gate": [{"name": "tests", "run": "npm test"}]}`.
-  - `node ${CLAUDE_SKILL_DIR}/assets/stage.mjs <task file> "<message>"` runs the gate and the scope check and commits only if both pass.
+  - `node ${CLAUDE_SKILL_DIR}/assets/stage.mjs <task file> "<message>" [<main|user> "<reason>"]` runs the gate and the scope check and commits only if both pass. The last two arguments log that the stage went back to the implementer after review, who sent it back and why in one English sentence.
 - Every tool call rereads the whole session, so put in one shell call whatever can go together.
 - Never merge or push. The user integrates the branch.
 
@@ -49,7 +49,7 @@ Do all of this in one shell call.
 ### 3. Each stage
 
 1. **Delegate.** Launch `implementer` with the path of the task file, never a summary. Run one stage at a time, and two in parallel only if neither needs the other's code, seam or result and they change no file in common. Launch `implementer` with the `haiku` model only for what `tdd` excludes, which is renames, formatting, moving files, documentation and fixtures.
-2. **Review.** Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or with what is wrong. After two failed rounds stop and ask the user, which is a stop and not a checkpoint.
+2. **Review.** Read the diff only when a script fails, when the report says `stopped` or carries a decision or something open, or at a checkpoint, where you read the diff since the previous one. Otherwise the scripts are the review. To fix a stage, resume the same subagent with the script output or with what is wrong. When you or the user sent the stage back and no script had failed, pass who and why to `stage.mjs` when you commit the fix, because the scripts only see the code once it is green. After two failed rounds stop and ask the user, which is a stop and not a checkpoint.
 3. **Commit.** In one call update `PROGRESS.md` with the stage and its base, the gate and scope results, what is left to test, the next step and the decisions the implementer reported, then run `stage.mjs` with the stage's commit message. If it fails nothing is committed and you go back to review. Another session must be able to continue from `PROGRESS.md` alone.
 
 ### 4. Checkpoint
