@@ -49,7 +49,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 
 Instructions that read well don't always change what an agent does, so we test them. Each task runs several times and reports three things.
 
-- **Quality.** A judge on a different model checks the assertions, and shell commands check what a command can decide, such as hidden tests the agent never saw and seeded errors its tests should catch.
+- **Quality.** A judge on Opus checks the assertions, a different model from the agent except in the cases that run on Opus themselves, such as `delegate`'s. Shell commands check what a command can decide, such as hidden tests the agent never saw and seeded errors its tests should catch.
 - **Activation.** Did the agent pick up the skill when it should, and leave it alone when it shouldn't?
 - **Efficiency.** Turns, tool calls, tokens, cache use, peak context and cost.
 

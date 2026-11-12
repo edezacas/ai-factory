@@ -516,13 +516,29 @@ function activityOf(events) {
   ].join('\n\n');
 }
 
+// The judge reads whole files up to a total size. A file that does not fit is left out and
+// named, to the judge and in grading.json: cut without notice, it would read as never written.
+const JUDGE_FILE_CHARS = 8000;
+const JUDGE_FILES_CHARS = 48_000;
+
+function judgedFiles(files) {
+  const shown = [];
+  const leftOut = [];
+  let size = 0;
+  for (const f of files) {
+    const part = `--- ${f.rel} ---\n${f.content.slice(0, JUDGE_FILE_CHARS)}${f.content.length > JUDGE_FILE_CHARS ? '\n[truncated]' : ''}`;
+    if (size + part.length > JUDGE_FILES_CHARS) {
+      leftOut.push(f.rel);
+      continue;
+    }
+    shown.push(part);
+    size += part.length + 2;
+  }
+  return { block: shown.join('\n\n') || '(none)', leftOut };
+}
+
 function gradingPrompt(testCase, response, files, baseline = [], activity = null) {
-  const fileBlock = files.length
-    ? files
-        .map((f) => `--- ${f.rel} ---\n${f.content.slice(0, 8000)}${f.content.length > 8000 ? '\n[truncated]' : ''}`)
-        .join('\n\n')
-        .slice(0, 48_000)
-    : '(none)';
+  const { block: fileBlock, leftOut } = judgedFiles(files);
   // Input files the agent did not touch, so "leaves X unchanged" and "keeps the old
   // records" are verifiable instead of failing for lack of a baseline.
   const label = {
@@ -553,6 +569,9 @@ function gradingPrompt(testCase, response, files, baseline = [], activity = null
     '',
     `FILES THE AGENT CREATED OR MODIFIED, WITH THEIR CONTENT:\n${fileBlock}`,
     '',
+    ...(leftOut.length
+      ? [`FILES THE AGENT ALSO CREATED OR MODIFIED, NOT SHOWN FOR SIZE. They exist, and their content cannot be checked:\n${leftOut.map((f) => `- ${f}`).join('\n')}`, '']
+      : []),
     `FILES PROVIDED AS INPUT, WITH THEIR ORIGINAL CONTENT:\n${baselineBlock}`,
     '',
     ...(activity ? [activity, ''] : []),
@@ -835,6 +854,10 @@ async function gradeCase(testCase, config, response, files, dir, baseline) {
         error: 'unparseable',
       };
   grading.judge_cost_usd = judgeCost;
+  grading.files_left_out = judgedFiles(files).leftOut;
+  if (grading.files_left_out.length) {
+    console.warn(`  WARNING ${path.relative(WORKSPACE, dir)}: the judge did not see ${grading.files_left_out.join(', ')}`);
+  }
   await writeFile(path.join(dir, 'grading.json'), JSON.stringify(grading, null, 2) + '\n');
   return grading;
 }
