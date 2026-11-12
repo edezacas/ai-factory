@@ -70,7 +70,7 @@ So the main session keeps the whole analysis and delegates only tests and code, 
 - **The gate runs on the untouched tree before any plan.** Starting on a broken repo makes every later stage harder to judge, so a base that fails is a decision for the user.
 - **Checkpoints are one more decision of the analysis.** The minimum is one after the first stage, one before anything hard to reverse and one at the end, never one per stage by default. Two failed rounds in a stage are a stop, not a checkpoint.
 - **A checkpoint is the end of the turn, and nothing enforces it.** If the main session goes on past checkpoints, that failure is what justifies phase 3, not a patch in the skill.
-- **One stage at a time by default.** Subagents are for work that only reports back, and agent teams only if the agents must talk to each other.
+- **One stage at a time by default.** Subagents are for work that only reports back, and agent teams only if the agents must talk to each other. The skill still allows two independent stages in parallel, which the scripts cannot close, because the scope check and the commit both see the whole tree. The option is to be removed, since the way out is a worktree per stage and that is not wanted in this mode. It is item 8 in `PLAN.md`, and parallel stages come back with the unattended mode.
 
 Rejected for good:
 
@@ -116,7 +116,7 @@ Confirmed in its docs, except the last item.
 
 1. Hands-on: the skills, each discovered on its own, in a single session. Done, on five real tasks.
 2. Orchestrated: `delegate`, the implementer and the scripts are built and measured against phase 1, and the verifier is built and measured on a small change. `tune` is left, in `PLAN.md`.
-3. Only if unattended execution or real parallelism is needed: a minimal TypeScript orchestrator, a state machine and files. Later, if data justifies it, a structured ledger with context slices per role, a stable prefix for prompt caching and a model per phase.
+3. Only if unattended execution or real parallelism is needed: a minimal TypeScript orchestrator, a state machine and files. The unattended case in mind is a run started from a GitHub issue that ends in a pull request, noted in `PLAN.md`. Later, if data justifies it, a structured ledger with context slices per role, a stable prefix for prompt caching and a model per phase.
 
 Each phase measures tokens, time and failures detected per task against the previous one. If it does not improve, do not move on.
 
