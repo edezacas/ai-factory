@@ -21,7 +21,6 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 | R4 | Verifier | `agents/verifier.md`, installed with the plugin | It passes a correct implementation, fails a mutant naming the criterion, leaves `git status` unchanged, and is never launched in three Opus runs that do not mention it |
 | 6 | Project setup | `init-project` writes `harness.json` from the project's commands | On a fresh clone of a real project the file is written and the gate passes |
 | 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
-| P | Script permissions | The permission rule for `delegate`'s scripts under the plugin cache | A run outside auto mode starts the scripts without a prompt |
 
 ## R7 results
 
@@ -45,6 +44,7 @@ Fewer diff reads when the implementer reports decisions is dropped as an idea. I
 ## Left out, and what brings it back
 
 - A second tool such as pi, OpenCode or Codex, with its own install, only when a real project works in that tool. The hands-on mode ports with its own agent files. `delegate` needs its delegation rethought per tool, because `skills` preload and resuming a subagent are Claude Code's. The fallback that works anywhere is another session given the task file path.
+- Running `delegate`'s scripts without a permission prompt outside auto mode, if a real run in another mode is slowed by the prompts. Real runs are in auto mode, where the scripts do not prompt. A plugin cannot ship permission rules, and `allowed-tools` in the skill lapses at the user's next message. The way would be a `bin/` folder in the plugin, which gives the scripts fixed names, plus an allow rule the user adds once. The skill would then call the script alone, one more call per stage, because every part of a compound command needs its own permission. The implementer's gate commands would still prompt, since they belong to each project.
 - A session bootstrap header in `PROGRESS.md`, if a real session fails to resume from it. `delegate` already resumes on load.
 - A `SubagentStop` hook running the scripts, if a run shows the main session skipping them.
 - A JSON feature list as the source of state, if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
