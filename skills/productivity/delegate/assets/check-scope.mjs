@@ -2,7 +2,7 @@
 // Fails if a file outside the task file's "## Files" section changed since the base.
 // Usage: node check-scope.mjs <task file> [--base <ref>]   (from the project root; the script itself lives in the delegate skill's assets/)
 import { execFileSync } from 'node:child_process';
-import { posix } from 'node:path';
+import { posix, relative, sep } from 'node:path';
 import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 
 // The log is evidence for this machine, not part of the project: .harness/ ignores itself,
@@ -46,13 +46,17 @@ try {
 // Everything in backticks counts as allowed; tokens that are not paths simply never match.
 const section = text.split(/^## /m).find(s => s.startsWith('Files')) ?? '';
 const allowed = new Set([...section.matchAll(/`([^`]+)`/g)].map(m => m[1].trim()));
-allowed.add(task);
+// Git names files from the project root, so the task file is named that way however it was passed.
+const taskPath = relative('.', task).split(sep).join('/');
+allowed.add(taskPath);
 // The main session updates the work's PROGRESS.md before it commits the stage.
-allowed.add(posix.join(posix.dirname(task), 'PROGRESS.md'));
+allowed.add(posix.join(posix.dirname(taskPath), 'PROGRESS.md'));
 
-const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).split('\n').filter(Boolean);
+// Names as they are on disk, not escaped, and from this folder even when the repo starts above it.
+const git = (...args) =>
+  execFileSync('git', ['-c', 'core.quotePath=false', ...args], { encoding: 'utf8' }).split('\n').filter(Boolean);
 const changed = new Set([
-  ...git('diff', '--name-only', base),
+  ...git('diff', '--name-only', '--relative', base),
   ...git('ls-files', '--others', '--exclude-standard'),
 ]);
 const outOfScope = [...changed].filter(f => !allowed.has(f));

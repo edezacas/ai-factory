@@ -187,6 +187,46 @@ function stageProject(gate) {
 }
 const head = (p) => p.git('rev-parse', 'HEAD').toString().trim();
 
+test('check-scope passes a listed file whose name is not ASCII, changed or new', () => {
+  const p = project({ 'src/año.ts': '1', 'task.md': '## Files\n\n- `src/año.ts`: x\n- `src/camión.ts`: new\n' });
+  p.write('src/año.ts', '2');
+  p.write('src/camión.ts', '1');
+  const r = run('check-scope.mjs', p.dir, 'task.md');
+  assert.equal(r.status, 0, r.stdout);
+});
+
+test('check-scope names a file outside the list as it is on disk when its name is not ASCII', () => {
+  const p = project({ 'task.md': '## Files\n\n- `src/a.ts`: x\n' });
+  p.write('src/año.ts', '1');
+  const r = run('check-scope.mjs', p.dir, 'task.md');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /src\/año\.ts/);
+});
+
+test('check-scope takes the task file by any path that points to it', () => {
+  const files = { 'docs/plans/w/1.md': '## Files\n\n- `src/a.ts`: x\n', 'docs/plans/w/PROGRESS.md': 'start' };
+  for (const path of [p => './docs/plans/w/1.md', p => join(p.dir, 'docs/plans/w/1.md')]) {
+    const p = project(files);
+    p.write('docs/plans/w/1.md', files['docs/plans/w/1.md'] + '\nrewritten');
+    p.write('docs/plans/w/PROGRESS.md', 'stage 1');
+    const r = run('check-scope.mjs', p.dir, path(p));
+    assert.equal(r.status, 0, r.stdout);
+  }
+});
+
+test('check-scope works from a project that is a folder of a larger repo, and looks only inside it', () => {
+  const p = project({ 'api/task.md': '## Files\n\n- `src/a.ts`: x\n', 'api/src/a.ts': '1', 'client/b.ts': '1' });
+  const api = join(p.dir, 'api');
+  p.write('api/src/a.ts', '2');
+  p.write('client/b.ts', '2');
+  assert.equal(run('check-scope.mjs', api, 'task.md').status, 0);
+  p.write('api/src/other.ts', '1');
+  p.git('add', '-A');
+  const r = run('check-scope.mjs', api, 'task.md');
+  assert.equal(r.status, 1);
+  assert.deepEqual(log(api).at(-1).outOfScope, ['src/other.ts']);
+});
+
 test('stage commits the stage with its message when the gate and the scope pass', () => {
   const p = stageProject(pass);
   p.write('src/a.ts', 'a2');

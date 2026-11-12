@@ -6,7 +6,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 
 - The kit installs in Claude Code as the `ai-factory` plugin, from this repo as its own marketplace. A project holds only `harness.json` at its root and its own documents.
 - The skills track is closed. `ask-me`, `tdd`, `code-design`, `write-why` and `init-project` are measured, and the five real tasks of phase 1 are done. `angular-conventions`, `init-project` and `web-performance` evals stay unmeasured by choice. A skill reopens only on a failure that repeats in real work.
-- `delegate` is at 0.10.0. It is an ordered way to do any task with agents, and three figures guide what comes next.
+- `delegate` is at 0.10.1. It is an ordered way to do any task with agents, and three figures guide what comes next.
   - A branch per work, a commit per stage and the scope check cost 17 % more than v0.2.1 with the same result, and they stay.
   - On tasks that fit one session it costs about 2.3 times a hands-on Opus session with the same quality. The extra is the orchestration, accepted for the order it gives.
   - Since 0.8.0 the implementer stops when a task leaves behaviour open, 3 of 3 runs against 1 of 3 before.
