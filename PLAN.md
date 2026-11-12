@@ -22,7 +22,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
 | R4 | Verifier | `agents/verifier.md`, installed with the plugin | It passes a correct implementation, fails a mutant naming the criterion, leaves `git status` unchanged, and is never launched in three Opus runs that do not mention it |
-| 6 | Project setup | `init-project` writes `harness.json` from the project's commands, and writes `AGENTS.md` on `/init` | On a fresh clone of a real project the file is written and the gate passes, and its case 1 leaves both files in 3 of 3 runs |
+| 6 | `init-project` on `/init` | It writes `AGENTS.md` and not only `CLAUDE.md`. It never writes `harness.json`, which belongs to `delegate` alone | Its case 1 leaves both files in 3 of 3 Opus runs |
 | 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
 
 ## R7 results
@@ -54,4 +54,3 @@ Fewer diff reads when the implementer reports decisions is dropped as an idea. I
 - Tester, Haiku for code and parallelism, each on a recorded failure as the brief says.
 - From the redesign, each with its condition in the brief, an advisor before stopping, a worktree per work and a hook blocking writes from the verifier.
 - Auto-applying `tune` proposals, never. If approval becomes a bottleneck, that is a question for a phase 3 orchestrator.
-- A TypeScript installer instead of `init-project`, only if the skill fails to install cleanly in two projects.
