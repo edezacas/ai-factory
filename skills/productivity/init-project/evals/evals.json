@@ -4,16 +4,20 @@
     {
       "id": 1,
       "prompt": "/init for this repo.",
-      "expected_output": "The agent inspects the project, writes both CLAUDE.md and AGENTS.md with the shared sections filled in from real manifests, under 80 lines, and adds no empty section.",
+      "expected_output": "The agent inspects the project, writes AGENTS.md with the sections filled in from real manifests, under 80 lines, with no empty section, and makes CLAUDE.md a symbolic link to it.",
       "assertions": [],
       "checks": [
         {
-          "name": "both files exist",
-          "run": "test -f AGENTS.md && test -f CLAUDE.md"
+          "name": "AGENTS.md is a real file",
+          "run": "test -f AGENTS.md && ! test -L AGENTS.md"
         },
         {
-          "name": "each under 80 lines",
-          "run": "test $(wc -l < AGENTS.md) -le 80 && test $(wc -l < CLAUDE.md) -le 80"
+          "name": "CLAUDE.md is a link to AGENTS.md",
+          "run": "test -L CLAUDE.md && test \"$(readlink CLAUDE.md)\" = AGENTS.md"
+        },
+        {
+          "name": "under 80 lines",
+          "run": "test $(wc -l < AGENTS.md) -le 80"
         },
         {
           "name": "the real commands",
@@ -26,25 +30,56 @@
       ]
     },
     {
+      "id": 2,
+      "prompt": "/init for this repo.",
+      "files": [
+        "evals/files/CLAUDE.md"
+      ],
+      "expected_output": "The project starts with a real CLAUDE.md and no AGENTS.md. The agent moves what it says into AGENTS.md, replaces CLAUDE.md with a symbolic link and says so.",
+      "assertions": [
+        "The final message tells the user that CLAUDE.md was replaced by a link to AGENTS.md."
+      ],
+      "checks": [
+        {
+          "name": "AGENTS.md is a real file",
+          "run": "test -f AGENTS.md && ! test -L AGENTS.md"
+        },
+        {
+          "name": "CLAUDE.md is a link to AGENTS.md",
+          "run": "test -L CLAUDE.md && test \"$(readlink CLAUDE.md)\" = AGENTS.md"
+        },
+        {
+          "name": "the old gotchas are kept",
+          "run": "grep -qi cents AGENTS.md && grep -q '03:00' AGENTS.md"
+        }
+      ]
+    },
+    {
       "id": 3,
-      "prompt": "Add to AGENTS.md our coding style: 2-space indent, single quotes, no semicolons. Also add that our Claude setup uses a PostToolUse hook that runs prettier.",
+      "prompt": "Add to CLAUDE.md our coding style: 2-space indent, single quotes, no semicolons.",
       "files": [
         "evals/files/AGENTS.md"
       ],
-      "expected_output": "The style stays out of AGENTS.md, and the Claude-specific hook goes in CLAUDE.md only.",
-      "assertions": [],
+      "expected_output": "The project has only AGENTS.md. The style the user asked for goes into AGENTS.md, CLAUDE.md becomes a link to it, and the agent mentions that a formatter or linter would enforce it better.",
+      "assertions": [
+        "The response mentions that a formatter or linter would enforce the style better."
+      ],
       "checks": [
         {
-          "name": "no style rules in AGENTS.md",
-          "run": "! grep -qiE 'single quote|semicolon|2-space' AGENTS.md"
+          "name": "AGENTS.md is a real file",
+          "run": "test -f AGENTS.md && ! test -L AGENTS.md"
         },
         {
-          "name": "no hook in AGENTS.md",
-          "run": "! grep -qiE 'PostToolUse|hook' AGENTS.md"
+          "name": "CLAUDE.md is a link to AGENTS.md",
+          "run": "test -L CLAUDE.md && test \"$(readlink CLAUDE.md)\" = AGENTS.md"
         },
         {
-          "name": "the hook is in CLAUDE.md",
-          "run": "grep -qi PostToolUse CLAUDE.md"
+          "name": "the style is in AGENTS.md",
+          "run": "grep -qiE 'single quote' AGENTS.md && grep -qiE 'semicolon' AGENTS.md"
+        },
+        {
+          "name": "what was there is kept",
+          "run": "grep -q 'Internal order management service' AGENTS.md"
         }
       ]
     },

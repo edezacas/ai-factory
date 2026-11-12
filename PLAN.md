@@ -7,7 +7,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 - The kit installs in Claude Code as the `ai-factory` plugin, from this repo as its own marketplace. A project holds only `harness.json` at its root and its own documents.
 - The skills track is closed. `ask-me`, `tdd`, `code-design` and `write-why` are measured, and the five real tasks of phase 1 are done. A skill reopens only on a failure that repeats in real work. The three skills of v0.1 were measured on Opus in iterations 146 to 148, three runs with and without each.
   - `angular-conventions` is read in 12 of 12 runs that touch Angular and in none of the guard case. `effect()`, `@empty` and `inject()` on review pass 3 of 3 with it and 0 of 3 without. Opus already writes the rest alone.
-  - `init-project` is read in 9 of 9 runs, yet on `/init` it wrote only `CLAUDE.md` in all six runs, with and without the skill. It keeps a Claude hook out of `AGENTS.md`, 3 of 3 against 0 of 3, and lets style rules in when the user asks for them. Item 6 rewrites it.
+  - `init-project` at 0.1 was read in 9 of 9 runs, yet on `/init` it wrote only `CLAUDE.md` in all six runs, with and without the skill. Since 0.2 it writes `AGENTS.md` and makes `CLAUDE.md` a symbolic link to it. In iteration 150 that holds in 9 of 9 Opus runs with the skill and in none of 9 without, on `/init`, on `/init` over a real `CLAUDE.md` whose content it keeps, and on a request that names `CLAUDE.md`. It is read in 12 of 12 runs and in none of the guard case. It never writes `harness.json`, which belongs to `delegate` alone.
   - `web-performance` stays without evidence that it helps. Its work is measuring in a browser before and after each change, which a single turn on a fixture cannot check. It is read in 3 of 3 runs on a page that feels slow, in none of 12 that ask for advice and in none of the guard case.
 - `delegate` is at 0.10.1. It is an ordered way to do any task with agents, and three figures guide what comes next.
   - A branch per work, a commit per stage and the scope check cost 17 % more than v0.2.1 with the same result, and they stay.
@@ -22,7 +22,6 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
 | R4 | Verifier | `agents/verifier.md`, installed with the plugin | It passes a correct implementation, fails a mutant naming the criterion, leaves `git status` unchanged, and is never launched in three Opus runs that do not mention it |
-| 6 | `init-project` on `/init` | It writes `AGENTS.md` and not only `CLAUDE.md`. It never writes `harness.json`, which belongs to `delegate` alone | Its case 1 leaves both files in 3 of 3 Opus runs |
 | 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
 
 ## R7 results

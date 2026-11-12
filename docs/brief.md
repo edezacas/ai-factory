@@ -137,7 +137,7 @@ Confirmed in the Claude Code docs: the `skills` field in an agent definition inj
    2. `gate.mjs` and `check-scope.mjs` with the log, tried on `acme-app` and on one real project.
    3. Session bootstrap: the resume header in `PROGRESS.md` and step 0 of `delegate`, the gate's steps run first. Dropped as a step of its own: `delegate` resumes on load and runs the gate in its analysis.
    4. The Claude Code plugin, tried on a clean Claude Code configuration: installed from the marketplace, `/ai-factory:delegate` launches the implementer on Sonnet with `tdd` and `code-design` preloaded from the first session.
-   5. `init-project` writing `harness.json` and `AGENTS.md`, tried on a fresh clone of a real project. Dropped: `harness.json` belongs to `delegate` alone. What is left for `init-project` is writing `AGENTS.md` on `/init`, an item of `PLAN.md`.
+   5. `init-project` writing `harness.json` and `AGENTS.md`, tried on a fresh clone of a real project. Dropped: `harness.json` belongs to `delegate` alone. Since 0.2 `init-project` writes `AGENTS.md` and links `CLAUDE.md` to it.
    6. `tune`, only once a project has at least 10 logged stages. Finished works leave no `PROGRESS.md` or task file in the tree, and git loses them when a rejected branch is deleted, so `tune` relies on the log alone. A task file's path in a line is an identifier that groups lines by stage and by work, never a file to open, which is why a `review` line carries its reason.
    7. The runner case and the A/B against phase 1. Done, with the results in `PLAN.md`.
    8. Tester, Haiku for code and parallelism, each only on a recorded failure that asks for it. The verifier has its own stage in `PLAN.md`.

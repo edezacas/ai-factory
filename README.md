@@ -41,7 +41,7 @@ Then ask for something a little vague, such as "Add a CSV export for orders". If
 ### Productivity
 
 - **[ask-me](skills/productivity/ask-me/SKILL.md)**: Before writing code, the agent brings you every open decision as a concrete proposal, so nothing is forgotten and nothing is decided on your behalf.
-- **[init-project](skills/productivity/init-project/SKILL.md)**: Guides the creation and editing of `CLAUDE.md` and `AGENTS.md`.
+- **[init-project](skills/productivity/init-project/SKILL.md)**: Writes a project's `AGENTS.md` and makes `CLAUDE.md` a symbolic link to it.
 - **[write-why](skills/productivity/write-why/SKILL.md)**: When the work is done, the agent records the decisions the code can't explain and that are hard to reverse or surprising, and writes nothing if none qualifies.
 - **[delegate](skills/productivity/delegate/SKILL.md)** is an ordered way to do any task with agents. It needs a `harness.json` at the project root with the gate's steps, and proposes one if there is none. Each stage goes to an `implementer` subagent on Sonnet that carries `tdd` and `code-design`, works only in the files its task lists and stops instead of deciding behaviour the task leaves open. The work stays on its own branch with one commit per stage, and you merge it. It never starts on its own.
 

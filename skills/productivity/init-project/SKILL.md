@@ -1,39 +1,34 @@
 ---
 name: init-project
-description: Guidelines for creating or editing CLAUDE.md and AGENTS.md for a project or subdirectory. Use when running /init, creating or updating CLAUDE.md or AGENTS.md, or when asked to set up agent configuration files for a project.
+description: Guidelines for creating or editing a project's AGENTS.md, with CLAUDE.md as a symbolic link to it. Use when running /init, creating or updating AGENTS.md or CLAUDE.md, or when asked to set up agent configuration files for a project or subdirectory. Do not use it for other documentation such as a README.
 metadata:
   author: edezacas
-  version: "0.1"
+  version: "0.2"
 ---
 
-# Project Agent Configuration Guidelines
+# Project agent configuration
 
-Two files, same purpose — give the agent context about the project:
+`AGENTS.md` gives any agent the context of the project, and it is the only file with content. `CLAUDE.md` is a symbolic link to it, so Claude Code reads the same text.
 
-- **`CLAUDE.md`** — read by Claude Code. May include Claude-specific sections (hooks, auto-triggers, tool permissions).
-- **`AGENTS.md`** — read by Codex, pi, opencode and other compatible agents. Pure context, no agent-specific syntax.
+## Always
 
-When both files are needed, generate them together. They share the same core content; only the Claude-specific sections differ.
+- Write the content in `AGENTS.md`, even when the request or `/init` names `CLAUDE.md`.
+- Create the link in the same folder with `ln -s AGENTS.md CLAUDE.md`. A subdirectory gets its own pair the same way.
+- If `CLAUDE.md` is a real file, move what it says into `AGENTS.md`, merged with what is already there, replace it with the link and say so in your report.
+- Leave out what belongs to one tool, such as hooks or permissions, which live in that tool's settings. If one of them changes how to work in the project, it is a gotcha like any other.
 
-## Shared structure (no empty sections)
+## Sections
 
-1. `## Overview` — 1-2 lines: what it is and what it does
-2. `## Stack` — key technologies and versions
-3. `## Commands` — build, dev, test, lint
-4. `## Structure` — map of relevant directories
-5. `## Gotchas` — only what cannot be inferred from the code
+Write only the ones that have content.
 
-**Limits:** max 80 lines each. No snippets except for non-obvious patterns. No style guides. No personal preferences.
+1. `## Overview` says in one or two lines what the project is and what it does.
+2. `## Stack` lists the key technologies and versions.
+3. `## Commands` gives build, dev, test and lint, taken from the project's manifests.
+4. `## Structure` maps the relevant directories.
+5. `## Gotchas` holds only what cannot be inferred from the code.
 
-## CLAUDE.md only
-
-Add a `## Claude Code Integration` section if the project uses Claude-specific features (hooks, auto-triggers, tool permissions). Keep it at the end.
-
-## AGENTS.md only
-
-Omit any Claude-specific sections. The file must be readable as plain context by any LLM.
+Keep the file under 80 lines, with no snippets except for patterns that are not obvious. Add no style guide or personal preference on your own. When the user asks for one, add it and mention that a formatter or linter would enforce it better.
 
 ## agent_docs/
 
-For topic-specific instructions the agent decides what to read per task:
-`building.md` · `testing.md` · `architecture.md` · `deployment.md`
+Long instructions on one topic go in `agent_docs/`, in files such as `building.md`, `testing.md`, `architecture.md` and `deployment.md`. `AGENTS.md` points to them and the agent reads the one its task needs.
