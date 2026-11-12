@@ -31,7 +31,7 @@
     {
       "id": 2,
       "prompt": "In src/app/user-detail.component.ts, load the user from UserService every time userId changes. Also stream live updates from UserService.watch() and stop listening when the component is destroyed.",
-      "expected_output": "The agent watches the input signal with an effect instead of using ngOnInit or ngOnChanges, and ends the watch() subscription with takeUntilDestroyed and a DestroyRef.",
+      "expected_output": "The agent watches the input signal with an effect instead of using ngOnInit or ngOnChanges, and ends the watch() subscription with the component, by takeUntilDestroyed, the effect's onCleanup, a DestroyRef or toSignal.",
       "assertions": [],
       "files": [
         "evals/files/package.json",
@@ -48,8 +48,8 @@
           "run": "grep -rqE '\\beffect\\(' src/app"
         },
         {
-          "name": "stops with takeUntilDestroyed",
-          "run": "grep -rqE 'takeUntilDestroyed' src/app"
+          "name": "stops listening when the component is destroyed",
+          "run": "grep -rqE 'takeUntilDestroyed|onCleanup|toSignal|onDestroy' src/app"
         }
       ]
     },

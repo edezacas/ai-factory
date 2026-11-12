@@ -57,7 +57,7 @@ A skill is compared with the same task without it. `delegate` is compared with d
 
 This has already paid off. With its first short description, `ask-me` triggered in 1 of 10 runs on two vague requests, and rewording it took that to 10 of 10 while it still stayed out of the way on a rename and on a question. Without `tdd`, the agent wrote no tests on two small coding tasks in any of 10 runs, and with it in all 10. Given a task that left a rounding rule open, the `implementer` stopped and asked in 3 of 3 runs after its rules were tightened, against 1 of 3 before.
 
-The skills are measured on Sonnet and Opus, on a small test project and on five tasks in real projects. Few runs separate clearly, so a real project may still behave differently.
+The skills are measured on Sonnet and Opus, on a small test project and on five tasks in real projects. Few runs separate clearly, so a real project may still behave differently. `web-performance` is the exception: its work is measuring in a browser before and after each change, which these runs cannot check, so it is kept without numbers.
 
 To run an evaluation you need Node 20.11 or later and the Claude Code CLI. It uses your Claude Code account, so each run has a real cost:
 
@@ -70,7 +70,7 @@ node evals/run.mjs --only ask-me --id 6 --runs 1
 - **One skill, one problem.** If it needs an "and" to explain, it's two skills.
 - **Short.** The goal and the constraints, not steps a good model already knows.
 - **Discovered, not summoned.** A skill's description should get it used at the right moment, without anyone asking. `delegate` is the one exception, because it is a way of working you choose.
-- **Measured, or removed.** A skill stays only if the numbers show it helps.
+- **Measured, or removed.** A skill stays only if the numbers show it helps, or if its work cannot be measured here and that is said.
 
 ## Credits
 
