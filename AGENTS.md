@@ -24,7 +24,8 @@ skills/<category>/<skill>/evals/evals.json  # cases; files in evals/files/ land 
 skills/<category>/<skill>/evals/hidden/     # files for a case's `checks`, copied only after the agent has finished
 evals/fixtures/acme-app/         # the project every run starts from, with code and passing tests
 evals/run.mjs                    # runner, started from edezacas/agent-skills and now specific to Claude Code
-docs/brief.md                    # what is being built, the phases and their stop criteria
+docs/brief.md                    # what is being built and why, the phases and their stop criteria
+docs/measurements.md             # every measured result, the baseline for the next change; add a row when a measurement decides something
 PLAN.md                          # the stages of the current work on the kit, one PR each
 ```
 
