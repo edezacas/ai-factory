@@ -475,6 +475,20 @@ async function copyCaseFiles(testCase, workdir, skillDir, expected) {
   }
 }
 
+// A case's `uncommitted` files, each { file, as }, land after the fixture commit, so the
+// run starts with a change in the working tree over a clean HEAD. That is what an agent
+// asked to review a change needs: a base and a diff.
+async function copyUncommitted(testCase, workdir, skillDir, expected) {
+  for (const { file, as } of testCase.uncommitted ?? []) {
+    const source = path.join(skillDir, file);
+    if (!existsSync(source)) throw new Error(`missing eval file: ${file}`);
+    const target = path.join(workdir, as);
+    await mkdir(path.dirname(target), { recursive: true });
+    await cp(source, target, { force: true, dereference: true });
+    expected.set(as, await readFile(source, 'utf8'));
+  }
+}
+
 // -------------------------------------------------------------- grading
 
 // An assertion is either a string or { text, guardrail: true }. Guardrails encode a
@@ -907,6 +921,7 @@ async function runCase(skill, testCase, itDir, repetition) {
     const expected = await prepareWorkdir(workdir);
     await copyCaseFiles(testCase, workdir, skill.dir, expected);
     initGit(workdir);
+    await copyUncommitted(testCase, workdir, skill.dir, expected);
     // Companions go on both sides, so the two differ only in the skill under test.
     for (const name of alsoInstall) await installSkill(await findSkill(name), workdir);
     if (config === 'with') {
