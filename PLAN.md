@@ -50,6 +50,8 @@ Fewer diff reads when the implementer reports decisions is dropped as an idea. I
 - A session bootstrap header in `PROGRESS.md`, if a real session fails to resume from it. `delegate` already resumes on load.
 - A `SubagentStop` hook running the scripts, if a run shows the main session skipping them.
 - A JSON feature list as the source of state, if a run shows the model corrupting `PLAN.md` or `PROGRESS.md`.
+- A rule for when the implementer may leave a criterion untested, if a second real work shows it reporting `done` with one under `Open`. `tdd` says to report what it could not test as open, and the implementer is told to stop when a task leaves something a test could observe. Seen once, in `bluplat-api`.
+- Tests for `evals/run.mjs`, if the runner fails again in a way a test would have caught. Its functions would first have to be split from its start-up.
 - Tester, Haiku for code and parallelism, each on a recorded failure as the brief says.
 - From the redesign, each with its condition in the brief, an advisor before stopping, a worktree per work and a hook blocking writes from the verifier.
 - Auto-applying `tune` proposals, never. If approval becomes a bottleneck, that is a question for a phase 3 orchestrator.
