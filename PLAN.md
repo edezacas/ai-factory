@@ -9,7 +9,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
   - `angular-conventions` is read in 12 of 12 runs that touch Angular and in none of the guard case. `effect()`, `@empty` and `inject()` on review pass 3 of 3 with it and 0 of 3 without. Opus already writes the rest alone.
   - `init-project` at 0.1 was read in 9 of 9 runs, yet on `/init` it wrote only `CLAUDE.md` in all six runs, with and without the skill. Since 0.2 it writes `AGENTS.md` and makes `CLAUDE.md` a symbolic link to it. In iteration 150 that holds in 9 of 9 Opus runs with the skill and in none of 9 without, on `/init`, on `/init` over a real `CLAUDE.md` whose content it keeps, and on a request that names `CLAUDE.md`. It is read in 12 of 12 runs and in none of the guard case. It never writes `harness.json`, which belongs to `delegate` alone.
   - `web-performance` stays without evidence that it helps. Its work is measuring in a browser before and after each change, which a single turn on a fixture cannot check. It is read in 3 of 3 runs on a page that feels slow, in none of 12 that ask for advice and in none of the guard case.
-- `delegate` is at 0.10.1. It is an ordered way to do any task with agents, and three figures guide what comes next.
+- `delegate` is at 0.10.2. It is an ordered way to do any task with agents, and three figures guide what comes next.
   - A branch per work, a commit per stage and the scope check cost 17 % more than v0.2.1 with the same result, and they stay.
   - On tasks that fit one session it costs about 2.3 times a hands-on Opus session with the same quality. The extra is the orchestration, accepted for the order it gives.
   - Since 0.8.0 the implementer stops when a task leaves behaviour open, 3 of 3 runs against 1 of 3 before.

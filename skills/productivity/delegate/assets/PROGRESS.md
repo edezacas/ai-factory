@@ -6,7 +6,7 @@
 
 ## Done
 
-- Stage N, <name>: base `<HEAD before the stage>`. <What changed>. Gate: <pass, or failed at step>. Scope: <pass, or files outside the task>. Decisions reported: <each with its reason, or none>.
+- Stage N, <name>: base `<HEAD before the stage>`. <What changed>. Decisions reported: <each with its reason, or none>.
 
 ## Left to test
 

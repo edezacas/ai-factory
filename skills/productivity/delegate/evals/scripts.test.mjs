@@ -269,6 +269,43 @@ test('stage commits nothing when a file outside the task changed, and names it',
   assert.equal(head(p), before);
 });
 
+test('stage names the commits made since the last stage, which the scope check did not see, and still commits', () => {
+  const p = stageProject(pass);
+  const last = head(p);
+  // The implementer committed its work, a file outside the task included, so the tree is clean of it.
+  p.write('src/a.ts', 'a2');
+  p.write('src/c.ts', 'c2');
+  p.git('add', '-A');
+  p.git('commit', '-q', '-m', 'by the implementer');
+  p.write('docs/plans/w/PROGRESS.md', 'p2');
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, new RegExp(`WARNING.*${last.slice(0, 7)}[^]*by the implementer`));
+  assert.equal(p.git('log', '-1', '--format=%s').toString().trim(), 'stage 1');
+});
+
+test('stage gives no warning when nobody committed since the last stage', () => {
+  const p = stageProject(pass);
+  p.write('src/a.ts', 'a2');
+  p.write('docs/plans/w/PROGRESS.md', 'p2');
+  assert.equal(run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 1').status, 0);
+  p.write('src/b.ts', 'b');
+  p.write('docs/plans/w/PROGRESS.md', 'p3');
+  const r = run('stage.mjs', p.dir, 'docs/plans/w/01.md', 'stage 2');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout, /WARNING/);
+});
+
+test('stage runs as before when the work has no committed PROGRESS.md', () => {
+  const p = project({ 'harness.json': JSON.stringify({ gate: [{ name: 'tests', run: pass }] }), 'tasks/01.md': task, 'src/a.ts': 'a' });
+  p.write('src/a.ts', 'a2');
+  p.git('add', '-A');
+  p.git('commit', '-q', '-m', 'unrelated');
+  p.write('src/b.ts', 'b');
+  const r = run('stage.mjs', p.dir, 'tasks/01.md', 'stage 1');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+});
+
 test('stage without a message fails with usage and commits nothing', () => {
   const p = stageProject(pass);
   p.write('src/a.ts', 'a2');
