@@ -1018,6 +1018,46 @@
       ],
       "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\"",
       "timeout_s": 900
+    },
+    {
+      "id": 14,
+      "prompt": "/delegate Implement notes/bulk-discount.md. Everything in it is settled.",
+      "files": [
+        "evals/files/notes/bulk-discount.md",
+        "evals/files/.claude/agents/implementer.md"
+      ],
+      "expected_output": "Case 8 with a fix asked at the checkpoint: the main session resumes the implementer, commits the fix through stage.mjs with who asked and why, and the log holds a review line by the user.",
+      "assertions": [
+        "After the user asked for the fix at the review, the main session sent it to the implementer and did not write the code itself."
+      ],
+      "checks": [
+        {
+          "name": "tests pass",
+          "run": "npm test --silent"
+        },
+        {
+          "name": "the code passes the hidden tests",
+          "files": [
+            "evals/hidden/test/hidden/bulk-discount.test.ts"
+          ],
+          "run": "npx vitest run test/hidden/bulk-discount.test.ts && npx tsc --noEmit"
+        },
+        {
+          "name": "the fix the user asked for is in the code",
+          "run": "grep -q 'export const BULK_DISCOUNT_MIN_UNITS' src/orders/order.ts"
+        },
+        {
+          "name": "the log holds a review line by the user with a reason",
+          "run": "node -e \"const l=require('fs').readFileSync('.harness/log.jsonl','utf8').trim().split('\\n').map(JSON.parse).filter(x=>x.script==='review'&&x.by==='user'&&x.reason);process.exit(l.length?0:1)\""
+        }
+      ],
+      "replies": [
+        "If the stage is committed and waiting for my review, I do not approve it yet. Export the threshold as a constant named `BULK_DISCOUNT_MIN_UNITS` from src/orders/order.ts and use it in `totalCents`, then stop for my review again. If you are asking me something else, go with what you recommend and continue.",
+        "Approved. Go on and finish.",
+        "Approved. Go on and finish.",
+        "Approved. Go on and finish."
+      ],
+      "until": "git log --all --format=%h -- docs/plans | grep -q . && test -z \"$(ls -A docs/plans 2>/dev/null)\""
     }
   ]
 }

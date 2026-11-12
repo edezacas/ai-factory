@@ -10,6 +10,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
   - A branch per work, a commit per stage and the scope check cost 17 % more than v0.2.1 with the same result, and they stay.
   - On tasks that fit one session it costs about 2.3 times a hands-on Opus session with the same quality. The extra is the orchestration, accepted for the order it gives.
   - Since 0.8.0 the implementer stops when a task leaves behaviour open, 3 of 3 runs against 1 of 3 before.
+  - Since 0.10.0 `stage.mjs` logs a fix after review with who asked and why. In case 14, a fix asked at the checkpoint, 3 of 3 Opus runs left the `review` line by the user, at $0.49-0.53 against $0.31-0.37 for case 8 without the fix.
   - On a large task the review rule keeps the main session's cost after the first delegation 11 % lower, `separated`, with the same result, so it stays. Details below.
 - The evals runner keeps cost per model, resumes a session with fixed replies, and checks hidden tests and seeded mutants. Its gotchas are in `AGENTS.md`.
 
