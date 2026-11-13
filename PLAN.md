@@ -16,7 +16,7 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
-| 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals | A seeded log with two identical failures gives exactly one proposal and a clean log gives none. It starts only with ten logged stages in one project |
+| 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals. It infers whether each rule belongs to the project, a technology or the way of working, and drafts the last two for a kit skill besides the `AGENTS.md` line | A seeded log with two identical failures gives exactly one proposal, a clean log gives none, and a repeated failure of a technology gives the `AGENTS.md` line and a draft for a `stack` skill. Ten logged stages in one project exist since 2026-11-13, in a project's api repo with 15 |
 
 ## Left out, and what brings it back
 
@@ -39,6 +39,7 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 - `passing` and `accepted` as separate states, if the verifier's verdict has to be stored between sessions.
 - `Explore` returning code fragments instead of only locations, if a real work shows the main session's cost before the plan dominating while no implementer explores beyond its task file.
 - `write-why` adding one line to `AGENTS.md` that points to the records folder, if agents miss a recorded decision twice, in a real project or in an eval like write-why case 8. A script or hook only if the line fails too.
+- A `tune` pass from this repo over the logs of several projects, which could tell a kit failure from a project one with evidence instead of inference, when two projects log the same failure.
 - Rewriting records that a change contradicts, or a periodic pass that finds stale ones, if stale records show up in use. It can live in `tune` or in its own skill.
 - A `hexagonal` skill, no. `code-design` covers most of it, and a skill that can add layers would pull against one that holds them back. If a dependency that makes tests slow or brittle needs a port, that is a line in `code-design`.
 - A `tidy` skill, if the agent is seen leaving code dirty after green, and then only after trying `/simplify` and a stronger Refactor step in `tdd`. Neither this nor `hexagonal` was measured, so both are judgement.
