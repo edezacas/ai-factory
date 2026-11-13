@@ -8,6 +8,7 @@ The design and the reasons for it are in `docs/brief.md`. This file holds where 
 - The skills track is closed. Every skill but `web-performance` is measured, and the five real tasks of phase 1 are done. A skill reopens only on a failure that repeats in real work.
 - `delegate` is at 0.12.0, measured against hands-on work on small and large tasks. It runs one stage at a time, since the scripts cannot close two in parallel.
 - The verifier is built, at `agents/verifier.md`. It meets its criteria on a small change, and is not measured on a large one.
+- `tune` is built, at `skills/productivity/tune`. It meets its criteria on seeded logs and has not run on a real one.
 - The evals runner keeps cost per model, resumes a session with fixed replies, and checks hidden tests and seeded mutants. Its gotchas are in `AGENTS.md`.
 
 The figures behind each of these are in `docs/measurements.md`, and the brief gives the decision each supports.
@@ -16,7 +17,7 @@ The figures behind each of these are in `docs/measurements.md`, and the brief gi
 
 | # | Item | What changes | Done when |
 |---|------|--------------|-----------|
-| 7 | Tune skill | `skills/productivity/tune` reads only `.harness/log.jsonl`, `review` lines included, and proposes a change only on a repeated failure, cheapest level first, and also proposes removals. It infers whether each rule belongs to the project, a technology or the way of working, and drafts the last two for a kit skill besides the `AGENTS.md` line | A seeded log with two identical failures gives exactly one proposal, a clean log gives none, and a repeated failure of a technology gives the `AGENTS.md` line and a draft for a `stack` skill. Ten logged stages in one project exist since 2026-11-13, in a project's api repo with 15 |
+| 7 | `tune` on a real log | Nothing in the kit unless the run shows a fault. The user runs `/tune` in the project whose api repo has 15 logged stages, where the send-backs of 2026-11-13 include one convention sent back twice | Its proposals are read against the send-backs the user remembers, and a fault becomes a case on a seeded log, never on the real one |
 
 ## Left out, and what brings it back
 

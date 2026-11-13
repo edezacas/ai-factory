@@ -1,0 +1,80 @@
+{
+  "skill_name": "tune",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/tune",
+      "files": [],
+      "uncommitted": [
+        { "file": "evals/logs/project-repeat.jsonl", "as": ".harness/log.jsonl" }
+      ],
+      "expected_output": "Twelve stages in three works. Two review lines, worded differently, send back a repository that throws NotFoundError for a missing record instead of returning undefined like the other repositories. The agent makes exactly one proposal, a line in AGENTS.md, placed in the project and cited by both ts. The empty CSV header and the stage that needed two rounds were seen once and are left out, not proposed. Nothing in the tree changes.",
+      "assertions": [
+        "The report makes exactly one proposal.",
+        "The proposal is about repositories returning undefined for a missing record instead of throwing NotFoundError.",
+        "The proposal cites the ts of both review lines it rests on.",
+        "The proposal places the rule in the project and gives a line for AGENTS.md word for word.",
+        "The proposal drafts nothing for a kit skill.",
+        "The empty CSV header row and the stage whose gate failed once are named as seen once and not proposed.",
+        "The report keeps what the log shows apart from what it infers.",
+        {
+          "text": "The agent opened no task or plan file named in the log.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "the tree and the log are as they started",
+          "run": "test \"$(git status --porcelain)\" = '?? .harness/' && test \"$(git hash-object .harness/log.jsonl)\" = 26a694cd8d5254cd1ae5c18375b4f0a4b34f0f94 && test \"$(git rev-list --count --all)\" = 1"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/tune",
+      "files": [],
+      "uncommitted": [
+        { "file": "evals/logs/clean.jsonl", "as": ".harness/log.jsonl" }
+      ],
+      "expected_output": "Twelve stages in three works, every gate and scope check passing and no review line. The agent says no failure repeats and proposes nothing, neither a new rule nor a removal, since a log without failures is not evidence that a piece can go.",
+      "assertions": [
+        "The report says that no failure repeats.",
+        "The report makes no proposal of a new rule, line or skill.",
+        "The report proposes no removal, or says that a log without failures is not evidence for one."
+      ],
+      "checks": [
+        {
+          "name": "the tree and the log are as they started",
+          "run": "test \"$(git status --porcelain)\" = '?? .harness/' && test \"$(git hash-object .harness/log.jsonl)\" = ee27d225d450eadedd16218b646aebf3679f908e && test \"$(git rev-list --count --all)\" = 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/tune",
+      "files": [],
+      "uncommitted": [
+        { "file": "evals/logs/stack-repeat.jsonl", "as": ".harness/log.jsonl" }
+      ],
+      "expected_output": "Twelve stages in three works. Two different Vitest failures repeat, each twice: a vi.mock factory that reads a top-level variable instead of using vi.hoisted, and a rejection checked with try/catch instead of await expect(...).rejects.toThrow. The agent places both in Vitest as an inference, gives a line for AGENTS.md for each now, and, since no installed skill covers Vitest and two different failures of it repeat, drafts a new stack skill holding both rules for the kit. The EventBus send-back was seen once and is left out.",
+      "assertions": [
+        "The report makes one proposal for the vi.mock factory and vi.hoisted, and one for asserting rejections with expect(...).rejects.",
+        "Each of the two proposals cites the ts of both its review lines.",
+        "Both proposals are placed in Vitest, the technology, not in the project, and the placement is given as an inference.",
+        "Each of the two proposals gives a line for AGENTS.md to add now.",
+        "The report drafts a new stack skill for Vitest that holds both rules, to be taken to the kit and measured there.",
+        "The EventBus send-back is named as seen once and not proposed.",
+        {
+          "text": "The agent opened no task or plan file named in the log.",
+          "guardrail": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "the tree and the log are as they started",
+          "run": "test \"$(git status --porcelain)\" = '?? .harness/' && test \"$(git hash-object .harness/log.jsonl)\" = e4f6faf12e0447f241cb8a2dbcb719613ad76d54 && test \"$(git rev-list --count --all)\" = 1"
+        }
+      ]
+    }
+  ]
+}

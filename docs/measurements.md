@@ -67,6 +67,18 @@ The change is the bulk discount, left uncommitted over a clean `HEAD`, with test
 
 The judge cannot tell the two sides apart, because its assertion takes a file and line as evidence, so the difference on Sonnet was read by hand. The reports had small faults that did not change a verdict: a proposed fix the form does not ask for, an example corrected in place and left, and "overcharged" for a customer who pays a cent less. The variant without the rule was not kept as a case.
 
+## tune
+
+Seeded logs of twelve stages in three works, run with `/tune` and `--configs with` on Sonnet, three runs a case. Cases 1 to 3.
+
+| What | Iteration | Result |
+|---|---|---|
+| One project failure sent back twice in different words, two failures seen once | 167 | Exactly one proposal, placed in the project with its `AGENTS.md` line, both `ts` cited and the single failures left out, in 3 of 3. Tree unchanged in 3 of 3. About $0.06 a run |
+| Clean log | 167 | Nothing proposed and no removal in 3 of 3. In 0.1 and 0.2 it still wrote the full report instead of one line, and the assertion on length was dropped. About $0.05 a run |
+| Two Vitest failures, each sent back twice, a project one seen once | 167, 168 | Both proposals with their lines in 3 of 3. On 0.2 one run of three put off the new skill, waiting for a second failure the log already had; on 0.3 it was drafted with both rules in 3 of 3. One run of 0.3 gave the placement without calling it an inference. About $0.07 a run |
+
+In 0.1 a proposal left a gap for a path the log does not give, and the draft for the kit did not say it is measured there. Both were fixed in 0.2.
+
 ## Real works with `delegate`
 
 Not comparisons, since no work was done twice. They are what the evals cannot show.
@@ -77,3 +89,4 @@ Not comparisons, since no work was done twice. They are what the evals cannot sh
 | Second, in another project | 2026-11-11 | Reading diffs found two fixture problems with the gate green |
 | Third, in that same project, 4 stages, 87 min, main session on Fable | 2026-11-12 | The diff was read in 6 of 7 rounds, because 5 of 6 reports carried decisions, and one read found a design flaw. Main-session context went from 43k to 234k tokens, and 43 requests after the first delegation reread 8.5M cached tokens, 3.5 times the 2.4M of the four implementers. The implementer reported `done` once with a criterion untested |
 | The log of that project over three works and nine stages | 2026-11-12 | 27 lines, all `pass`, while the works had two fixes asked by the user and one stage rejected by the main session. That is why 0.10.0 logs a fix after review |
+| Fourth, in that same project, 15 stages over three repos, main session on Fable | 2026-11-13 | Six stages were sent back, four of them for conventions the code already follows and the project's `AGENTS.md` does not hold, one of them twice. Red was not seen in 5 code stages, all 3 of the Angular ones, which the reports said and the log cannot show. The verifier, asked for four times on Opus, passed all four, and twice what it left uncovered became a stage the user approved. The main session's own edit to `PLAN.md` failed the scope check once. The api repo's log reached 15 stages, the start condition of `tune` |

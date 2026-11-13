@@ -1,6 +1,6 @@
 {
   "name": "ai-factory",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Skills and subagents that take an agent from a prompt to validated code: clarify, design, test first, record decisions, and work with agents in order on any task.",
   "author": {
     "name": "edezacas"
