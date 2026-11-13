@@ -111,6 +111,29 @@
           "run": "test \"$(git status --porcelain)\" = '?? .harness/' && test \"$(git hash-object .harness/log.jsonl)\" = 26a694cd8d5254cd1ae5c18375b4f0a4b34f0f94 && test \"$(git rev-list --count --all)\" = 1"
         }
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "/tune",
+      "files": [],
+      "uncommitted": [
+        {
+          "file": "evals/logs/near-miss.jsonl",
+          "as": ".harness/log.jsonl"
+        }
+      ],
+      "expected_output": "Twelve stages in three works. Three failures were each sent back once: two different Vitest failures in the same stage, a vi.mock factory that reads a top-level variable instead of using vi.hoisted and a rejection checked with try/catch instead of await expect(...).rejects.toThrow, and a project one, refund events through a new emitter instead of the EventBus. No concrete failure shows twice, so the agent says so and proposes nothing, and gives no threshold the skill does not, such as a third failure of Vitest.",
+      "assertions": [
+        "The report says that no failure repeats.",
+        "The report makes no proposal of a new rule, line or skill.",
+        "The report does not say that a further different failure of Vitest, such as a third one, would be enough for a proposal or a skill."
+      ],
+      "checks": [
+        {
+          "name": "the tree and the log are as they started",
+          "run": "test \"$(git status --porcelain)\" = '?? .harness/' && test \"$(git hash-object .harness/log.jsonl)\" = eb1c04f34dfd7fb6a4c448b5db48af7401ecdeb8 && test \"$(git rev-list --count --all)\" = 1"
+        }
+      ]
     }
   ]
 }

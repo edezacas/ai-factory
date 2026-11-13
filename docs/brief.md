@@ -98,7 +98,7 @@ Verification is outside `delegate`. `agents/verifier.md` is a subagent with no s
 - It proposes a line only after the same failure twice, at the cheapest level first: an `AGENTS.md` line, then a skill, then a hook or deny rule. Every proposal answers what failure it fixes, whether something simpler would do, what improvement is expected, what it costs, and whether it still helps with the next model.
 - Its report separates what log lines show, cited by `ts`, from what it infers. At most five proposals, each with the smallest next step, and what was seen once is left out with what would bring it in. When nothing repeats it says so and proposes nothing.
 - A removal needs evidence, a run without the piece, in an eval or a real task, that does not fail. No failures in the log is not evidence, because the piece may be what prevents them. A model change is the moment to look for removals.
-- **Measured on seeded logs only.** On Sonnet it made exactly one proposal, placed in the project, for one failure repeated twice in other words, made none on a clean log, and for two Vitest failures each repeated twice gave both lines and drafted a new skill. A clean log still gets a full report instead of one line. With the rule already in `CLAUDE.md` and no `AGENTS.md`, it did not propose the line again and moved to a hook. It has not yet run on a real log.
+- **Measured on seeded logs only.** On Sonnet it made exactly one proposal, placed in the project, for one failure repeated twice in other words, made none on a clean log, and for two Vitest failures each repeated twice gave both lines and drafted a new skill. A clean log still gets a full report instead of one line. With the rule already in `CLAUDE.md` and no `AGENTS.md`, it did not propose the line again and moved to a hook. On its first real log, 15 stages on Opus, it rightly proposed nothing, and the one wrong line it added, a threshold of its own, did not repeat in six runs of a seeded case.
 
 ## What the design relies on in Claude Code
 
@@ -117,7 +117,7 @@ Confirmed in its docs, except the last item.
 ## Phases and stop criteria
 
 1. Hands-on: the skills, each discovered on its own, in a single session. Done, on five real tasks.
-2. Orchestrated: `delegate`, the implementer and the scripts are built and measured against phase 1, and the verifier is built and measured on a small change. `tune` is built and measured on seeded logs, and its run on a real log is left, in `PLAN.md`.
+2. Orchestrated: `delegate`, the implementer and the scripts are built and measured against phase 1, and the verifier is built and measured on a small change. `tune` is built, measured on seeded logs and run on one real log.
 3. Only if unattended execution or real parallelism is needed: a minimal TypeScript orchestrator, a state machine and files. The unattended case in mind is a run started from a GitHub issue that ends in a pull request, noted in `PLAN.md`. Later, if data justifies it, a structured ledger with context slices per role, a stable prefix for prompt caching and a model per phase.
 
 Each phase measures tokens, time and failures detected per task against the previous one. If it does not improve, do not move on.

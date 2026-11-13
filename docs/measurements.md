@@ -69,7 +69,7 @@ The judge cannot tell the two sides apart, because its assertion takes a file an
 
 ## tune
 
-Seeded logs of twelve stages in three works, run with `/tune` and `--configs with` on Sonnet, three runs a case. Cases 1 to 4.
+Seeded logs of twelve stages in three works, run with `/tune` and `--configs with` on Sonnet, three runs a case. Cases 1 to 5, and case 5 also on Opus.
 
 | What | Iteration | Result |
 |---|---|---|
@@ -78,6 +78,8 @@ Seeded logs of twelve stages in three works, run with `/tune` and `--configs wit
 | Two Vitest failures, each sent back twice, a project one seen once | 167, 168 | Both proposals with their lines in 3 of 3. On 0.2 one run of three put off the new skill, waiting for a second failure the log already had; on 0.3 it was drafted with both rules in 3 of 3. One run of 0.3 gave the placement without calling it an inference. About $0.07 a run |
 | 0.4, the steps cut from 57 lines to 50 and the instructions file read as `AGENTS.md` or `CLAUDE.md`, cases 1 to 3 | 169 | Every assertion in 3 of 3 runs of each case, at the same cost a run |
 | 0.4, the project has only `CLAUDE.md` and it already holds the rule sent back twice | 169 | The rule cited from `CLAUDE.md`, not proposed again, no `AGENTS.md` proposed, and the next level proposed, a hook, since no installed skill covers it, in 3 of 3. About $0.07 a run |
+| 0.4 on the first real log, 15 stages in five works, main session on Opus | 2026-11-13 | Nothing proposed, correctly: two send-backs in one stage were different Symfony failures, an `EventSubscriberInterface` instead of `AsEventListener` and the attribute on each method instead of the class. Its closing line said a third Symfony failure would be enough for a skill, a threshold the skill does not give |
+| 0.4, case 5: two different Vitest failures in one stage and a project one, each seen once | 170, 171 | Nothing proposed and no threshold invented in 3 of 3 runs on Sonnet and 3 of 3 on Opus, so the fault of the real run did not repeat and `SKILL.md` stays as it is. Whether the reply says what would bring a proposal was asserted at first and dropped, since the skill does not ask it: 2 of 3 on Sonnet, 1 of 3 on Opus. About $0.05 a run on Sonnet and $0.15 on Opus |
 
 In 0.1 a proposal left a gap for a path the log does not give, and the draft for the kit did not say it is measured there. Both were fixed in 0.2.
 

@@ -1,0 +1,36 @@
+{"ts":"2026-10-05T09:10:00.000Z","script":"gate","version":"0.12.0","result":"pass","task":null,"step":null,"durationMs":14000}
+{"ts":"2026-10-05T09:13:00.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:13:01.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:16:01.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:16:02.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:16:03.000Z","script":"review","version":"0.12.0","task":"docs/plans/order-export/01-csv-columns.md","by":"user","reason":"The test read a top-level variable inside the vi.mock factory, which Vitest hoists above the declaration; the value must come from vi.hoisted."}
+{"ts":"2026-10-05T09:17:30.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:17:31.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/01-csv-columns.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:17:32.000Z","script":"review","version":"0.12.0","task":"docs/plans/order-export/01-csv-columns.md","by":"user","reason":"The new test checked the rejected promise with try/catch instead of await expect(...).rejects.toThrow, so it passed when nothing was thrown."}
+{"ts":"2026-10-05T09:19:03.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/02-date-filter.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:19:04.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/02-date-filter.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:22:04.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/03-empty-list.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:22:05.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/03-empty-list.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:28:07.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/order-export/04-download-route.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:28:08.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/order-export/04-download-route.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:38:08.000Z","script":"gate","version":"0.12.0","result":"pass","task":null,"step":null,"durationMs":14000}
+{"ts":"2026-10-05T09:41:08.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/refunds/01-refund-amount.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:41:09.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/refunds/01-refund-amount.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:44:09.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/refunds/02-refund-repository.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:44:10.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/refunds/02-refund-repository.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:47:10.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/refunds/02-refund-repository.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:47:11.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/refunds/02-refund-repository.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:47:12.000Z","script":"review","version":"0.12.0","task":"docs/plans/refunds/02-refund-repository.md","by":"main","reason":"The refund events must go through the EventBus in src/payments, as the payment events do, instead of a new emitter."}
+{"ts":"2026-10-05T09:50:12.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/refunds/03-partial-refund.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:50:13.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/refunds/03-partial-refund.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T09:53:13.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/refunds/04-refund-events.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T09:53:14.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/refunds/04-refund-events.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T10:03:14.000Z","script":"gate","version":"0.12.0","result":"pass","task":null,"step":null,"durationMs":14000}
+{"ts":"2026-10-05T10:06:14.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/01-invoice-lines.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T10:06:15.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/01-invoice-lines.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T10:12:17.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/02-totals.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T10:12:18.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/02-totals.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T10:15:18.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/03-invoice-repository.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T10:15:19.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/03-invoice-repository.md","base":"HEAD","outOfScope":[],"durationMs":20}
+{"ts":"2026-10-05T10:21:21.000Z","script":"gate","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/04-pdf-render.md","step":null,"durationMs":15000}
+{"ts":"2026-10-05T10:21:22.000Z","script":"check-scope","version":"0.12.0","result":"pass","task":"docs/plans/invoice-pdf/04-pdf-render.md","base":"HEAD","outOfScope":[],"durationMs":20}
