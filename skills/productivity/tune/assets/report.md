@@ -12,7 +12,7 @@ Read <N> lines, <S> stages in <W> works, from <first ts> to <last ts>.
 
 - **Fixes:** <the failure, with its ts>
 - **Belongs to:** <project | technology, and which | way of working>, inferred because <reason>
-- **Change now:** <the line for AGENTS.md, word for word>
+- **Change now:** <the line for the instructions file, word for word, and which file; or, when the file already holds it, that it does and the next level instead>
 - **Draft for the kit:** <only for a technology or the way of working: the skill it goes to, installed or new, and the text, to carry to the kit's repo and measure there before it ships>
 - **Simpler option:** <one, or why none would do>
 - **Expected:** <what stops happening>
